@@ -1,0 +1,59 @@
+{
+    "name": "nanvc",
+    "description": "Not Another Node Vault Client :)",
+    "version": "1.0.0-beta.1",
+    "author": {
+        "name": "Ionut Zailic",
+        "email": "ionut@zailic.com"
+    },
+    "license": "MIT",
+    "main": "dist/main.js",
+    "scripts": {
+        "start": "node index.js",
+        "start:debug": "node --no-lazy --inspect=0.0.0.0:9222 ./index.js",
+        "test": "mocha -r ts-node/register test/**/*.ts",
+        "test:coverage": "nyc npm run test",
+        "build": "tsc"
+    },
+    "nyc": {
+        "include": [
+            "src/**/*.ts",
+            "src/**/*.tsx"
+        ],
+        "exclude": [
+            "test/**/*.ts",
+            "test/**/*.tsx"
+        ],
+        "extension": [
+            ".ts",
+            ".tsx"
+        ],
+        "require": [
+            "ts-node/register"
+        ],
+        "reporter": [
+            "text-summary",
+            "html"
+        ],
+        "sourceMap": true,
+        "instrument": true
+    },
+    "dependencies": {
+        "request": "^2.83.0",
+        "request-promise-native": "^1.0.5"
+    },
+    "devDependencies": {
+        "typescript": "^2.7.2",
+        "ts-node": "^5.0.1",
+        "tslint": "^5.9.1",
+        "chai": "^4.1.2",
+        "mocha": "^5.0.1",
+        "mocha-typescript": "^1.1.12",
+        "sinon": "^4.4.2",
+        "nyc": "^11.4.1",
+        "@types/request-promise-native": "1.0.14",
+        "@types/chai": "^4.1.2",
+        "@types/mocha": "^2.2.48",
+        "@types/sinon": "^4.3.0"
+    }
+}
