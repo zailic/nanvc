@@ -11,3 +11,6 @@ install:
 
 script:
   - npm run test:coverage
+
+after_success: 
+  - npm run coveralls
