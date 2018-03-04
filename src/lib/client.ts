@@ -71,14 +71,10 @@ export class VaultClient {
                     "X-Vault-Token": this.authToken
                 },
                 resolveWithFullResponse: true
-            },
-            ret = null;
+            };
         this.sanitizeRequest(requestData, httpMethod, path, restOfArgs)
         let fullResponse: request.FullResponse = await request[httpMethod.toLowerCase()](requestData);
-        if(fullResponse.statusCode == 200) {
-            ret = JSON.parse(fullResponse.body);
-        } 
-        return ret;
+        return fullResponse.statusCode == 200? fullResponse.body: null; 
     }
 
     sanitizeRequest(

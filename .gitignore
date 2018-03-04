@@ -12,5 +12,6 @@ npm-debug.log
 # ts-node
 /ts-node-*
 
-# instanbul
+# istanbul
 /.nyc_output
+/coverage
