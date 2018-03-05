@@ -9,6 +9,10 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es5",
+    "lib": [
+      "es5",
+      "es2015.promise"
+    ],
     "sourceMap": true,
     "outDir": "./dist"
   },

@@ -11,8 +11,9 @@
     "scripts": {
         "start": "node index.js",
         "start:debug": "node --no-lazy --inspect=0.0.0.0:9222 ./index.js",
-        "test": "mocha -r ts-node/register test/**/*.ts",
-        "test:coverage": "nyc npm run test",
+        "test:unit": "mocha -r ts-node/register test/unit/**/*.ts",
+        "test:all": "mocha -r ts-node/register test/unit/**/*.ts test/integration/**/*.ts",
+        "coverage": "nyc npm run test:all",
         "build": "tsc",
         "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
     },

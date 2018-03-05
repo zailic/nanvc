@@ -2,7 +2,7 @@ import { suite, test } from "mocha-typescript";
 import * as chai from "chai";
 import * as sinonjs from "sinon";
 import * as request from "request-promise-native";
-import { VaultClient } from "./../../src/lib/client";
+import { VaultClient } from "./../../../src/lib/client";
 
 const expect = chai.expect;
 
