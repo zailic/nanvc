@@ -16,19 +16,24 @@ var VaultClient = require('nanvc');
 var vault = new VaultClient('http://127.0.0.1:8200');
 vault.init({ secret_shares: 1, secret_threshold: 1 })
      .then(
-         // initialize Promise reponse 
         function(result) {
+            if(!result.succeded) {
+                console.error(result.errorMessage);
+                return;
+            }
             var keys = result.apiResponse.keys;
             vault.token = result.apiResponse.root_token;
-            return vault.unseal({ secret_shares: 1, key: keys[0] })
+            vault.unseal({ 
+                    secret_shares: 1, 
+                    key: keys[0] 
+                })
+                .then(
+                    function(result) {
+                        console.log(result.succeded)
+                    }
+                )
         }
-     )
-     .then(
-         // unseal Promise reponse
-        function(result) {
-            console.log(result.succeded)
-        }
-     )
+     );
 ```
 ### ES6
 ```javascript
