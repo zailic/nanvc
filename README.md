@@ -10,20 +10,45 @@ project: [node-vault](https://github.com/kr1sp1n/node-vault)
 npm install nanvc --save
 ```
 ## How to use it
+### ES5
 ```javascript
 var VaultClient = require('nanvc');
-var vault = new VaultClient(
-    'http://127.0.0.1:8200', // default
-    'root-token',
-    'v1', // default 
-);
+var vault = new VaultClient('http://127.0.0.1:8200');
 vault.init({ secret_shares: 1, secret_threshold: 1 })
-    .then( (result) => {
-        var keys = result.keys;
-        vault.token = result.root_token;
-        return vault.unseal({ secret_shares: 1, key: keys[0] })
-    })
-    .catch(console.error);
+     .then(
+         // initialize Promise reponse 
+        function(result) {
+            var keys = result.apiResponse.keys;
+            vault.token = result.apiResponse.root_token;
+            return vault.unseal({ secret_shares: 1, key: keys[0] })
+        }
+     )
+     .then(
+         // unseal Promise reponse
+        function(result) {
+            console.log(result.succeded)
+        }
+     )
 ```
-####
-
+### ES6
+```javascript
+import VaultClient from "nanvc";
+let vault = new Vault('http://127.0.0.1');
+const initAndUnseal = async () => {
+    let initResponse = await vault.init({
+        secret_shares: 1, 
+        secret_threshold: 1
+    });
+    if (initResponse.succeded) {
+        let unsealResponse = await vault.unseal({
+            secret_shares: 1,
+            key: initResponse.apiResoponse.keys[0]
+        });
+        if(!unsealResponse.succeded) {
+            throw new Error(unsealResponse.errorMessage);
+        }
+    } else {
+        throw new Error(initResponse.errorMessage);
+    }
+}
+```
