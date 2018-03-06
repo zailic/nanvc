@@ -36,12 +36,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var constants_1 = require("./constants");
+var metadata_1 = require("./metadata");
 var request = require("request-promise-native");
 var VaultClient = (function () {
     function VaultClient(clusterAddress, authToken, apiVersion) {
-        if (clusterAddress === void 0) { clusterAddress = 'http://127.0.0.1:8200'; }
-        if (authToken === void 0) { authToken = '2733800b-cbb3-1c40-cebe-a3e7b2b17af0'; }
-        if (apiVersion === void 0) { apiVersion = 'v1'; }
+        if (clusterAddress === void 0) { clusterAddress = process.env.NANVC_VAULT_CLUSTER_ADDRESS || 'http://127.0.0.1:8200'; }
+        if (authToken === void 0) { authToken = process.env.NANVC_VAULT_AUTH_TOKEN || null; }
+        if (apiVersion === void 0) { apiVersion = process.env.NANVC_VAULT_API_VERSION || 'v1'; }
         var _this = this;
         this.clusterAddress = clusterAddress;
         this.authToken = authToken;
@@ -62,6 +63,16 @@ var VaultClient = (function () {
             _loop_1(k);
         }
     }
+    Object.defineProperty(VaultClient.prototype, "token", {
+        get: function () {
+            return this.authToken;
+        },
+        set: function (token) {
+            this.authToken = token;
+        },
+        enumerable: true,
+        configurable: true
+    });
     VaultClient.prototype.read = function (path) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -96,25 +107,34 @@ var VaultClient = (function () {
             restOfArgs[_i - 2] = arguments[_i];
         }
         return __awaiter(this, void 0, void 0, function () {
-            var requestData, ret, fullResponse;
+            var requestData, fullResponse, partialVaultResponse, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        requestData = {
-                            url: this.clusterAddress,
-                            headers: {
-                                "X-Vault-Token": this.authToken
-                            },
-                            resolveWithFullResponse: true
-                        }, ret = null;
-                        this.sanitizeRequest(requestData, httpMethod, path, restOfArgs);
-                        return [4, request[httpMethod.toLowerCase()](requestData)];
-                    case 1:
-                        fullResponse = _a.sent();
-                        if (fullResponse.statusCode == 200) {
-                            ret = JSON.parse(fullResponse.body);
+                        requestData = {}, partialVaultResponse = {};
+                        requestData.url = this.clusterAddress;
+                        requestData.resolveWithFullResponse = true;
+                        requestData.json = true;
+                        if (this.token) {
+                            requestData.headers = {};
+                            requestData.headers["X-Vault-Token"] = this.token;
                         }
-                        return [2, ret];
+                        this.sanitizeRequest(requestData, httpMethod, path, restOfArgs);
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        return [4, request[httpMethod.toLowerCase()](requestData)];
+                    case 2:
+                        fullResponse = _a.sent();
+                        partialVaultResponse._httpStatusCode = fullResponse.statusCode;
+                        partialVaultResponse._apiResponse = fullResponse.body;
+                        return [3, 4];
+                    case 3:
+                        e_1 = _a.sent();
+                        partialVaultResponse._httpStatusCode = e_1.statusCode;
+                        partialVaultResponse._errorMessage = e_1.message;
+                        return [3, 4];
+                    case 4: return [2, metadata_1.VaultResponse.newInstanceFromPartial(partialVaultResponse)];
                 }
             });
         });
@@ -129,7 +149,7 @@ var VaultClient = (function () {
         switch (httpMethod.toUpperCase()) {
             case "POST":
             case "PUT":
-                request.json = extraArgs[pathHasPlaceholder ? 1 : 0];
+                request.body = extraArgs[pathHasPlaceholder ? 1 : 0];
                 break;
         }
     };
