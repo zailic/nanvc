@@ -96,7 +96,6 @@ class VaultClientIntegrationTest {
 
         // Then
         expect(expectedResult).to.be.an.instanceof(VaultResponse)
-        expect(expectedResult.succeded).to.be.true;
     } 
 
     @test("should update a secret")
