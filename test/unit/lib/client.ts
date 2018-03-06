@@ -3,6 +3,7 @@ import * as chai from "chai";
 import * as sinonjs from "sinon";
 import * as request from "request-promise-native";
 import { VaultClient } from "./../../../src/lib/client";
+import { VaultResponse } from "../../../src/lib/metadata";
 
 const expect = chai.expect;
 
@@ -65,32 +66,21 @@ class VaultClientTest {
 
         // Then
         expect(reqInitialData.url).equals("https://fake.cluster.address:8200/v1/sys/mounts/my-mount");
-        expect(reqInitialData.json).equals(mountPointPayload);
+        expect(reqInitialData.body.type).equals(mountPointPayload.type);
     }
 
     @test("apiRequest method should be called within dynamic methods")
     async apiRequestMethodShouldBeCalledWithinDynamicMethods() {
 
         // Given
-        let spiedApiRequestMethod = this.sandbox.stub(this.client, "apiRequest").resolves({ intialized: true });
+        let vaultResponse = new VaultResponse(200, { intialized: true });
+        let spiedApiRequestMethod = this.sandbox.stub(this.client, "apiRequest").resolves(vaultResponse);
 
         // When
         let result = await this.client.isInitialized();
 
         // Then
-        expect(result.intialized).to.be.true;
+        expect(result.succeded).to.be.true;
         expect(spiedApiRequestMethod.called).to.be.true;
-    }
-
-    @test("apiRequest method should fail")
-    async apiRequestMethodShouldFail() {
-
-        // When
-        try {
-            let result = await this.client.status();
-        } catch (e) {
-            // Then
-            expect(e.message).matches(/Error: getaddrinfo/);
-        }
     }
 }

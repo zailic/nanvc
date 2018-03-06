@@ -1,12 +1,13 @@
 import { SYSTEM_BACKEND_COMMANDS } from "./constants";
-import { VaultResponse, VaultAllowedHttpMethod } from "./metadata";
+import { VaultResponse, PartialVaultResponse, VaultAllowedHttpMethod } from "./metadata";
 import * as request from "request-promise-native";
-export class VaultClient {    
-    
+
+export class VaultClient {
+
     public status: () => Promise<VaultResponse>;
     public isInitialized: () => Promise<VaultResponse>;
-    public init: () => Promise<VaultResponse>;
-    public unseal: (payload:any) => Promise<VaultResponse>;
+    public init: (paylod: { [x: string]: any }) => Promise<VaultResponse>;
+    public unseal: (payload: any) => Promise<VaultResponse>;
     public seal: () => Promise<VaultResponse>;
     public mounts: () => Promise<VaultResponse>;
     public mount: () => Promise<VaultResponse>;
@@ -27,13 +28,13 @@ export class VaultClient {
 
     constructor(
         private clusterAddress: string = process.env.NANVC_VAULT_CLUSTER_ADDRESS || 'http://127.0.0.1:8200',
-        private authToken: string = process.env.NANVC_VAULT_AUTH_TOKEN || '2733800b-cbb3-1c40-cebe-a3e7b2b17af0',
+        private authToken: string = process.env.NANVC_VAULT_AUTH_TOKEN || null,
         private apiVersion: string = process.env.NANVC_VAULT_API_VERSION || 'v1'
     ) {
         for (let k in SYSTEM_BACKEND_COMMANDS) {
             VaultClient.prototype[k] = (...args: any[]): Promise<VaultResponse> => {
                 return this.apiRequest.apply(
-                    this, 
+                    this,
                     [
                         SYSTEM_BACKEND_COMMANDS[k].method,
                         SYSTEM_BACKEND_COMMANDS[k].path,
@@ -42,6 +43,14 @@ export class VaultClient {
                 );
             }
         }
+    }
+
+    get token() {
+        return this.authToken;
+    }
+
+    set token(token: string) {
+        this.authToken = token;
     }
 
     async read(path: string): Promise<VaultResponse> {
@@ -61,24 +70,39 @@ export class VaultClient {
     }
 
     async apiRequest(
-        httpMethod: VaultAllowedHttpMethod, 
-        path: string, 
+        httpMethod: VaultAllowedHttpMethod,
+        path: string,
         ...restOfArgs: any[]
     ): Promise<VaultResponse> {
-        let requestData: request.OptionsWithUrl = {
-                url: this.clusterAddress,
-                headers: {
-                    "X-Vault-Token": this.authToken
-                },
-                resolveWithFullResponse: true
-            };
-        this.sanitizeRequest(requestData, httpMethod, path, restOfArgs)
-        let fullResponse: request.FullResponse = await request[httpMethod.toLowerCase()](requestData);
-        return fullResponse.statusCode == 200? fullResponse.body: null; 
+
+        let requestData: Partial<request.OptionsWithUrl> = {},
+            fullResponse: request.FullResponse,
+            partialVaultResponse: PartialVaultResponse = {};
+
+        requestData.url = this.clusterAddress;
+        requestData.resolveWithFullResponse = true;
+        requestData.json = true;
+        if (this.token) {
+            requestData.headers = {};
+            requestData.headers["X-Vault-Token"] = this.token;
+        }
+
+        this.sanitizeRequest(requestData, httpMethod, path, restOfArgs);
+
+        try {
+            fullResponse = await request[httpMethod.toLowerCase()](requestData);
+            partialVaultResponse._httpStatusCode = fullResponse.statusCode;
+            partialVaultResponse._apiResponse = fullResponse.body;
+        } catch (e) {
+            partialVaultResponse._httpStatusCode = e.statusCode;
+            partialVaultResponse._errorMessage = e.message;
+        }
+
+        return VaultResponse.newInstanceFromPartial(partialVaultResponse);
     }
 
     sanitizeRequest(
-        request: request.OptionsWithUrl,
+        request: Partial<request.OptionsWithUrl>,
         httpMethod: VaultAllowedHttpMethod,
         path: string,
         extraArgs: any[]
@@ -97,7 +121,7 @@ export class VaultClient {
         switch (httpMethod.toUpperCase()) {
             case "POST":
             case "PUT":
-                request.json = extraArgs[pathHasPlaceholder ? 1 : 0];
+                request.body = extraArgs[pathHasPlaceholder ? 1 : 0];
                 break;
         }
     }
