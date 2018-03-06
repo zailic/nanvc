@@ -28,7 +28,6 @@ class VaultClientIntegrationTest {
         
         // When
         let vaultResponse = await this.client.init(payload);
-        console.log(vaultResponse);
 
         // Then
         expect(vaultResponse.succeded).to.be.true;
@@ -52,7 +51,6 @@ class VaultClientIntegrationTest {
         
         // When
         let vaultResponse = await this.client.init(payload);
-        console.log(vaultResponse);
 
         // Then
         expect(vaultResponse.succeded).to.be.false;    
@@ -65,7 +63,6 @@ class VaultClientIntegrationTest {
 
         // When
         let expectedResult = await this.client.isInitialized();
-        console.log(expectedResult);
 
         // Then
         expect(expectedResult).to.be.an.instanceof(VaultResponse)
@@ -96,7 +93,6 @@ class VaultClientIntegrationTest {
             secret = { "foo": "bar"};
         // When
         let expectedResult = await this.client.write(path, secret);
-        console.log(expectedResult);
 
         // Then
         expect(expectedResult).to.be.an.instanceof(VaultResponse);
@@ -111,7 +107,6 @@ class VaultClientIntegrationTest {
 
         // When
         let expectedResult = await this.client.update(path, secret);
-        console.log(expectedResult);
 
         // Then
         expect(expectedResult).to.be.an.instanceof(VaultResponse);
@@ -124,7 +119,6 @@ class VaultClientIntegrationTest {
         let path = 'integration-tests/my-secret';
         // When
         let expectedResult = await this.client.read(path);
-        console.log(expectedResult);
 
         // Then
         expect(expectedResult).to.be.an.instanceof(VaultResponse);
@@ -139,7 +133,6 @@ class VaultClientIntegrationTest {
         
         // When
         let expectedResult = await this.client.delete(path);
-        console.log(expectedResult);
 
         // Then
         expect(expectedResult).to.be.an.instanceof(VaultResponse)

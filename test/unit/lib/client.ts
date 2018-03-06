@@ -25,7 +25,7 @@ class VaultClientTest {
         this.sandbox.restore();
     }
 
-    @test("baseUrl should contan api version")
+    @test("baseUrl should contain api version")
     baseUrlShouldContainApiVersion() {
         // Given
 
