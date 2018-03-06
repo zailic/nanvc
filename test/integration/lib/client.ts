@@ -65,7 +65,7 @@ class VaultClientIntegrationTest {
 
         // When
         let expectedResult = await this.client.isInitialized();
-                console.log(vaultResponse);
+        console.log(expectedResult);
 
         // Then
         expect(expectedResult).to.be.an.instanceof(VaultResponse)
