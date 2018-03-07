@@ -19,82 +19,108 @@ npm install nanvc --save
 ### ES5
 ```javascript
 var VaultClient = require('nanvc');
-var vault = new VaultClient('http://127.0.0.1:8200');
-vault.init({ secret_shares: 1, secret_threshold: 1 })
-     .then(
-        function(result) {
-            if(!result.succeded) {
-                console.error(result.errorMessage);
-                return;
-            }
-            var keys = result.apiResponse.keys;
-            vault.token = result.apiResponse.root_token;
-            vault.unseal({ 
-                    secret_shares: 1, 
-                    key: keys[0] 
+var vault = new VaultClient('http://vault.local:8200');
+try {
+    vault.init({ secret_shares: 1, secret_threshold: 1 })
+        .then(
+            function (result) {
+                console.log(result);
+                if (!result.succeded) {
+                   throw new Error(result.errorMessage);
+                }
+                var keys = result.apiResponse.keys;
+                vault.token = result.apiResponse.root_token;
+                vault.unseal({
+                    secret_shares: 1,
+                    key: keys[0]
                 })
-                .then(
-                    function(result) {
-                        console.log(result.succeded)
-                    }
-                )
-        }
-     );
-// write a secret
-vault.write('my-app/my-secret', {'foo': 'my-password'}).then(
-    function(writeSecretResponse){
-        /*process the response here*/
-    });
-// update a secret
-vault.update('my-app/my-secret', {'foo': 'my-password-updated'}).then(
-    function(writeSecretResponse){
-        /*process the response here*/
-    });
-// read a secret
-var mySecret=null; 
-vault.read('my-app/my-secret').then(
-    function(mySecretQueryResponse){ 
-        mySecret = mySecretQueryResponse.apiResponse.data.foo; 
-    })
-// delete a secret
-var mySecretIsDeleted = null;
-vault.delete('my-app/my-secret').then(
-    function(mySecretDeleteQueryResponse){
-        mySecretIsDeleted = mySecretDeleteQueryResponse.succeded? true: false;
-    });
+                    .then(
+                        function (result) {
+                            if (result.succeded) {
+                                // write a secret
+                                vault.write('my-app/my-secret', { 'foo': 'my-password' }).then(
+                                    function (writeSecretResponse) {
+                                        console.log(writeSecretResponse);
+                                        /*process the response here*/
+                                    });
+                                // update a secret
+                                vault.update('my-app/my-secret', { 'foo': 'my-password-updated' }).then(
+                                    function (updateSecretResponse) {
+                                        console.log(updateSecretResponse);
+                                        /*process the response here*/
+                                    });
+                                // read a secret
+                                var mySecret = null;
+                                vault.read('my-app/my-secret').then(
+                                    function (mySecretQueryResponse) {
+                                        console.log(mySecretQueryResponse);
+                                        mySecret = mySecretQueryResponse.succceded && mySecretQueryResponse.apiResponse.data.foo;
+                                    })
+                                // delete a secret
+                                var mySecretIsDeleted = null;
+                                vault.delete('my-app/my-secret').then(
+                                    function (mySecretDeleteQueryResponse) {
+                                        console.log(mySecretDeleteQueryResponse);
+                                        mySecretIsDeleted = mySecretDeleteQueryResponse.succeded;
+                                        //...
+                                    });
+                            } else {
+                                throw new Error(result.errorMessage);
+                            }
+                        }
+                    )
+            }
+        ).catch(console.error);
+
+} catch (e) {
+    console.error(e);
+}
 ```
 ### ES6
 ```javascript
-// init and unseal vault
 import VaultClient from "nanvc";
-let vault = new Vault('http://127.0.0.1:8200');
-const initAndUnseal = async () => {
-    let initResponse = await vault.init({
-        secret_shares: 1, 
-        secret_threshold: 1
-    });
-    if (initResponse.succeded) {
-        let unsealResponse = await vault.unseal({
+let vault = new VaultClient('http://vault.local:8200');
+
+async function main() {
+    try {
+        let initResponse = await vault.init({
             secret_shares: 1,
-            key: initResponse.apiResoponse.keys[0]
+            secret_threshold: 1
         });
-        if(!unsealResponse.succeded) {
-            throw new Error(unsealResponse.errorMessage);
+
+        if (initResponse.succeded) {
+            console.log(initResponse);
+            vault.token = initResponse.apiResponse.root_token;
+            let unsealResponse = await vault.unseal({
+                secret_shares: 1,
+                key: initResponse.apiResponse.keys[0]
+            });
+            if (!unsealResponse.succeded) {
+                throw new Error(unsealResponse.errorMessage);
+            }
+        } else {
+            throw new Error(initResponse.errorMessage);
         }
-    } else {
-        throw new Error(initResponse.errorMessage);
+        // write a secret
+        let writeSecretResponse = await vault.write('my-app/my-secret', { 'foo': 'my-password' });
+        console.log(writeSecretResponse);
+        // update a secret
+        let updateSecretResponse = await vault.update('my-app/my-secret', { 'foo': 'my-updated-password' });
+        console.log(updateSecretResponse);
+        // read a secret
+        let mySecretQueryResponse = await vault.read('my-app/my-secret');
+        let mySecret = mySecretQueryResponse.succeded && mySecretQueryResponse.apiResponse.data.foo;
+        console.log(mySecretQueryResponse);
+        // delete a secret
+        let mySecretDeleteQueryResponse = await vault.delete('my-app/my-secret');
+        let mySecretIsDeleted = mySecretDeleteQueryResponse.succeded;
+        console.log(mySecretDeleteQueryResponse);
+    } catch (e) {
+        throw (e);
     }
+
 }
 
-// write a secret
-let writeSecretResponse = await vault.write('my-app/my-secret', {'foo': 'my-password'});
-// update a secret
-let updateSecretResponse = await vault.updated('my-app/my-secret', {'foo': 'my-updated-password'});
-// read a secret
-let mySecretQueryResponse = await vault.read('my-app/my-secret');
-mySecret = mySecretQueryResponse.apiResponse.data.foo;
-// delete a secret
-let mySecretDeleteQueryResponse = await vault.delete('my-app/my-secret');
-let mySecretIsDeleted = mySecretDeleteQueryResponse.succeded? true: false;
+main().then().catch(console.error);
 
 ```
