@@ -5,13 +5,17 @@
 This is a [Vault](https://www.vaultproject.io/) client written in typescript, heavily inspired from much more mature
 project: [node-vault](https://github.com/kr1sp1n/node-vault)
 
-## TODO list
-- [ ] Better documentation(API, more samples, what is supported and what is NOT)
-- [ ] Full support for ["System Backend Commands"](https://www.vaultproject.io/api/system/index.html)
-- [ ] Typescript declarations - it will bring IDE intellisense for tools like Vscode, IntelliJ IDEA, Atom, etc
+# Table of contents
+* [Install](#install)
+* [How to use it](#how-to-use-it)
+    * [ES5](#es5)
+    * [ES6](#es6)
+* [What is supported](#what-is-supported)
+* [TODO list](#todo-list)
 
-## Install - requires nodejs >=6
+## Install
 ``` bash
+# requires nodejs >=6
 npm install nanvc --save
 ```
 ## How to use it
@@ -124,3 +128,69 @@ async function main() {
 main().then().catch(console.error);
 
 ```
+## What is supported
+
+Vault Rest API Call | Http Method | Client Library Method | Tested
+--------------------|-------------|-----------------------|-------
+/secret/:path|GET|VaultClient.read(secretPath: string)| Yes
+/secret/:path|POST|VaultClient.write(secretPath: string, secretData: object)| Yes
+/secret/:path|PUT|VaultClient.update(secretPath: string, secretData: object)| Yes
+/secret/:path|DELETE|VaultClient.delete(secretPath: string)| Yes
+/sys/audit|GET|VaultClient.audits()|No
+/sys/audit/:name|PUT|VaultClient.enableAudit(auditName: string)|No
+/sys/audit/:name|DELETE|VaultClient.disableAudit(auditName: string)|No
+/sys/audit-hash/:path|POST|N/A|N/A
+/sys/auth|GET|VaultClient.auths()|No
+/sys/auth|POST|VaultClient.enableAuth(mountPoint: string)|No
+/sys/auth|DELETE|VaultClient.disableAuth(mountPoint: string)|No
+/sys/capabilities|POST|N/A|N/A
+/sys/capabilities-accessor|POST|N/A|N/A
+/sys/capabilities-self|POST|N/A|N/A
+/sys/config/auditing|GET|N/A|N/A
+/sys/config/control-group|GET|N/A|N/A
+/sys/config/cors|GET|N/A|N/A
+/sys/control-group|POST|N/A|N/A
+/sys/generate-root|GET|N/A|N/A
+/sys/health|HEAD|N/A|N/A
+/sys/health|GET|N/A|N/A
+/sys/init|GET|VaultClient.isInitialized()|YES
+/sys/init|PUT|VaultClient.init(initData: object)|No
+/sys/key-status|GET|N/A|N/A
+/sys/leader|GET|N/A|N/A
+/sys/leases|PUT|N/A|N/A
+/sys/leases|LIST|N/A|N/A
+/sys/license|GET|N/A|N/A
+/sys/mfa|N/A|N/A|N/A
+/sys/mounts|GET|VaultClient.mounts()|No
+/sys/mounts/:mount_point|POST|VaultClient.mount(path:string, mountData: object)|No
+/sys/mounts/:mount_point|DELETE|VaultClient.unmount(path: string)|No
+/sys/mounts/:mount_point/tune|POST|N/A|N/A
+/sys/plugins/reload/backend|PUT|N/A|N/A
+/sys/plugins/catalog|LIST|N/A|N/A
+/sys/plugins/catalog/:catalog_name|PUT|N/A|N/A
+/sys/plugins/catalog/:catalog_name|GET|N/A|N/A
+/sys/plugins/catalog/:catalog_name|DELETE|N/A|N/A
+/sys/policy|GET|VaultClient.policies()|No
+/sys/policy|PUT|VaultClient.addPolicy(policyName: string, policyData: obkect )|No
+/sys/policy|DELETE|VaultClient.removePolicy(policyName: string)|No
+/sys/policies|N/A|N/A|N/a
+/sys/raw|N/A|N/A|N/A
+/sys/rekey|N/A|N/A|N/A
+/sys/rekey-recovery-key|N/A|N/A|N/A
+/sys/remount|POST|VaultClient.remount(remountData: object)|No
+/sys/replication|N/A|N/A|N/A
+/sys/rotate|N/A|N/A|N/A
+/sys/seal|PUT|VaultClient.seal()|No
+/sys/seal-status|GET|VaultClient.status()|Yes
+/sys/step-down|N/A|N/A|N/A
+/sys/tools|N/A|N/A|N/A
+/sys/unseal|PUT|VaultClient.unseal(unsealData: object)|No
+/sys/wrapping/lookup|N/A|N/A|N/A
+/sys/wrapping/rewrap|N/A|N/A|N/A
+/sys/wrapping/unwrap|N/A|N/A|N/A
+/sys/wrapping/wrap|N/A|N/A|N/A
+
+## TODO list
+- [ ] Better documentation(API, more samples, what is supported and what is NOT)
+- [ ] Full support for ["System Backend Commands"](https://www.vaultproject.io/api/system/index.html)
+- [ ] Typescript declarations - it will bring IDE intellisense for tools like Vscode, IntelliJ IDEA, Atom, etc
