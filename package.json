@@ -1,7 +1,7 @@
 {
     "name": "nanvc",
     "description": "Not Another Node Vault Client :)",
-    "version": "1.0.4-beta.2",
+    "version": "1.0.4",
     "author": {
         "name": "Ionut Zailic",
         "email": "ionut@zailic.com"

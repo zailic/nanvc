@@ -15,3 +15,6 @@ npm-debug.log
 # istanbul
 /.nyc_output
 /coverage
+
+# transpilations
+/dist

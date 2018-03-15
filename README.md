@@ -140,9 +140,9 @@ Vault Rest API Call | Http Method | Client Library Method | Tested
 /sys/audit/:name|PUT|VaultClient.enableAudit(auditName: string)|No
 /sys/audit/:name|DELETE|VaultClient.disableAudit(auditName: string)|No
 /sys/audit-hash/:path|POST|N/A|N/A
-/sys/auth|GET|VaultClient.auths()|No
-/sys/auth|POST|VaultClient.enableAuth(mountPoint: string)|No
-/sys/auth|DELETE|VaultClient.disableAuth(mountPoint: string)|No
+/sys/auth|GET|N/A|No
+/sys/auth|POST|N/A|No
+/sys/auth|DELETE|N/A|No
 /sys/capabilities|POST|N/A|N/A
 /sys/capabilities-accessor|POST|N/A|N/A
 /sys/capabilities-self|POST|N/A|N/A
@@ -154,16 +154,16 @@ Vault Rest API Call | Http Method | Client Library Method | Tested
 /sys/health|HEAD|N/A|N/A
 /sys/health|GET|N/A|N/A
 /sys/init|GET|VaultClient.isInitialized()|YES
-/sys/init|PUT|VaultClient.init(initData: object)|No
+/sys/init|PUT|VaultClient.init(initData: object)|YES
 /sys/key-status|GET|N/A|N/A
 /sys/leader|GET|N/A|N/A
 /sys/leases|PUT|N/A|N/A
 /sys/leases|LIST|N/A|N/A
 /sys/license|GET|N/A|N/A
 /sys/mfa|N/A|N/A|N/A
-/sys/mounts|GET|VaultClient.mounts()|No
-/sys/mounts/:mount_point|POST|VaultClient.mount(path:string, mountData: object)|No
-/sys/mounts/:mount_point|DELETE|VaultClient.unmount(path: string)|No
+/sys/mounts|N/A|No
+/sys/mounts/:mount_point|POST|N/A|No
+/sys/mounts/:mount_point|DELETE|N/A|No
 /sys/mounts/:mount_point/tune|POST|N/A|N/A
 /sys/plugins/reload/backend|PUT|N/A|N/A
 /sys/plugins/catalog|LIST|N/A|N/A
@@ -191,6 +191,6 @@ Vault Rest API Call | Http Method | Client Library Method | Tested
 /sys/wrapping/wrap|N/A|N/A|N/A
 
 ## TODO list
-- [ ] Better documentation(API, more samples, what is supported and what is NOT)
+- [x] Better documentation(API, more samples, what is supported and what is NOT)
 - [ ] Full support for ["System Backend Commands"](https://www.vaultproject.io/api/system/index.html)
-- [ ] Typescript declarations - it will bring IDE intellisense for tools like Vscode, IntelliJ IDEA, Atom, etc
+- [x] Typescript declarations - it will bring IDE intellisense for tools like Vscode, IntelliJ IDEA, Atom, etc

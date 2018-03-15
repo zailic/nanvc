@@ -35,16 +35,16 @@ export class VaultClient {
 
     // not tested
 
-    public mounts: () => Promise<VaultResponse>;
-    public mount: () => Promise<VaultResponse>;
-    public unmount: () => Promise<VaultResponse>;
-    public remount: () => Promise<VaultResponse>;
-    public auths: () => Promise<VaultResponse>;
-    public enableAuth: () => Promise<VaultResponse>;
-    public disableAuth: () => Promise<VaultResponse>;
-    public renew: () => Promise<VaultResponse>;
-    public revoke: () => Promise<VaultResponse>;
-    public revokePrefix: () => Promise<VaultResponse>;
+    // public mounts: () => Promise<VaultResponse>;
+    // public mount: () => Promise<VaultResponse>;
+    // public unmount: () => Promise<VaultResponse>;
+    // public remount: () => Promise<VaultResponse>;
+    // public auths: () => Promise<VaultResponse>;
+    // public enableAuth: () => Promise<VaultResponse>;
+    // public disableAuth: () => Promise<VaultResponse>;
+    // public renew: () => Promise<VaultResponse>;
+    // public revoke: () => Promise<VaultResponse>;
+    // public revokePrefix: () => Promise<VaultResponse>;
 
     constructor(
         private _clusterAddress: string = process.env.NANVC_VAULT_CLUSTER_ADDRESS || 'http://127.0.0.1:8200',
