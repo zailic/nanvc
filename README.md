@@ -20,6 +20,11 @@ npm install nanvc --save
 ```
 ## How to use it
 
+The VaultClient constructor takes three optional arguments:
+- vault cluster address - if not passed in, defaults to NANVC_VAULT_CLUSER_ADDRESS environment variable otherwise it will take 'http://127.0.0.1:8200' value
+- vault auth token - if not passed in, defaults to NANVC_VAULT_AUTH_TOKEN env. variable, otherwise will be set to null
+- vault api version - if not passed in, defaults to NANVC_VAULT_API_VERSION environment variable, otherwise is set internaly to 'v1'
+
 ### ES5
 ```javascript
 var VaultClient = require('nanvc');
