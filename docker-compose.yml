@@ -4,7 +4,8 @@ services:
   vault:
     container_name: vault.server
     command: server
-    image: vault:latest
+    build:
+      context: ./test/util/vault
     volumes:
       - ./test/util/vault/config:/vault/config
     cap_add:

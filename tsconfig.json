@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "declaration": false,
+    "declaration": true,
     "noImplicitAny": false,
     "removeComments": true,
+    "declarationDir": "./dist",
     "noLib": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

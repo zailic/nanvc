@@ -1,77 +1,81 @@
-import { SYSTEM_BACKEND_COMMANDS } from "./constants";
-import { VaultResponse, PartialVaultResponse, VaultAllowedHttpMethod } from "./metadata";
+import * as tv4 from "tv4";
 import * as request from "request-promise-native";
+
+import { COMMANDS } from "./constants";
+import {
+    VaultCommandMetadata,
+    VaultResponse,
+    PartialVaultResponse,
+    VaultAllowedHttpMethod
+} from "./metadata/common";
+import { VaultInitPayloadRequest } from "./metadata/sys-init";
+import { VaultUnsealPayloadRequest } from "./metadata/sys-unseal";
+import { VaultAuditHashPayloadRequest } from "./metadata/sys-audit-hash";
+import { VaultAuditPayloadRequest } from "./metadata/sys-audit";
 
 export class VaultClient {
 
-    public status: () => Promise<VaultResponse>;
+    // tested
+    public addPolicy: () => Promise<VaultResponse>;
+    public audits: () => Promise<VaultResponse>;
+    public auditHash: (path: string, payload: VaultAuditHashPayloadRequest) => Promise<VaultResponse>;
+    public enableAudit: (path: string, payload: VaultAuditPayloadRequest) => Promise<VaultResponse>;
+    public delete: (path: string) => Promise<VaultResponse>;
+    public disableAudit: (path: string) => Promise<VaultResponse>;
+    public read: (path: string) => Promise<VaultResponse>;
     public isInitialized: () => Promise<VaultResponse>;
-    public init: (paylod: { [x: string]: any }) => Promise<VaultResponse>;
-    public unseal: (payload: any) => Promise<VaultResponse>;
+    public init: (payload: VaultInitPayloadRequest) => Promise<VaultResponse>;
+    public policies: () => Promise<VaultResponse>;
+    public removePolicy: () => Promise<VaultResponse>;
     public seal: () => Promise<VaultResponse>;
+    public status: () => Promise<VaultResponse>;
+    public unseal: (payload: VaultUnsealPayloadRequest) => Promise<VaultResponse>;
+    public update: (path: string, payload: object) => Promise<VaultResponse>
+    public write: (path: string, payload: object) => Promise<VaultResponse>;
+
+    // not tested
+
     public mounts: () => Promise<VaultResponse>;
     public mount: () => Promise<VaultResponse>;
     public unmount: () => Promise<VaultResponse>;
     public remount: () => Promise<VaultResponse>;
-    public policies: () => Promise<VaultResponse>;
-    public addPolicy: () => Promise<VaultResponse>;
-    public removePolicy: () => Promise<VaultResponse>;
     public auths: () => Promise<VaultResponse>;
     public enableAuth: () => Promise<VaultResponse>;
     public disableAuth: () => Promise<VaultResponse>;
-    public audits: () => Promise<VaultResponse>;
-    public enableAudit: () => Promise<VaultResponse>;
-    public disableAudit: () => Promise<VaultResponse>;
     public renew: () => Promise<VaultResponse>;
     public revoke: () => Promise<VaultResponse>;
     public revokePrefix: () => Promise<VaultResponse>;
 
     constructor(
-        private clusterAddress: string = process.env.NANVC_VAULT_CLUSTER_ADDRESS || 'http://127.0.0.1:8200',
-        private authToken: string = process.env.NANVC_VAULT_AUTH_TOKEN || null,
-        private apiVersion: string = process.env.NANVC_VAULT_API_VERSION || 'v1'
+        private _clusterAddress: string = process.env.NANVC_VAULT_CLUSTER_ADDRESS || 'http://127.0.0.1:8200',
+        private _authToken: string = process.env.NANVC_VAULT_AUTH_TOKEN || null,
+        private _apiVersion: string = process.env.NANVC_VAULT_API_VERSION || 'v1'
     ) {
-        for (let k in SYSTEM_BACKEND_COMMANDS) {
+        for (let k in COMMANDS) {
             VaultClient.prototype[k] = (...args: any[]): Promise<VaultResponse> => {
-                return this.apiRequest.apply(
-                    this,
-                    [
-                        SYSTEM_BACKEND_COMMANDS[k].method,
-                        SYSTEM_BACKEND_COMMANDS[k].path,
-                        ...args
-                    ]
-                );
+                return this.apiRequest.apply(this, [COMMANDS[k], ...args]);
             }
         }
     }
 
+    get clusterAddress(): string {
+        return this._clusterAddress;
+    }
+
+    get apiVersion(): string {
+        return this._apiVersion;
+    }
+
     get token() {
-        return this.authToken;
+        return this._authToken;
     }
 
     set token(token: string) {
-        this.authToken = token;
-    }
-
-    async read(path: string): Promise<VaultResponse> {
-        return this.apiRequest('GET', '/secret/' + path);
-    }
-
-    async write(path: string, data: { [key: string]: any }): Promise<VaultResponse> {
-        return this.apiRequest('POST', '/secret/' + path, data);
-    }
-
-    async delete(path: string): Promise<VaultResponse> {
-        return this.apiRequest('DELETE', '/secret/' + path);
-    }
-
-    async update(path: string, data: { [key: string]: any }): Promise<VaultResponse> {
-        return this.apiRequest('PUT', '/secret/' + path, data);
+        this._authToken = token;
     }
 
     async apiRequest(
-        httpMethod: VaultAllowedHttpMethod,
-        path: string,
+        commandMetadata: VaultCommandMetadata,
         ...restOfArgs: any[]
     ): Promise<VaultResponse> {
 
@@ -79,7 +83,7 @@ export class VaultClient {
             fullResponse: request.FullResponse,
             partialVaultResponse: PartialVaultResponse = {};
 
-        requestData.url = this.clusterAddress;
+        requestData.url = this._clusterAddress;
         requestData.resolveWithFullResponse = true;
         requestData.json = true;
         if (this.token) {
@@ -87,10 +91,26 @@ export class VaultClient {
             requestData.headers["X-Vault-Token"] = this.token;
         }
 
-        this.sanitizeRequest(requestData, httpMethod, path, restOfArgs);
+        this.sanitizeRequest(
+            requestData,
+            commandMetadata.method,
+            commandMetadata.path,
+            restOfArgs
+        );
 
         try {
-            fullResponse = await request[httpMethod.toLowerCase()](requestData);
+
+            if (commandMetadata.schema &&
+                commandMetadata.schema.req
+            ) {
+                let tv4ValidationResult = tv4.validate(requestData.body, commandMetadata.schema.req);
+                if (!tv4ValidationResult) {
+                    throw new Error(JSON.stringify(tv4.error, null, 4));
+                }
+            }
+
+            let httpMethod = commandMetadata.method.toLowerCase();
+            fullResponse = await request[httpMethod](requestData);
             partialVaultResponse._httpStatusCode = fullResponse.statusCode;
             partialVaultResponse._apiResponse = fullResponse.body;
         } catch (e) {
@@ -127,6 +147,6 @@ export class VaultClient {
     }
 
     getBaseUrl(): string {
-        return `${this.clusterAddress}/${this.apiVersion}`;
+        return `${this._clusterAddress}/${this._apiVersion}`;
     }
 }

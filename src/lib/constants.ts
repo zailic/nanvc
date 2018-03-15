@@ -1,88 +1,38 @@
-import { VaultCommandMetadata } from "./metadata";
+import { VaultCommandMetadata } from "./metadata/common";
+import { 
+    VaultAuditsCommandMetadata, 
+    VaultEnableAuditCommandMetadata, 
+    VaultDisableAuditCommandMetadata 
+} from "./metadata/sys-audit";
+import {
+    VaultReadSecretCommandMetadata,
+    VaultDeleteSecretCommandMetadata,
+    VaultWriteSecretCommandMetadata,
+    VaultUpdateSecretCommandMetadata
+} from "./metadata/secrets";
+import { 
+    VaultIsInitializedCommandMetadata, 
+    VaultInitCommandMetadata 
+} from "./metadata/sys-init";
+import { VaultUnsealCommandMetadata } from "./metadata/sys-unseal";
+import { VaultStatusCommandMetadata } from "./metadata/sys-seal-status";
+import { VaultAuditHashCommandMetadata } from "./metadata/sys-audit-hash";
+import { VaultSealCommandMetadata } from "./metadata/sys-seal";
+import { VaultPoliciesCommandMetadata } from "./metadata/sys-policy";
 
-export const SYSTEM_BACKEND_COMMANDS: { [command: string]: VaultCommandMetadata } = {
-    status: {
-        method: 'GET',
-        path: '/sys/seal-status'
-    },
-    isInitialized: {
-        method: 'GET',
-        path: '/sys/init'
-    },
-    init: {
-        method: 'PUT',
-        path: '/sys/init'
-    },
-    unseal: {
-        method: 'PUT',
-        path: '/sys/unseal'
-    },
-    seal: {
-        method: 'PUT',
-        path: '/sys/seal'
-    },
-    mounts: {
-        method: 'GET',
-        path: '/sys/mounts'
-    },
-    mount: {
-        method: 'POST',
-        path: '/sys/mounts/:mount_point'
-    },
-    unmount: {
-        method: 'DELETE',
-        path: '/sys/mounts/:mount_point'
-    },
-    remount: {
-        method: 'POST',
-        path: '/sys/remount'
-    },
-    policies: {
-        method: 'GET',
-        path: '/sys/policy'
-    },
-    addPolicy: {
-        method: 'PUT',
-        path: '/sys/policy/:name'
-    },
-    removePolicy: {
-        method: 'DELETE',
-        path: '/sys/policy/:name'
-    },
-    auths: {
-        method: 'GET',
-        path: '/sys/auth'
-    },
-    enableAuth: {
-        method: 'POST',
-        path: '/sys/auth/:mount_point'
-    },
-    disableAuth: {
-        method: 'DELETE',
-        path: '/sys/auth/:mount_point'
-    },
-    audits: {
-        method: 'GET',
-        path: '/sys/audit'
-    },
-    enableAudit: {
-        method: 'PUT',
-        path: '/sys/audit/:name'
-    },
-    disableAudit: {
-        method: 'DELETE',
-        path: '/sys/audit/:name'
-    },
-    renew: {
-        method: 'PUT',
-        path: '/sys/renew/:lease_id'
-    },
-    revoke: {
-        method: 'PUT',
-        path: '/sys/revoke/:lease_id'
-    },
-    revokePrefix: {
-        method: 'PUT',
-        path: '/sys/revoke-prefix/:path_prefix'
-    }
+export const COMMANDS: { [command: string]: VaultCommandMetadata } = {
+    audits: VaultAuditsCommandMetadata,
+    auditHash: VaultAuditHashCommandMetadata,
+    delete: VaultDeleteSecretCommandMetadata,
+    disableAudit: VaultDisableAuditCommandMetadata,
+    enableAudit: VaultEnableAuditCommandMetadata,
+    isInitialized: VaultIsInitializedCommandMetadata,
+    init: VaultInitCommandMetadata,
+    policies: VaultPoliciesCommandMetadata,
+    read: VaultReadSecretCommandMetadata,
+    seal: VaultSealCommandMetadata,
+    status: VaultStatusCommandMetadata,
+    update: VaultUpdateSecretCommandMetadata,
+    unseal: VaultUnsealCommandMetadata,
+    write: VaultWriteSecretCommandMetadata
 }

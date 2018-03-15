@@ -1,0 +1,18 @@
+# dependencies
+/node_modules
+# IDE
+/.idea
+/.vscode
+# ts-node
+/ts-node-*
+# istanbul
+/.nyc_output
+/coverage
+# misc
+npm-debug.log
+src/
+test/
+.travis.yml
+docker-compose.yml
+gh-md-toc
+tsconfig.json

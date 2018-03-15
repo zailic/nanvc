@@ -1,3 +1,5 @@
+import { JsonSchema } from "tv4";
+
 export type VaultAllowedHttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export class PartialVaultResponse {
@@ -42,7 +44,15 @@ export class VaultResponse {
     }
 };
 
+
+export interface VaultCommandValidationSchema extends JsonSchema {
+    req?: JsonSchema; 
+    res?: JsonSchema;
+} 
+
 export interface VaultCommandMetadata {
-    method: VaultAllowedHttpMethod;
-    path: string;
+    readonly method: VaultAllowedHttpMethod;
+    readonly path: string;
+    schema?: VaultCommandValidationSchema,
+    acceptedCodes: Array<number>;
 }

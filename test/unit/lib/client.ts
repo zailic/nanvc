@@ -3,7 +3,7 @@ import * as chai from "chai";
 import * as sinonjs from "sinon";
 import * as request from "request-promise-native";
 import { VaultClient } from "./../../../src/lib/client";
-import { VaultResponse } from "../../../src/lib/metadata";
+import { VaultResponse } from "../../../src/lib/metadata/common";
 
 const expect = chai.expect;
 
@@ -17,12 +17,24 @@ class VaultClientTest {
         this.sandbox = sinonjs.sandbox.create();
         this.client = new VaultClient(
             "https://fake.cluster.address:8200",
-            "fake-token"
+            "fake-token",
+            "v1"
         );
     }
 
     after() {
         this.sandbox.restore();
+    }
+
+    @test("should fallback to default values")
+    shouldFallbackToDefaultValues() {
+        // Given
+        let client = new VaultClient;
+
+        // Then
+        expect(client.token).is.null;
+        expect(client.apiVersion).equals('v1');
+        expect(client.clusterAddress).equals('http://127.0.0.1:8200')
     }
 
     @test("baseUrl should contain api version")
@@ -73,11 +85,20 @@ class VaultClientTest {
     async apiRequestMethodShouldBeCalledWithinDynamicMethods() {
 
         // Given
-        let vaultResponse = new VaultResponse(200, { intialized: true });
+        let vaultResponse = new VaultResponse(
+            200, {
+            "file": {
+                "type": "file",
+                "description": "Store logs in a file",
+                "options": {
+                    "path": "/var/log/vault.log"
+                }
+            }
+        });
         let spiedApiRequestMethod = this.sandbox.stub(this.client, "apiRequest").resolves(vaultResponse);
 
         // When
-        let result = await this.client.isInitialized();
+        let result = await this.client.audits();
 
         // Then
         expect(result.succeded).to.be.true;
