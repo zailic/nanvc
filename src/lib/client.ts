@@ -12,6 +12,7 @@ import { VaultInitPayloadRequest } from "./metadata/sys-init";
 import { VaultUnsealPayloadRequest } from "./metadata/sys-unseal";
 import { VaultAuditHashPayloadRequest } from "./metadata/sys-audit-hash";
 import { VaultAuditPayloadRequest } from "./metadata/sys-audit";
+import { VaultMountsPayloadRequest } from "./metadata/sys-mounts";
 
 export class VaultClient {
 
@@ -25,19 +26,19 @@ export class VaultClient {
     public read: (path: string) => Promise<VaultResponse>;
     public isInitialized: () => Promise<VaultResponse>;
     public init: (payload: VaultInitPayloadRequest) => Promise<VaultResponse>;
+    public mount: (path: string, payload: VaultMountsPayloadRequest) => Promise<VaultResponse>;
+    public mounts: () => Promise<VaultResponse>;
     public policies: () => Promise<VaultResponse>;
     public removePolicy: () => Promise<VaultResponse>;
     public seal: () => Promise<VaultResponse>;
     public status: () => Promise<VaultResponse>;
+    public unmount: (path: string) => Promise<VaultResponse>;
     public unseal: (payload: VaultUnsealPayloadRequest) => Promise<VaultResponse>;
     public update: (path: string, payload: object) => Promise<VaultResponse>
     public write: (path: string, payload: object) => Promise<VaultResponse>;
 
     // not tested
 
-    // public mounts: () => Promise<VaultResponse>;
-    // public mount: () => Promise<VaultResponse>;
-    // public unmount: () => Promise<VaultResponse>;
     // public remount: () => Promise<VaultResponse>;
     // public auths: () => Promise<VaultResponse>;
     // public enableAuth: () => Promise<VaultResponse>;
@@ -129,7 +130,7 @@ export class VaultClient {
     ): void {
 
         let pathHasPlaceholder: boolean = false,
-            re = /^(\/?[a-z-]+(?:\/[a-z-]+)*)((?:\/):[a-z_]+)$/,
+            re = /^(\/?[a-z-]+(?:\/[a-z-]+)*)?((?:\/):[a-z_]+)$/,
             resolvedPath = path.replace(re, (m, $1, $2) => {
                 pathHasPlaceholder = true;
                 return [$1, extraArgs[0]].join("/").replace(/\/\//g, "/");

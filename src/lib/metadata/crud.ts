@@ -2,24 +2,24 @@ import { VaultCommandMetadata, VaultCommandValidationSchema } from "./common";
 
 export const VaultReadSecretCommandMetadata: VaultCommandMetadata = {
     method: 'GET',
-    path: '/secret/:path',
+    path: '/:path',
     acceptedCodes: [200]
 }
 
 export const VaultWriteSecretCommandMetadata: VaultCommandMetadata = {
     method: 'POST',
-    path: '/secret/:path',
+    path: '/:path',
     acceptedCodes: [204]
 }
 
 export const VaultUpdateSecretCommandMetadata: VaultCommandMetadata = {
     method: 'PUT',
-    path: '/secret/:path',
+    path: '/:path',
     acceptedCodes: [204]
 }
 
 export const VaultDeleteSecretCommandMetadata: VaultCommandMetadata = {
     method: 'DELETE',
-    path: '/secret/:path',
+    path: '/:path',
     acceptedCodes: [204]
 }

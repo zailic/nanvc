@@ -12,3 +12,11 @@ services:
       - IPC_LOCK
     ports:
       - "8200:8200"
+  
+  db:
+    container_name: postgresql.server
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: integration
+      POSTGRES_USER: nanvc

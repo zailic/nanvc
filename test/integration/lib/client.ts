@@ -17,7 +17,6 @@ class VaultClientIntegrationTest {
         let args = [null, "http://vault.local:8200"];
         if (VaultClientIntegrationTest.rootToken) {
             args.push(VaultClientIntegrationTest.rootToken);
-            console.log(VaultClientIntegrationTest.rootToken);
         }
         this.client = new (Function.prototype.bind.apply(VaultClient, args));
     }
@@ -119,7 +118,7 @@ class VaultClientIntegrationTest {
     @test("should write a secret")
     async shouldWriteSecret() {
         // Given
-        let path = 'integration-tests/my-secret',
+        let path = '/secret/integration-tests/my-secret',
             secret = { "foo": "bar" };
         // When
         let expectedResult = await this.client.write(path, secret);
@@ -132,7 +131,7 @@ class VaultClientIntegrationTest {
     @test("should update a secret")
     async shouldUpdateSecret() {
         // Given
-        let path = 'integration-tests/my-secret',
+        let path = '/secret/integration-tests/my-secret',
             secret = { "foo": "bar-updated" };
 
         // When
@@ -146,7 +145,7 @@ class VaultClientIntegrationTest {
     @test("should read a secret")
     async shouldReadSecret() {
         // Given
-        let path = 'integration-tests/my-secret';
+        let path = '/secret/integration-tests/my-secret';
         // When
         let expectedResult = await this.client.read(path);
 
@@ -159,7 +158,7 @@ class VaultClientIntegrationTest {
     @test("should delete a secret")
     async shouldDeleteSecret() {
         // Given
-        let path = 'integration-tests/my-secret';
+        let path = '/secret/integration-tests/my-secret';
 
         // When
         let expectedResult = await this.client.delete(path);
@@ -257,5 +256,49 @@ class VaultClientIntegrationTest {
         expect(expectedResult.succeded).to.be.true;
         expect(expectedResult.httpStatusCode).equals(200);
         expect(expectedResult.apiResponse.keys).to.be.an('array').that.is.not.empty;
+    }
+
+    @test("should validate dynamic credentials flow")
+    async checkDynamicCredentialsSupport() {
+        // Given
+        let payload = {
+            type: 'database',
+            plugin_name: 'postgresql-database-plugin'
+        };
+        let pgSetupPayload = {
+            plugin_name: 'postgresql-database-plugin',
+            connection_url: 'postgresql://nanvc:integration@db:5432/postgres?sslmode=disable',
+            allowed_roles: 'readonly'
+        };
+        let readonlyRolePayload = {
+            db_name: "postgresql",
+            creation_statements: `
+                CREATE ROLE "{{name}}" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';
+                GRANT SELECT ON ALL TABLES IN SCHEMA public TO "{{name}}";
+            `
+        };
+        
+        // Then
+        let mountResult = await this.client.mount('database', payload);
+        let writePgConnSetupResult = await this.client.write('database/config/postgresql', pgSetupPayload);
+        let writePgReadonlyRoleResult = await this.client.write('database/roles/readonly', readonlyRolePayload);
+        let credsReadonlyResult = await this.client.read('database/creds/readonly');
+        let mountsResult = await this.client.mounts();
+        let unmountResult = await this.client.unmount('database');
+        let mountsAfterDbUnmountResult = await this.client.mounts();
+
+        // When
+        expect(mountResult.httpStatusCode).equals(204);
+        expect(writePgConnSetupResult.httpStatusCode).equals(200);
+        expect(writePgReadonlyRoleResult.httpStatusCode).equals(204);
+        expect(credsReadonlyResult.apiResponse.data.username).is.not.empty;
+        expect(credsReadonlyResult.apiResponse.data.password).is.not.empty;
+        expect(mountsResult.httpStatusCode).equals(200);
+        expect(mountsResult.apiResponse.data).to.have.ownProperty('database/');
+        expect(mountsResult.apiResponse.data).to.have.ownProperty('secret/');
+        expect(mountsResult.apiResponse.data).to.have.ownProperty('sys/');
+        expect(unmountResult.httpStatusCode).equals(204);
+        expect(mountsAfterDbUnmountResult.apiResponse.data).not.ownProperty('database/');
+
     }
 }

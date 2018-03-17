@@ -104,4 +104,21 @@ class VaultClientTest {
         expect(result.succeded).to.be.true;
         expect(spiedApiRequestMethod.called).to.be.true;
     }
+
+    @test("Should take vault settings from environment")
+    async shouldTakeVaultSettingsFromEnvVars(){
+        // Given
+        this.sandbox.stub(process, 'env').value({
+            'NANVC_VAULT_CLUSTER_ADDRESS': 'http://vault.local:1234',
+            'NANVC_VAULT_AUTH_TOKEN': 'myt0k3n',
+            'NANVC_VAULT_API_VERSION': 'v2'
+        });
+        // When
+        let vault = new VaultClient;
+
+        // Then
+        expect(vault.apiVersion).equals('v2');
+        expect(vault.token).equals('myt0k3n');
+        expect(vault.clusterAddress).equals('http://vault.local:1234');
+    }
 }

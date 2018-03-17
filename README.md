@@ -47,27 +47,27 @@ try {
                         function (result) {
                             if (result.succeded) {
                                 // write a secret
-                                vault.write('my-app/my-secret', { 'foo': 'my-password' }).then(
+                                vault.write('/secret/my-app/my-secret', { 'foo': 'my-password' }).then(
                                     function (writeSecretResponse) {
                                         console.log(writeSecretResponse);
                                         /*process the response here*/
                                     });
                                 // update a secret
-                                vault.update('my-app/my-secret', { 'foo': 'my-password-updated' }).then(
+                                vault.update('/secret/my-app/my-secret', { 'foo': 'my-password-updated' }).then(
                                     function (updateSecretResponse) {
                                         console.log(updateSecretResponse);
                                         /*process the response here*/
                                     });
                                 // read a secret
                                 var mySecret = null;
-                                vault.read('my-app/my-secret').then(
+                                vault.read('/secret/my-app/my-secret').then(
                                     function (mySecretQueryResponse) {
                                         console.log(mySecretQueryResponse);
                                         mySecret = mySecretQueryResponse.succceded && mySecretQueryResponse.apiResponse.data.foo;
                                     })
                                 // delete a secret
                                 var mySecretIsDeleted = null;
-                                vault.delete('my-app/my-secret').then(
+                                vault.delete('/secret/my-app/my-secret').then(
                                     function (mySecretDeleteQueryResponse) {
                                         console.log(mySecretDeleteQueryResponse);
                                         mySecretIsDeleted = mySecretDeleteQueryResponse.succeded;
@@ -111,17 +111,17 @@ async function main() {
             throw new Error(initResponse.errorMessage);
         }
         // write a secret
-        let writeSecretResponse = await vault.write('my-app/my-secret', { 'foo': 'my-password' });
+        let writeSecretResponse = await vault.write('/secret/my-app/my-secret', { 'foo': 'my-password' });
         console.log(writeSecretResponse);
         // update a secret
-        let updateSecretResponse = await vault.update('my-app/my-secret', { 'foo': 'my-updated-password' });
+        let updateSecretResponse = await vault.update('/secret/my-app/my-secret', { 'foo': 'my-updated-password' });
         console.log(updateSecretResponse);
         // read a secret
-        let mySecretQueryResponse = await vault.read('my-app/my-secret');
+        let mySecretQueryResponse = await vault.read('/secret/my-app/my-secret');
         let mySecret = mySecretQueryResponse.succeded && mySecretQueryResponse.apiResponse.data.foo;
         console.log(mySecretQueryResponse);
         // delete a secret
-        let mySecretDeleteQueryResponse = await vault.delete('my-app/my-secret');
+        let mySecretDeleteQueryResponse = await vault.delete('/secret/my-app/my-secret');
         let mySecretIsDeleted = mySecretDeleteQueryResponse.succeded;
         console.log(mySecretDeleteQueryResponse);
     } catch (e) {
@@ -137,14 +137,14 @@ main().then().catch(console.error);
 
 Vault Rest API Call | Http Method | Client Library Method | Tested
 --------------------|-------------|-----------------------|-------
-/secret/:path|GET|VaultClient.read(secretPath: string)| Yes
-/secret/:path|POST|VaultClient.write(secretPath: string, secretData: object)| Yes
-/secret/:path|PUT|VaultClient.update(secretPath: string, secretData: object)| Yes
-/secret/:path|DELETE|VaultClient.delete(secretPath: string)| Yes
-/sys/audit|GET|VaultClient.audits()|No
-/sys/audit/:name|PUT|VaultClient.enableAudit(auditName: string)|No
-/sys/audit/:name|DELETE|VaultClient.disableAudit(auditName: string)|No
-/sys/audit-hash/:path|POST|N/A|N/A
+/:path|GET|VaultClient.read(secretPath: string)| Yes
+/:path|POST|VaultClient.write(secretPath: string, secretData: object)| Yes
+/:path|PUT|VaultClient.update(secretPath: string, secretData: object)| Yes
+/:path|DELETE|VaultClient.delete(secretPath: string)| Yes
+/sys/audit|GET|VaultClient.audits()|Yes
+/sys/audit/:name|PUT|VaultClient.enableAudit(auditName: string)|Yes
+/sys/audit/:name|DELETE|VaultClient.disableAudit(auditName: string)|Yes
+/sys/audit-hash/:path|POST|VaultClient.auditHash(path: string, payload: object)|Yes
 /sys/auth|GET|N/A|No
 /sys/auth|POST|N/A|No
 /sys/auth|DELETE|N/A|No
@@ -159,16 +159,16 @@ Vault Rest API Call | Http Method | Client Library Method | Tested
 /sys/health|HEAD|N/A|N/A
 /sys/health|GET|N/A|N/A
 /sys/init|GET|VaultClient.isInitialized()|YES
-/sys/init|PUT|VaultClient.init(initData: object)|YES
+/sys/init|PUT|VaultClient.init(initData: object)|Yes
 /sys/key-status|GET|N/A|N/A
 /sys/leader|GET|N/A|N/A
 /sys/leases|PUT|N/A|N/A
 /sys/leases|LIST|N/A|N/A
 /sys/license|GET|N/A|N/A
 /sys/mfa|N/A|N/A|N/A
-/sys/mounts|N/A|No
-/sys/mounts/:mount_point|POST|N/A|No
-/sys/mounts/:mount_point|DELETE|N/A|No
+/sys/mounts|GET|VaultClient.mounts()|Yes
+/sys/mounts/:mount_point|POST|VaultClient.mount(path: string, mountOptions: object)|Yes
+/sys/mounts/:mount_point|DELETE|VaultClient.unmount(path: string)|Yes
 /sys/mounts/:mount_point/tune|POST|N/A|N/A
 /sys/plugins/reload/backend|PUT|N/A|N/A
 /sys/plugins/catalog|LIST|N/A|N/A

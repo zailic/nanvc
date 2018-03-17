@@ -9,7 +9,7 @@ import {
     VaultDeleteSecretCommandMetadata,
     VaultWriteSecretCommandMetadata,
     VaultUpdateSecretCommandMetadata
-} from "./metadata/secrets";
+} from "./metadata/crud";
 import { 
     VaultIsInitializedCommandMetadata, 
     VaultInitCommandMetadata 
@@ -19,6 +19,11 @@ import { VaultStatusCommandMetadata } from "./metadata/sys-seal-status";
 import { VaultAuditHashCommandMetadata } from "./metadata/sys-audit-hash";
 import { VaultSealCommandMetadata } from "./metadata/sys-seal";
 import { VaultPoliciesCommandMetadata } from "./metadata/sys-policy";
+import { 
+    VaultMountCommandMetadata, 
+    VaultMountsCommandMetadata, 
+    VaultUnmountCommandMetadata 
+} from "./metadata/sys-mounts";
 
 export const COMMANDS: { [command: string]: VaultCommandMetadata } = {
     audits: VaultAuditsCommandMetadata,
@@ -28,10 +33,13 @@ export const COMMANDS: { [command: string]: VaultCommandMetadata } = {
     enableAudit: VaultEnableAuditCommandMetadata,
     isInitialized: VaultIsInitializedCommandMetadata,
     init: VaultInitCommandMetadata,
+    mount: VaultMountCommandMetadata,
+    mounts: VaultMountsCommandMetadata,
     policies: VaultPoliciesCommandMetadata,
     read: VaultReadSecretCommandMetadata,
     seal: VaultSealCommandMetadata,
     status: VaultStatusCommandMetadata,
+    unmount: VaultUnmountCommandMetadata,
     update: VaultUpdateSecretCommandMetadata,
     unseal: VaultUnsealCommandMetadata,
     write: VaultWriteSecretCommandMetadata
