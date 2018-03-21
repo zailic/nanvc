@@ -1,25 +1,24 @@
-import { JsonSchema } from "tv4";
+import { JsonSchema } from 'tv4';
 
-export type VaultAllowedHttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+export type VaultAllowedHttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'LIST';
 
 export class PartialVaultResponse {
-    _httpStatusCode?: number;
-    _apiResponse?: { [x: string]: any };
-    _errorMessage?: string;
+    public _httpStatusCode?: number;
+    public _apiResponse?: { [x: string]: any };
+    public _errorMessage?: string;
 }
-
 
 export class VaultResponse {
     private _succeeded: boolean;
     constructor(
         private _httpStatusCode: number,
         private _apiResponse?: { [x: string]: any },
-        private _errorMessage?: string
+        private _errorMessage?: string,
     ) {
-        this._succeeded = _httpStatusCode == 200 || _httpStatusCode == 204 ? true : false
+        this._succeeded = _httpStatusCode === 200 || _httpStatusCode === 204 ? true : false;
     }
 
-    get succeded() {
+    get succeeded() {
         return this._succeeded;
     }
 
@@ -34,25 +33,24 @@ export class VaultResponse {
     get errorMessage() {
         return this._errorMessage;
     }
-    
-    static newInstanceFromPartial(partial: PartialVaultResponse): VaultResponse {
+
+    public static newInstanceFromPartial(partial: PartialVaultResponse): VaultResponse {
         return new VaultResponse(
             partial._httpStatusCode,
             partial._apiResponse,
-            partial._errorMessage
+            partial._errorMessage,
         );
     }
-};
-
+}
 
 export interface VaultCommandValidationSchema extends JsonSchema {
-    req?: JsonSchema; 
+    req?: JsonSchema;
     res?: JsonSchema;
-} 
+}
 
 export interface VaultCommandMetadata {
     readonly method: VaultAllowedHttpMethod;
     readonly path: string;
-    schema?: VaultCommandValidationSchema,
+    schema?: VaultCommandValidationSchema;
     acceptedCodes: Array<number>;
 }

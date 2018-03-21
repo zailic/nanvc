@@ -1,7 +1,7 @@
 {
     "name": "nanvc",
     "description": "Not Another Node Vault Client :)",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "author": {
         "name": "Ionut Zailic",
         "email": "ionut@zailic.com"
@@ -32,7 +32,8 @@
         "test:all": "mocha -r ts-node/register test/unit/**/*.ts test/integration/**/*.ts",
         "coverage": "nyc npm run test:all",
         "build": "rimraf ./dist/* && tsc",
-        "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
+        "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
+        "tslint": "tslint -c ./tslint.json './src/**/*.ts'"
     },
     "nyc": {
         "include": [

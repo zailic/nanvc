@@ -1,2 +1,2 @@
-import { VaultClient } from "./lib/client";
+import { VaultClient } from './lib/client';
 export = VaultClient;

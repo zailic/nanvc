@@ -141,13 +141,14 @@ Vault Rest API Call | Http Method | Client Library Method | Tested
 /:path|POST|VaultClient.write(secretPath: string, secretData: object)| Yes
 /:path|PUT|VaultClient.update(secretPath: string, secretData: object)| Yes
 /:path|DELETE|VaultClient.delete(secretPath: string)| Yes
+/:path|LIST|VaultClient.list(path: string)| Yes
 /sys/audit|GET|VaultClient.audits()|Yes
 /sys/audit/:name|PUT|VaultClient.enableAudit(auditName: string)|Yes
 /sys/audit/:name|DELETE|VaultClient.disableAudit(auditName: string)|Yes
 /sys/audit-hash/:path|POST|VaultClient.auditHash(path: string, payload: object)|Yes
-/sys/auth|GET|N/A|No
-/sys/auth|POST|N/A|No
-/sys/auth|DELETE|N/A|No
+/sys/auth|GET|VaultClient.auths()|Yes
+/sys/auth|POST|VaultClient.enableAuth(path: string, payload: object)| Yes
+/sys/auth|DELETE|VaultClient.disableAuth(path: string)| Yes
 /sys/capabilities|POST|N/A|N/A
 /sys/capabilities-accessor|POST|N/A|N/A
 /sys/capabilities-self|POST|N/A|N/A
@@ -158,7 +159,7 @@ Vault Rest API Call | Http Method | Client Library Method | Tested
 /sys/generate-root|GET|N/A|N/A
 /sys/health|HEAD|N/A|N/A
 /sys/health|GET|N/A|N/A
-/sys/init|GET|VaultClient.isInitialized()|YES
+/sys/init|GET|VaultClient.isInitialized()|Yes
 /sys/init|PUT|VaultClient.init(initData: object)|Yes
 /sys/key-status|GET|N/A|N/A
 /sys/leader|GET|N/A|N/A
@@ -182,14 +183,14 @@ Vault Rest API Call | Http Method | Client Library Method | Tested
 /sys/raw|N/A|N/A|N/A
 /sys/rekey|N/A|N/A|N/A
 /sys/rekey-recovery-key|N/A|N/A|N/A
-/sys/remount|POST|VaultClient.remount(remountData: object)|No
+/sys/remount|POST|VaultClient.remount(remountData: object)|Yes
 /sys/replication|N/A|N/A|N/A
 /sys/rotate|N/A|N/A|N/A
-/sys/seal|PUT|VaultClient.seal()|No
+/sys/seal|PUT|VaultClient.seal()|Yes
 /sys/seal-status|GET|VaultClient.status()|Yes
 /sys/step-down|N/A|N/A|N/A
 /sys/tools|N/A|N/A|N/A
-/sys/unseal|PUT|VaultClient.unseal(unsealData: object)|No
+/sys/unseal|PUT|VaultClient.unseal(unsealData: object)|Yes
 /sys/wrapping/lookup|N/A|N/A|N/A
 /sys/wrapping/rewrap|N/A|N/A|N/A
 /sys/wrapping/unwrap|N/A|N/A|N/A

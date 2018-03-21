@@ -1,5 +1,4 @@
-import { VaultCommandMetadata, VaultCommandValidationSchema } from "./common";
-
+import { VaultCommandMetadata, VaultCommandValidationSchema } from './common';
 
 export interface VaultAuditPayloadRequest {
     description?: string;
@@ -12,37 +11,37 @@ export const VaultAuditJsonSchema: VaultCommandValidationSchema =  {
     req: {
         properties: {
             description: {
-                type: 'string'
+                type: 'string',
             },
             options: {
-                type: 'object'
+                type: 'object',
             },
             type: {
-                type: 'string'
+                type: 'string',
             },
             local: {
-                type: 'boolean'
-            }
+                type: 'boolean',
+            },
         },
-        required: ['type']
-    }
-}
+        required: ['type'],
+    },
+};
 
 export const VaultAuditsCommandMetadata: VaultCommandMetadata = {
     method: 'GET',
     path: '/sys/audit',
-    acceptedCodes: [200]
-}
+    acceptedCodes: [200],
+};
 
 export const VaultEnableAuditCommandMetadata: VaultCommandMetadata = {
     method: 'PUT',
     path: '/sys/audit/:path',
     schema: VaultAuditJsonSchema,
-    acceptedCodes: [204]
-}
+    acceptedCodes: [204],
+};
 
 export const VaultDisableAuditCommandMetadata: VaultCommandMetadata = {
     method: 'DELETE',
     path: '/sys/audit/:path',
-    acceptedCodes: [204]
-}
+    acceptedCodes: [204],
+};

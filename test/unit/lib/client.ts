@@ -1,120 +1,119 @@
-import { suite, test } from "mocha-typescript";
-import * as chai from "chai";
-import * as sinonjs from "sinon";
-import * as request from "request-promise-native";
-import { VaultClient } from "./../../../src/lib/client";
-import { VaultResponse } from "../../../src/lib/metadata/common";
+import { suite, test } from 'mocha-typescript';
+import * as chai from 'chai';
+import * as sinonjs from 'sinon';
+import * as request from 'request-promise-native';
+import { VaultClient } from './../../../src/lib/client';
+import { VaultResponse } from '../../../src/lib/metadata/common';
 
 const expect = chai.expect;
 
-@suite("VaultClient unit test cases.")
+@suite('VaultClient unit test cases.')
 class VaultClientTest {
 
     private sandbox: sinon.SinonSandbox;
     private client: VaultClient;
 
-    before() {
+    public before() {
         this.sandbox = sinonjs.sandbox.create();
         this.client = new VaultClient(
-            "https://fake.cluster.address:8200",
-            "fake-token",
-            "v1"
+            'https://fake.cluster.address:8200',
+            'fake-token',
+            'v1',
         );
     }
 
-    after() {
+    public after() {
         this.sandbox.restore();
     }
 
-    @test("should fallback to default values")
-    shouldFallbackToDefaultValues() {
+    @test('should fallback to default values')
+    public shouldFallbackToDefaultValues() {
         // Given
-        let client = new VaultClient;
+        const client = new VaultClient();
 
         // Then
         expect(client.token).is.null;
         expect(client.apiVersion).equals('v1');
-        expect(client.clusterAddress).equals('http://127.0.0.1:8200')
+        expect(client.clusterAddress).equals('http://127.0.0.1:8200');
     }
 
-    @test("baseUrl should contain api version")
-    baseUrlShouldContainApiVersion() {
+    @test('baseUrl should contain api version')
+    public baseUrlShouldContainApiVersion() {
         // Given
 
         // When
-        let baseUrl = this.client.getBaseUrl();
+        const baseUrl = this.client.getBaseUrl();
 
         // Then
-        expect(baseUrl).to.equal("https://fake.cluster.address:8200/v1");
+        expect(baseUrl).to.equal('https://fake.cluster.address:8200/v1');
     }
 
-    @test("request sanitizer should handle path placeholders")
-    requestSanitizerShouldHandlePathPlaceholders() {
+    @test('request sanitizer should handle path placeholders')
+    public requestSanitizerShouldHandlePathPlaceholders() {
         // Given
-        let spiedApiRequestMethod = this.sandbox.stub(this.client, "apiRequest").resolves(null),
+        const spiedApiRequestMethod = this.sandbox.stub(this.client, 'apiRequest').resolves(null),
+            mountPoint = 'my-mount',
+            mountPointPayload = {
+                type: 'aws',
+                config: {
+                    force_no_cache: true,
+                },
+            },
+            mountPointApiUriTemplate = '/sys/mounts/:mount_point',
             reqInitialData: request.OptionsWithUrl = {
                 url: 'https://fake.cluster.address:8200',
                 headers: {
-                    "X-Vault-Token": 'fake-token'
+                    'X-Vault-Token': 'fake-token',
                 },
-                resolveWithFullResponse: true
-            },
-            mountPoint = 'my-mount',
-            mountPointPayload = {
-                "type": "aws",
-                "config": {
-                    "force_no_cache": true
-                }
-            },
-            mountPointApiUriTemplate = "/sys/mounts/:mount_point";
-
+                resolveWithFullResponse: true,
+            };
         // When
         this.client.sanitizeRequest(
             reqInitialData,
             'POST',
             mountPointApiUriTemplate,
-            [mountPoint, mountPointPayload]
+            [mountPoint, mountPointPayload],
         );
 
         // Then
-        expect(reqInitialData.url).equals("https://fake.cluster.address:8200/v1/sys/mounts/my-mount");
+        expect(reqInitialData.url).equals('https://fake.cluster.address:8200/v1/sys/mounts/my-mount');
         expect(reqInitialData.body.type).equals(mountPointPayload.type);
     }
 
-    @test("apiRequest method should be called within dynamic methods")
-    async apiRequestMethodShouldBeCalledWithinDynamicMethods() {
+    @test('apiRequest method should be called within dynamic methods')
+    public async apiRequestMethodShouldBeCalledWithinDynamicMethods() {
 
         // Given
-        let vaultResponse = new VaultResponse(
+        const vaultResponse = new VaultResponse(
             200, {
-            "file": {
-                "type": "file",
-                "description": "Store logs in a file",
-                "options": {
-                    "path": "/var/log/vault.log"
-                }
-            }
-        });
-        let spiedApiRequestMethod = this.sandbox.stub(this.client, "apiRequest").resolves(vaultResponse);
+                file: {
+                    type: 'file',
+                    description: 'Store logs in a file',
+                    options: {
+                        path: '/var/log/vault.log',
+                    },
+                },
+            });
+        const spiedApiRequestMethod = this.sandbox.stub(this.client, 'apiRequest').resolves(vaultResponse);
 
         // When
-        let result = await this.client.audits();
+        const result = await this.client.audits();
 
         // Then
-        expect(result.succeded).to.be.true;
+        expect(result.succeeded).to.be.true;
         expect(spiedApiRequestMethod.called).to.be.true;
     }
 
-    @test("Should take vault settings from environment")
-    async shouldTakeVaultSettingsFromEnvVars(){
+    @test('Should take vault settings from environment')
+    public async shouldTakeVaultSettingsFromEnvVars() {
         // Given
         this.sandbox.stub(process, 'env').value({
-            'NANVC_VAULT_CLUSTER_ADDRESS': 'http://vault.local:1234',
-            'NANVC_VAULT_AUTH_TOKEN': 'myt0k3n',
-            'NANVC_VAULT_API_VERSION': 'v2'
+            NANVC_VAULT_CLUSTER_ADDRESS: 'http://vault.local:1234',
+            NANVC_VAULT_AUTH_TOKEN: 'myt0k3n',
+            NANVC_VAULT_API_VERSION: 'v2',
         });
         // When
-        let vault = new VaultClient;
+        const vault = new VaultClient();
 
         // Then
         expect(vault.apiVersion).equals('v2');

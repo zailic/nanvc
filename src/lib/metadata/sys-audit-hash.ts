@@ -1,4 +1,4 @@
-import { VaultCommandMetadata, VaultCommandValidationSchema } from "./common";
+import { VaultCommandMetadata, VaultCommandValidationSchema } from './common';
 
 export interface VaultAuditHashPayloadRequest {
     input: string;
@@ -7,15 +7,15 @@ export interface VaultAuditHashPayloadRequest {
 export const VaultAuditHashJsonSchema: VaultCommandValidationSchema = {
     req: {
         properties: {
-            'input': { 'type': 'string' },
+            input: { type: 'string' },
         },
-        required: ['input']
-    }
-}
+        required: ['input'],
+    },
+};
 
 export const VaultAuditHashCommandMetadata: VaultCommandMetadata = {
     method: 'POST',
     path: '/sys/audit-hash/:path',
     schema: VaultAuditHashJsonSchema,
-    acceptedCodes: [200]
-}
+    acceptedCodes: [200],
+};

@@ -1,11 +1,10 @@
-import { VaultCommandMetadata, VaultCommandValidationSchema } from "./common";
-
+import { VaultCommandMetadata, VaultCommandValidationSchema } from './common';
 
 export interface VaultMountsPayloadRequest {
     type: string;
     description?: string;
     options?: VaultMountTypeConfig;
-    plungin_name?: string; 
+    plungin_name?: string;
     local?: boolean;
     seal_wrap?: boolean;
 }
@@ -21,37 +20,37 @@ export const VaultMountsJsonSchema: VaultCommandValidationSchema =  {
     req: {
         properties: {
             description: {
-                type: 'string'
+                type: 'string',
             },
             options: {
-                type: 'object'
+                type: 'object',
             },
             type: {
-                type: 'string'
+                type: 'string',
             },
             local: {
-                type: 'boolean'
-            }
+                type: 'boolean',
+            },
         },
-        required: ['type']
-    }
-}
+        required: ['type'],
+    },
+};
 
 export const VaultMountsCommandMetadata: VaultCommandMetadata = {
     method: 'GET',
     path: '/sys/mounts',
-    acceptedCodes: [200]
-}
+    acceptedCodes: [200],
+};
 
 export const VaultMountCommandMetadata: VaultCommandMetadata = {
     method: 'POST',
     path: '/sys/mounts/:path',
     schema: VaultMountsJsonSchema,
-    acceptedCodes: [204, 200]
-}
+    acceptedCodes: [204, 200],
+};
 
 export const VaultUnmountCommandMetadata: VaultCommandMetadata = {
     method: 'DELETE',
     path: '/sys/mounts/:path',
-    acceptedCodes: [204]
-}
+    acceptedCodes: [204],
+};
