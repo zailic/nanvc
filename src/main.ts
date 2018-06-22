@@ -1,2 +1,3 @@
 import { VaultClient } from './lib/client';
-export default VaultClient;
+module.exports = VaultClient;
+module.exports.default = VaultClient;
