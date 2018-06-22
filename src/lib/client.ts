@@ -1,5 +1,5 @@
 import * as tv4 from 'tv4';
-import * as request from 'request-promise-native';
+import request from 'request-promise-native';
 
 import { COMMANDS } from './constants';
 import {
