@@ -79,10 +79,7 @@ export class VaultClient {
         this._authToken = token;
     }
 
-    public async apiRequest(
-        commandMetadata: VaultCommandMetadata,
-        ...restOfArgs: any[],
-    ): Promise<VaultResponse> {
+    public async apiRequest( commandMetadata: VaultCommandMetadata, ...restOfArgs: any[]): Promise<VaultResponse> {
 
         // tslint:disable-next-line:prefer-const
         let requestData: Partial<request.OptionsWithUrl> = {},
