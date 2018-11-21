@@ -2,8 +2,7 @@
 [![Build Status](https://travis-ci.org/zailic/nanvc.svg?branch=master)](https://travis-ci.org/zailic/nanvc)
 [![Coverage Status](https://coveralls.io/repos/github/zailic/nanvc/badge.svg?branch=master)](https://coveralls.io/github/zailic/nanvc?branch=master)
 
-This is a [Vault](https://www.vaultproject.io/) client written in typescript, heavily inspired from much more mature
-project: [node-vault](https://github.com/kr1sp1n/node-vault)
+This is a [Vault](https://www.vaultproject.io/) client written in typescript.
 
 # Table of contents
 * [Install](#install)
