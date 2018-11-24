@@ -25,69 +25,58 @@ The VaultClient constructor takes three optional arguments:
 - vault api version - if not passed in, defaults to NANVC_VAULT_API_VERSION environment variable, otherwise is set internaly to 'v1'
 
 ### ES5
-The "callback hell" sample above is purely demonstrative:
 
 ```javascript
 var VaultClient = require('nanvc');
 var vault = new VaultClient('http://vault.local:8200');
-try {
-    vault.init({ secret_shares: 1, secret_threshold: 1 })
-        .then(
-            function (result) {
-                console.log(result);
-                if (!result.succeeded) {
-                   throw new Error(result.errorMessage);
-                }
-                var keys = result.apiResponse.keys;
-                vault.token = result.apiResponse.root_token;
-                vault.unseal({
-                    secret_shares: 1,
-                    key: keys[0]
-                })
-                    .then(
-                        function (result) {
-                            if (result.succeeded) {
-                                // write a secret
-                                vault.write('/secret/my-app/my-secret', { 'foo': 'my-password' }).then(
-                                    function (writeSecretResponse) {
-                                        console.log("Writing a secret");
-                                        console.log(writeSecretResponse);
-                                        // update a secret
-                                        vault.update('/secret/my-app/my-secret', { 'foo': 'my-password-updated' }).then(
-                                            function (updateSecretResponse) {
-                                                console.log("Updating a secret");
-                                                console.log(updateSecretResponse);
-                                                // read a secret
-                                                var mySecret = null;
-                                                vault.read('/secret/my-app/my-secret').then(
-                                                    function (mySecretQueryResponse) {
-                                                        console.log("Reading a secret");
-                                                        console.log(mySecretQueryResponse);
-                                                        mySecret = mySecretQueryResponse.succeeded && 
-                                                            mySecretQueryResponse.apiResponse.data.foo;
-                                                        // delete a secret
-                                                        var mySecretIsDeleted = null;
-                                                        vault.delete('/secret/my-app/my-secret').then(
-                                                            function (mySecretDeleteQueryResponse) {
-                                                                console.log("Deleting a secret");
-                                                                console.log(mySecretDeleteQueryResponse);
-                                                                mySecretIsDeleted = mySecretDeleteQueryResponse.succeeded;
-                                                                //...
-                                                            });
-                                                    })
-                                            });
-                                    });
-                            } else {
-                                throw new Error(result.errorMessage);
-                            }
-                        }
-                    )
+vault.init({ 
+        secret_shares: 1, 
+        secret_threshold: 1 
+    })
+    .then(function (result) { // unseal vault
+        console.log("Unsealing vault");
+        console.log(result);
+        if (!result.succeeded) {
+            throw new Error(result.errorMessage);
+        }
+        var keys = result.apiResponse.keys;
+        vault.token = result.apiResponse.root_token;
+        return vault.unseal({
+            secret_shares: 1,
+            key: keys[0]
+        });
+    })
+    .then(function (response) { // write a secret
+        console.log("Writing a secret");
+        return vault.write(
+            '/secret/my-app/my-secret', { 
+                'foo': 'my-password' 
             }
-        ).catch(console.error);
-
-} catch (e) {
-    console.error(e);
-}
+        )
+    })
+    .then(function(response) { // update a secret
+        console.log(response);
+        console.log("Updating secret");
+        return vault.update(
+            '/secret/my-app/my-secret', { 
+                'foo': 'my-updated-password' 
+            }
+        );  
+    })
+    .then(function(response){ // read a secret
+        console.log(response);
+        console.log("Reading a secret");
+        return vault.read('/secret/my-app/my-secret');
+    })
+    .then(function(response){ // delete a secret
+        console.log(response);
+        console.log("Deleting a secret");
+        return vault.delete('/secret/my-app/my-secret');
+    })
+    .then(function(response){ // handle delete response 
+        console.log(response);
+    })
+    .catch(console.error);
 ```
 ### ES6
 ```javascript
