@@ -1,6 +1,6 @@
 import { suite, test } from 'mocha-typescript';
 import * as chai from 'chai';
-import * as sinonjs from 'sinon';
+import { SinonSandbox, createSandbox } from 'sinon';
 import * as request from 'request-promise-native';
 import { VaultClient } from './../../../src/lib/client';
 import { VaultResponse } from '../../../src/lib/metadata/common';
@@ -10,11 +10,11 @@ const expect = chai.expect;
 @suite('VaultClient unit test cases.')
 class VaultClientTest {
 
-    private sandbox: sinon.SinonSandbox;
+    private sandbox: SinonSandbox;
     private client: VaultClient;
 
     public before() {
-        this.sandbox = sinonjs.sandbox.create();
+        this.sandbox = createSandbox();
         this.client = new VaultClient(
             'https://fake.cluster.address:8200',
             'fake-token',

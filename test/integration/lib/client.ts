@@ -123,6 +123,8 @@ class VaultClientIntegrationTest {
         const path = '/secret/integration-tests/my-secret',
             secret = { foo: 'bar' };
         // When
+        // ensures the secret path is mounted
+        await this.client.mount('secret', { type: 'kv' });
         const expectedResult = await this.client.write(path, secret);
 
         // Then
