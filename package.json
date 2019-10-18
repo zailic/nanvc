@@ -75,7 +75,7 @@
         "@types/sinon": "7.0.13",
         "chai": "4.2.0",
         "coveralls": "3.0.6",
-        "mocha": "6.2.0",
+        "mocha": "6.2.2",
         "mocha-typescript": "1.1.17",
         "nyc": "14.1.1",
         "rimraf": "3.0.0",
