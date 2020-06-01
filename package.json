@@ -77,7 +77,7 @@
         "coveralls": "3.1.0",
         "mocha": "7.2.0",
         "mocha-typescript": "1.1.17",
-        "nyc": "15.0.1",
+        "nyc": "15.1.0",
         "rimraf": "3.0.2",
         "sinon": "9.0.2",
         "ts-node": "8.10.1",
