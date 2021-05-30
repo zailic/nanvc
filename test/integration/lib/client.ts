@@ -1,6 +1,5 @@
-import { suite, test, skipOnError, timeout } from 'mocha-typescript';
+import { suite, test } from '@testdeck/mocha';
 import * as chai from 'chai';
-import * as request from 'request-promise-native';
 import { VaultClient } from './../../../src/lib/client';
 import { VaultResponse } from '../../../src/lib/metadata/common';
 import { VaultRemountPayloadRequest } from '../../../src/lib/metadata/sys-remount';

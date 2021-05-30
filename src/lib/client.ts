@@ -1,5 +1,4 @@
 import * as tv4 from 'tv4';
-import request from 'request-promise-native';
 
 import { COMMANDS } from './constants';
 import {
@@ -15,6 +14,12 @@ import { VaultAuditPayloadRequest } from './metadata/sys-audit';
 import { VaultMountsPayloadRequest } from './metadata/sys-mounts';
 import { VaultRemountPayloadRequest } from './metadata/sys-remount';
 import { VaultAuthPayloadRequest } from './metadata/sys-auth';
+import got, { 
+    Options as HttpReqOptions,  
+    Method as HttpMethod,
+    RequestError as HttpRequestError
+} from 'got';
+
 
 export class VaultClient {
 
@@ -82,15 +87,15 @@ export class VaultClient {
     public async apiRequest( commandMetadata: VaultCommandMetadata, ...restOfArgs: any[]): Promise<VaultResponse> {
 
         // tslint:disable-next-line:prefer-const
-        let requestData: Partial<request.OptionsWithUrl> = {},
-            fullResponse: request.FullResponse,
+        let requestData: Partial<HttpReqOptions> = {},
+            fullResponse: any,
             // tslint:disable-next-line:prefer-const
             partialVaultResponse: PartialVaultResponse = {};
 
         requestData.url = this._clusterAddress;
-        requestData.resolveWithFullResponse = true;
-        requestData.json = true;
-        requestData.method = commandMetadata.method;
+        requestData.method = <HttpMethod>commandMetadata.method;
+        requestData.responseType = 'json';
+        
 
         if (this.token) {
             requestData.headers = {};
@@ -109,18 +114,23 @@ export class VaultClient {
             if (commandMetadata.schema &&
                 commandMetadata.schema.req
             ) {
-                const tv4ValidationResult = tv4.validate(requestData.body, commandMetadata.schema.req);
+                const tv4ValidationResult = tv4.validate(requestData.json, commandMetadata.schema.req);
                 if (!tv4ValidationResult) {
                     throw new Error(JSON.stringify(tv4.error, null, 4));
                 }
             }
-            // @ts-ignore
-            fullResponse = await request(requestData);
+            fullResponse = await got(requestData);
             partialVaultResponse._httpStatusCode = fullResponse.statusCode;
             partialVaultResponse._apiResponse = fullResponse.body;
-        } catch (e) {
-            partialVaultResponse._httpStatusCode = e.statusCode;
-            partialVaultResponse._errorMessage = e.message;
+        } catch (err) {
+            switch(true) {
+                case err instanceof HttpRequestError:
+                    partialVaultResponse._httpStatusCode = err.response.statusCode;
+                    partialVaultResponse._errorMessage = err.response.body.errors[0];
+                    break;
+                default:
+                    partialVaultResponse._errorMessage = err.message;
+            }
         }
 
         return VaultResponse.newInstanceFromPartial(partialVaultResponse);
@@ -128,7 +138,7 @@ export class VaultClient {
 
     public sanitizeRequest(
         // tslint:disable-next-line:no-shadowed-variable
-        request: Partial<request.OptionsWithUrl>,
+        request: Partial<HttpReqOptions>,
         httpMethod: VaultAllowedHttpMethod,
         path: string,
         extraArgs: any[],
@@ -147,7 +157,7 @@ export class VaultClient {
         switch (httpMethod.toUpperCase()) {
             case 'POST':
             case 'PUT':
-                request.body = extraArgs[pathHasPlaceholder ? 1 : 0];
+                request.json = extraArgs[pathHasPlaceholder ? 1 : 0];
                 break;
         }
     }

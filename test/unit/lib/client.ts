@@ -1,7 +1,7 @@
-import { suite, test } from 'mocha-typescript';
+import { suite, test } from '@testdeck/mocha';
 import * as chai from 'chai';
 import { SinonSandbox, createSandbox } from 'sinon';
-import * as request from 'request-promise-native';
+import {Options as HttpReqOptions } from 'got';
 import { VaultClient } from './../../../src/lib/client';
 import { VaultResponse } from '../../../src/lib/metadata/common';
 
@@ -60,12 +60,11 @@ class VaultClientTest {
                 },
             },
             mountPointApiUriTemplate = '/sys/mounts/:mount_point',
-            reqInitialData: request.OptionsWithUrl = {
+            reqInitialData: HttpReqOptions = {
                 url: 'https://fake.cluster.address:8200',
                 headers: {
                     'X-Vault-Token': 'fake-token',
                 },
-                resolveWithFullResponse: true,
             };
         // When
         this.client.sanitizeRequest(
@@ -77,7 +76,7 @@ class VaultClientTest {
 
         // Then
         expect(reqInitialData.url).equals('https://fake.cluster.address:8200/v1/sys/mounts/my-mount');
-        expect(reqInitialData.body.type).equals(mountPointPayload.type);
+        expect(reqInitialData.json.type).equals(mountPointPayload.type);
     }
 
     @test('apiRequest method should be called within dynamic methods')

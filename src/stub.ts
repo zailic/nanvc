@@ -24,7 +24,7 @@ async function main() {
         } else {
             throw new Error(initResponse.errorMessage);
         }*/
-        vault.token = 's.lKp0isgqwo8ZHE54i9r3TDk6';
+        vault.token = 's.xSi4JRyewQIqacZ1RkxrDdY7';
 
         console.log(await vault.mounts());
 
