@@ -1,6 +1,7 @@
 # nanvc - Not Another Node Vault Client
-[![Build Status](https://travis-ci.org/zailic/nanvc.svg?branch=master)](https://travis-ci.org/zailic/nanvc)
-[![Coverage Status](https://coveralls.io/repos/github/zailic/nanvc/badge.svg?branch=master)](https://coveralls.io/github/zailic/nanvc?branch=master)
+
+[![build status](https://github.com/zailic/nanvc/actions/workflows/main/badge.svg)](https://github.com/zailic/nanvc/actions)
+[![code coverage](https://codecov.io/gh/zailic/nanvc/branch/master/graph/badge.svg?token=DWUB3ADSQG)](https://codecov.io/gh/zailic/nanvc)
 
 This is a [Vault](https://www.vaultproject.io/) client written in typescript.
 
@@ -14,7 +15,7 @@ This is a [Vault](https://www.vaultproject.io/) client written in typescript.
 
 ## Install
 ``` bash
-# requires nodejs >=6
+# requires nodejs >= 14
 npm install nanvc --save
 ```
 ## How to use it
