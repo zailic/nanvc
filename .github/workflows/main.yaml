@@ -8,7 +8,7 @@ jobs:
   
   test:
 
-    name: NANVC ${{ matrix.node-version }} on ${{ matrix.os }}
+    name: Testing NANVC library through nodejs v${{ matrix.node-version }}.x on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -35,5 +35,5 @@ jobs:
         uses: codecov/codecov-action@v1
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == 16
         with:
-          github-token: ${{ secrets.github_token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           fail_ci_if_error: true
