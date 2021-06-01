@@ -1,6 +1,6 @@
 # nanvc - Not Another Node Vault Client
 
-[![build status](https://github.com/zailic/nanvc/actions/workflows/main/badge.svg)](https://github.com/zailic/nanvc/actions)
+[![build status](https://github.com/zailic/nanvc/actions/workflows/main.yaml/badge.svg)](https://github.com/zailic/nanvc/actions/workflows/main.yaml)
 [![code coverage](https://codecov.io/gh/zailic/nanvc/branch/master/graph/badge.svg?token=DWUB3ADSQG)](https://codecov.io/gh/zailic/nanvc)
 
 This is a [Vault](https://www.vaultproject.io/) client written in typescript.

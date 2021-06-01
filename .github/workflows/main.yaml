@@ -1,4 +1,4 @@
-name: CI
+name: build
 
 on:
   - push
@@ -15,7 +15,7 @@ jobs:
       matrix:
         node-version:
           - 16
-#          - 14
+          - 14
         os:
           - ubuntu-latest
     steps:
