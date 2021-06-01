@@ -31,7 +31,9 @@ jobs:
         run: npm install
       - name: Run testing suite  
         run: npm run coverage
-      - uses: codecov/codecov-action@v1
+      - name: Coveralls  
+        uses: codecov/codecov-action@v1
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == 16
         with:
+          github-token: ${{ secrets.github_token }}
           fail_ci_if_error: true
