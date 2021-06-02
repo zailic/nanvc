@@ -69,7 +69,7 @@
         "@testdeck/mocha": "0.1.2",
         "@types/chai": "4.2.11",
         "@types/got": "9.6.11",
-        "@types/mocha": "8.0.0",
+        "@types/mocha": "8.2.2",
         "@types/sinon": "10.0.2",
         "@types/tv4": "1.2.30",
         "@typescript-eslint/eslint-plugin": "4.26.0",
