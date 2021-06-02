@@ -20,7 +20,6 @@ import { VaultMountsPayloadRequest } from './metadata/sys-mounts';
 import { VaultRemountPayloadRequest } from './metadata/sys-remount';
 import { VaultAuthPayloadRequest } from './metadata/sys-auth';
 
-
 export class VaultClient {
 
     // tested
