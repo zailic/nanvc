@@ -1,4 +1,4 @@
-/* tslint:disable */
+/* eslint-disable */
 import { VaultClient } from './lib/client'; 
 
 let vault = new VaultClient('http://vault.local:8200');

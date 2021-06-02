@@ -85,12 +85,10 @@ export class VaultClient {
 
     public async apiRequest( commandMetadata: VaultCommandMetadata, ...restOfArgs: any[]): Promise<VaultResponse> {
 
-        // tslint:disable-next-line:prefer-const
-        let requestData: Partial<HttpReqOptions> = {},
-            fullResponse: any,
-            // tslint:disable-next-line:prefer-const
+        const requestData: Partial<HttpReqOptions> = {},
             partialVaultResponse: PartialVaultResponse = {};
-
+        let fullResponse: any;
+        
         requestData.url = this._clusterAddress;
         requestData.method = commandMetadata.method as HttpMethod;
         requestData.responseType = 'json';
@@ -142,7 +140,7 @@ export class VaultClient {
         extraArgs: any[],
     ): void {
 
-        let pathHasPlaceholder: boolean = false;
+        let pathHasPlaceholder = false;
         const re = /^(\/?[a-z-]+(?:\/[a-z-]+)*)?((?:\/):[a-z_]+)$/,
             resolvedPath = path.replace(re, (m, $1, $2) => {
                 pathHasPlaceholder = true;

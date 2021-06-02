@@ -30,7 +30,7 @@ jobs:
       - name: Install nodejs dependencies
         run: npm install
       - name: Linting
-        run: npm run tslint
+        run: npm run lint
       - name: Run testing suite  
         run: npm run coverage
       - name: Coveralls  

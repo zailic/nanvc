@@ -32,7 +32,7 @@
         "test:all": "mocha -r ts-node/register test/unit/**/*.ts test/integration/**/*.ts",
         "coverage": "nyc npm run test:all",
         "build": "rimraf ./dist/* && tsc",
-        "tslint": "tslint -c ./tslint.json './src/**/*.ts'"
+        "lint": "eslint './src/**/*.ts'"
     },
     "nyc": {
         "include": [
@@ -70,15 +70,19 @@
         "@types/chai": "4.2.11",
         "@types/got": "9.6.11",
         "@types/mocha": "8.0.0",
-        "@types/sinon": "9.0.11",
-        "@types/tv4": "1.2.29",
-        "chai": "4.2.0",
+        "@types/sinon": "10.0.2",
+        "@types/tv4": "1.2.30",
+        "@typescript-eslint/eslint-plugin": "4.23.0",
+        "@typescript-eslint/parser": "4.23.0",
+        "chai": "4.3.4",
+        "eslint": "7.27.0",
+        "eslint-config-prettier": "8.3.0",
+        "eslint-plugin-import": "2.23.4",
         "mocha": "8.4.0",
         "nyc": "15.1.0",
         "rimraf": "3.0.2",
         "sinon": "11.1.1",
         "ts-node": "10.0.0",
-        "tslint": "5.20.1",
         "typescript": "3.9.7"
     }
 }
