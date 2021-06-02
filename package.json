@@ -70,7 +70,7 @@
         "@types/chai": "4.2.11",
         "@types/got": "9.6.11",
         "@types/mocha": "8.0.0",
-        "@types/sinon": "9.0.4",
+        "@types/sinon": "9.0.11",
         "@types/tv4": "1.2.29",
         "chai": "4.2.0",
         "mocha": "8.4.0",
