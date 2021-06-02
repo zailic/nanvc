@@ -32,7 +32,6 @@
         "test:all": "mocha -r ts-node/register test/unit/**/*.ts test/integration/**/*.ts",
         "coverage": "nyc npm run test:all",
         "build": "rimraf ./dist/* && tsc",
-        "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
         "tslint": "tslint -c ./tslint.json './src/**/*.ts'"
     },
     "nyc": {
@@ -74,7 +73,6 @@
         "@types/sinon": "9.0.4",
         "@types/tv4": "1.2.29",
         "chai": "4.2.0",
-        "coveralls": "3.1.0",
         "mocha": "8.4.0",
         "nyc": "15.1.0",
         "rimraf": "3.0.2",

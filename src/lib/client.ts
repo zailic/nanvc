@@ -1,6 +1,11 @@
-import * as tv4 from 'tv4';
+import tv4 from 'tv4';
+import got, {
+    Options as HttpReqOptions,
+    Method as HttpMethod,
+    RequestError as HttpRequestError,
+} from 'got';
 
-import { COMMANDS } from './constants';
+import * as constants from './constants';
 import {
     VaultCommandMetadata,
     VaultResponse,
@@ -14,11 +19,6 @@ import { VaultAuditPayloadRequest } from './metadata/sys-audit';
 import { VaultMountsPayloadRequest } from './metadata/sys-mounts';
 import { VaultRemountPayloadRequest } from './metadata/sys-remount';
 import { VaultAuthPayloadRequest } from './metadata/sys-auth';
-import got, { 
-    Options as HttpReqOptions,  
-    Method as HttpMethod,
-    RequestError as HttpRequestError
-} from 'got';
 
 
 export class VaultClient {
@@ -61,9 +61,9 @@ export class VaultClient {
         private _apiVersion: string = process.env.NANVC_VAULT_API_VERSION || 'v1',
     ) {
         // tslint:disable-next-line:forin
-        for (const k in COMMANDS) {
+        for (const k in constants.COMMANDS) {
             VaultClient.prototype[k] = (...args: any[]): Promise<VaultResponse> => {
-                return this.apiRequest.apply(this, [COMMANDS[k], ...args]);
+                return this.apiRequest.apply(this, [constants.COMMANDS[k], ...args]);
             };
         }
     }
@@ -93,9 +93,8 @@ export class VaultClient {
             partialVaultResponse: PartialVaultResponse = {};
 
         requestData.url = this._clusterAddress;
-        requestData.method = <HttpMethod>commandMetadata.method;
+        requestData.method = commandMetadata.method as HttpMethod;
         requestData.responseType = 'json';
-        
 
         if (this.token) {
             requestData.headers = {};
@@ -123,7 +122,7 @@ export class VaultClient {
             partialVaultResponse._httpStatusCode = fullResponse.statusCode;
             partialVaultResponse._apiResponse = fullResponse.body;
         } catch (err) {
-            switch(true) {
+            switch (true) {
                 case err instanceof HttpRequestError:
                     partialVaultResponse._httpStatusCode = err.response.statusCode;
                     partialVaultResponse._errorMessage = err.response.body.errors[0];

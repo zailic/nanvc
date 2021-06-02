@@ -29,6 +29,8 @@ jobs:
         run: echo "127.0.0.1 vault.local" | sudo tee -a /etc/hosts
       - name: Install nodejs dependencies
         run: npm install
+      - name: Linting
+        run: npm run tslint
       - name: Run testing suite  
         run: npm run coverage
       - name: Coveralls  
