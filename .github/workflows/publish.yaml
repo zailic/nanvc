@@ -13,10 +13,10 @@ jobs:
         with:
           ref: ${{ github.event.release.target_commitish }}
       - name: Use nodejs v14
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v1
         with:
           node-version: 14
-          registry-url: https://registry.npmjs.org/
+          registry-url: 'https://registry.npmjs.org'
       - name: Build the containers stack (integration tests dependency)
         run: docker-compose up -d
       - name: Adding host aliases (integration tests requirement)  
@@ -29,4 +29,4 @@ jobs:
         run: npm run build
       - run: npm publish
         env:
-          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
