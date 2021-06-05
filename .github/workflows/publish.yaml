@@ -16,10 +16,9 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 14
-      - run: npm install
       - run: git config --global user.name "GitHub CI/CD bot"
       - run: git config --global user.email "ionut@zailic.com"
-      - run: npm version ${{ github.event.release.tag_name }}
+      - run: npm version --no-git-tag-version ${{ github.event.release.tag_name }}
       # run tests just in case
       - name: Build the containers stack (integration tests dependency)
         run: docker-compose up -d
