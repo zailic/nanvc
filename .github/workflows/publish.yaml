@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 14
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: https://registry.npmjs.org/
       - name: Build the containers stack (integration tests dependency)
         run: docker-compose up -d
       - name: Adding host aliases (integration tests requirement)  
