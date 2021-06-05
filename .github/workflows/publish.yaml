@@ -1,0 +1,41 @@
+name: NPM publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.release.target_commitish }}
+      - name: Use nodejs v14
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - run: npm install
+      - run: git config --global user.name "GitHub CI/CD bot"
+      - run: git config --global user.email "ionut@zailic.com"
+      - run: npm version ${{ github.event.release.tag_name }}
+      # run tests just in case
+      - name: Build the containers stack (integration tests dependency)
+        run: docker-compose up -d
+      - name: Adding host aliases (integration tests requirement)  
+        run: echo "127.0.0.1 vault.local" | sudo tee -a /etc/hosts
+      - name: Install nodejs dependencies
+        run: npm install
+      - name: Run tests
+        run: npm run test:all
+      # build the npm package
+      - name: Build the package
+        run: npm run build
+      - run: npm publish --tag ${{ github.event.release.target_commitish }}
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # push the version changes to GitHub
+      - run: git push
+        env:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
