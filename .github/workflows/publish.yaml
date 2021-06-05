@@ -32,9 +32,10 @@ jobs:
       # build the npm package
       - name: Build the package
         run: npm run build
-      - run: npm publish --tag ${{ github.event.release.target_commitish }}
+      - run: npm publish --tag ${{ github.event.release.target_commitish }} --access public
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       # push the version changes to GitHub
       - run: git push
         env:

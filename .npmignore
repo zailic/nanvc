@@ -9,9 +9,13 @@
 /.nyc_output
 /coverage
 # misc
-npm-debug.log
 src/
 test/
+# github 
+.github/
+npm-debug.log
 docker-compose.yml
 gh-md-toc
+renovate.json
 tsconfig.json
+eslintrc.js
