@@ -62,7 +62,7 @@
         "node": ">=14"
     },
     "dependencies": {
-        "got": "11.8.2",
+        "got": "12.5.0",
         "tv4": "1.3.0"
     },
     "devDependencies": {
