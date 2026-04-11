@@ -39,6 +39,9 @@ jobs:
       - name: Add host alias for Vault
         run: echo "127.0.0.1 vault.local" | sudo tee -a /etc/hosts
 
+      - name: Wait for testing resources to be ready
+        run: sleep 30
+
       - name: Run full test suite
         run: npm run test:all
 

@@ -57,7 +57,7 @@ async function main(): Promise<void> {
         secret_threshold: 1,
     });
 
-    if (!initResponse.succeeded || !initResponse.apiResponse) {
+    if (!initResponse.succeeded || !initResponse.apiResponse?.initialized) {
         throw new Error(initResponse.errorMessage ?? 'Vault init failed');
     }
 
