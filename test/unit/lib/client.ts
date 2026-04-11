@@ -1,58 +1,52 @@
-import { suite, test } from '@testdeck/mocha';
-import * as chai from 'chai';
-import { SinonSandbox, createSandbox } from 'sinon';
-import {Options as HttpReqOptions } from 'got';
-import { VaultClient } from './../../../src/lib/client';
-import { VaultResponse } from '../../../src/lib/metadata/common';
+import assert from 'node:assert/strict';
+import { createSandbox } from 'sinon';
+import { VaultClient } from './../../../src/lib/client.js';
+import { VaultResponse } from '../../../src/lib/commands/spec.js';
+import { buildRequestOptions } from '../../../src/lib/commands/helpers.js';
 
-const expect = chai.expect;
+import type { SinonSandbox } from 'sinon';
 
-@suite('VaultClient unit test cases.')
-class VaultClientTest {
+describe('VaultClient unit test cases.', function () {
 
-    private sandbox: SinonSandbox;
-    private client: VaultClient;
+    let sandbox: SinonSandbox;
+    let client: VaultClient;
 
-    public before() {
-        this.sandbox = createSandbox();
-        this.client = new VaultClient(
+    beforeEach(function () {
+        sandbox = createSandbox();
+        client = new VaultClient(
             'https://fake.cluster.address:8200',
             'fake-token',
             'v1',
         );
-    }
+    });
 
-    public after() {
-        this.sandbox.restore();
-    }
+    afterEach(function () {
+        sandbox.restore();
+    });
 
-    @test('should fallback to default values')
-    public shouldFallbackToDefaultValues() {
+    it('should fallback to default values', function () {
         // Given
-        const client = new VaultClient();
+        const c = new VaultClient();
 
         // Then
-        expect(client.token).is.null;
-        expect(client.apiVersion).equals('v1');
-        expect(client.clusterAddress).equals('http://127.0.0.1:8200');
-    }
+        assert.equal(c.token, null);
+        assert.equal(c.apiVersion, 'v1');
+        assert.equal(c.clusterAddress, 'http://127.0.0.1:8200');
+    });
 
-    @test('baseUrl should contain api version')
-    public baseUrlShouldContainApiVersion() {
+    it('baseUrl should contain api version', function () {
         // Given
 
         // When
-        const baseUrl = this.client.getBaseUrl();
+        const baseUrl = client.getBaseUrl();
 
         // Then
-        expect(baseUrl).to.equal('https://fake.cluster.address:8200/v1');
-    }
+        assert.equal(baseUrl, 'https://fake.cluster.address:8200/v1');
+    });
 
-    @test('request sanitizer should handle path placeholders')
-    public requestSanitizerShouldHandlePathPlaceholders() {
+    it('should handle path placeholders', function () {
         // Given
-        const spiedApiRequestMethod = this.sandbox.stub(this.client, 'apiRequest').resolves(null),
-            mountPoint = 'my-mount',
+        const mountPoint = '/my-mount',
             mountPointPayload = {
                 type: 'aws',
                 config: {
@@ -60,14 +54,15 @@ class VaultClientTest {
                 },
             },
             mountPointApiUriTemplate = '/sys/mounts/:mount_point',
-            reqInitialData: HttpReqOptions = {
+            reqInitialData = {
                 url: 'https://fake.cluster.address:8200',
                 headers: {
                     'X-Vault-Token': 'fake-token',
                 },
-            };
+            } as Parameters<typeof buildRequestOptions>[1];
         // When
-        this.client.sanitizeRequest(
+        const opts = buildRequestOptions(
+            client.getBaseUrl(),
             reqInitialData,
             'POST',
             mountPointApiUriTemplate,
@@ -75,38 +70,113 @@ class VaultClientTest {
         );
 
         // Then
-        expect(reqInitialData.url).equals('https://fake.cluster.address:8200/v1/sys/mounts/my-mount');
-        expect(reqInitialData.json.type).equals(mountPointPayload.type);
-    }
+        assert.equal(opts.url, 'https://fake.cluster.address:8200/v1/sys/mounts/my-mount');
+        assert.equal((opts.json as { type: string }).type, mountPointPayload.type);
+    });
 
-    @test('apiRequest method should be called within dynamic methods')
-    public async apiRequestMethodShouldBeCalledWithinDynamicMethods() {
+    it('should build addPolicy requests with the policy name and body', function () {
+        // Given
+        const requestData = {
+            url: 'https://fake.cluster.address:8200',
+            headers: {
+                'X-Vault-Token': 'fake-token',
+            },
+        } as Parameters<typeof buildRequestOptions>[1];
+
+        // When
+        const opts = buildRequestOptions(
+            client.getBaseUrl(),
+            requestData,
+            'POST',
+            '/sys/policy/:name',
+            ['integration-policy', { policy: 'path "secret/*" { capabilities = ["read"] }' }],
+        );
+
+        // Then
+        assert.equal(opts.url, 'https://fake.cluster.address:8200/v1/sys/policy/integration-policy');
+        assert.equal((opts.json as { policy: string }).policy, 'path "secret/*" { capabilities = ["read"] }');
+    });
+
+    it('should build removePolicy requests with the policy name', function () {
+        // Given
+        const requestData = {
+            url: 'https://fake.cluster.address:8200',
+            headers: {
+                'X-Vault-Token': 'fake-token',
+            },
+        } as Parameters<typeof buildRequestOptions>[1];
+
+        // When
+        const opts = buildRequestOptions(
+            client.getBaseUrl(),
+            requestData,
+            'DELETE',
+            '/sys/policy/:name',
+            ['integration-policy'],
+        );
+
+        // Then
+        assert.equal(opts.url, 'https://fake.cluster.address:8200/v1/sys/policy/integration-policy');
+        assert.equal(opts.body, undefined);
+    });
+
+    it('apiRequest method should be called within dynamic methods', async function () {
 
         // Given
         const vaultResponse = new VaultResponse(
             200, {
-                file: {
-                    type: 'file',
-                    description: 'Store logs in a file',
-                    options: {
-                        path: '/var/log/vault.log',
-                    },
+            file: {
+                type: 'file',
+                description: 'Store logs in a file',
+                options: {
+                    path: '/var/log/vault.log',
                 },
-            });
-        const spiedApiRequestMethod = this.sandbox.stub(this.client, 'apiRequest').resolves(vaultResponse);
+            },
+        });
+        const spiedApiRequestMethod = sandbox.stub(client, 'apiRequest').resolves(vaultResponse);
 
         // When
-        const result = await this.client.audits();
+        const result = await client.audits();
 
         // Then
-        expect(result.succeeded).to.be.true;
-        expect(spiedApiRequestMethod.called).to.be.true;
-    }
+        assert.equal(result.succeeded, true);
+        assert.equal(spiedApiRequestMethod.called, true);
+    });
 
-    @test('Should take vault settings from environment')
-    public async shouldTakeVaultSettingsFromEnvVars() {
+    it('should route addPolicy through apiRequest with the policy name and payload', async function () {
         // Given
-        this.sandbox.stub(process, 'env').value({
+        const vaultResponse = new VaultResponse(204);
+        const spiedApiRequestMethod = sandbox.stub(client, 'apiRequest').resolves(vaultResponse);
+        const payload = {
+            policy: 'path "secret/*" { capabilities = ["read"] }',
+        };
+
+        // When
+        const result = await client.addPolicy('integration-policy', payload);
+
+        // Then
+        assert.equal(result.succeeded, true);
+        assert.equal(spiedApiRequestMethod.calledOnce, true);
+        assert.deepEqual(spiedApiRequestMethod.firstCall.args.slice(1), ['integration-policy', payload]);
+    });
+
+    it('should route removePolicy through apiRequest with the policy name', async function () {
+        // Given
+        const vaultResponse = new VaultResponse(204);
+        const spiedApiRequestMethod = sandbox.stub(client, 'apiRequest').resolves(vaultResponse);
+
+        // When
+        const result = await client.removePolicy('integration-policy');
+
+        // Then
+        assert.equal(result.succeeded, true);
+        assert.equal(spiedApiRequestMethod.calledOnce, true);
+        assert.deepEqual(spiedApiRequestMethod.firstCall.args.slice(1), ['integration-policy']);
+    });
+
+    it('Should take vault settings from environment', async function () {
+        // Given
+        sandbox.stub(process, 'env').value({
             NANVC_VAULT_CLUSTER_ADDRESS: 'http://vault.local:1234',
             NANVC_VAULT_AUTH_TOKEN: 'myt0k3n',
             NANVC_VAULT_API_VERSION: 'v2',
@@ -115,8 +185,84 @@ class VaultClientTest {
         const vault = new VaultClient();
 
         // Then
-        expect(vault.apiVersion).equals('v2');
-        expect(vault.token).equals('myt0k3n');
-        expect(vault.clusterAddress).equals('http://vault.local:1234');
-    }
-}
+        assert.equal(vault.apiVersion, 'v2');
+        assert.equal(vault.token, 'myt0k3n');
+        assert.equal(vault.clusterAddress, 'http://vault.local:1234');
+    });
+
+    it('should support object-based constructor options', function () {
+        // Given
+        const tls = {
+            ca: 'ca-pem',
+            cert: 'cert-pem',
+            key: 'key-pem',
+            passphrase: 'top-secret',
+            rejectUnauthorized: true,
+        };
+
+        // When
+        const vault = new VaultClient({
+            apiVersion: 'v2',
+            authToken: 'token-from-options',
+            clusterAddress: 'https://vault.local:8200',
+            tls,
+        });
+
+        // Then
+        assert.equal(vault.apiVersion, 'v2');
+        assert.equal(vault.token, 'token-from-options');
+        assert.equal(vault.clusterAddress, 'https://vault.local:8200');
+
+        const transportOptions = (vault as unknown as {
+            buildTransportOptions(url: URL, requestData: { headers?: Record<string, string>; method?: string }): {
+                ca?: string;
+                cert?: string;
+                key?: string;
+                passphrase?: string;
+                rejectUnauthorized?: boolean;
+            };
+        }).buildTransportOptions(
+            new URL('https://vault.local:8200/v1/sys/health'),
+            {
+                headers: {
+                    'X-Vault-Token': 'token-from-options',
+                },
+                method: 'GET',
+            },
+        );
+
+        assert.equal(transportOptions.ca, tls.ca);
+        assert.equal(transportOptions.cert, tls.cert);
+        assert.equal(transportOptions.key, tls.key);
+        assert.equal(transportOptions.passphrase, tls.passphrase);
+        assert.equal(transportOptions.rejectUnauthorized, tls.rejectUnauthorized);
+    });
+
+    it('should not apply tls options to plain http requests', function () {
+        // Given
+        const vault = new VaultClient({
+            clusterAddress: 'http://vault.local:8200',
+            tls: {
+                cert: 'cert-pem',
+                key: 'key-pem',
+            },
+        });
+
+        // When
+        const transportOptions = (vault as unknown as {
+            buildTransportOptions(url: URL, requestData: { method?: string }): {
+                cert?: string;
+                key?: string;
+            };
+        }).buildTransportOptions(
+            new URL('http://vault.local:8200/v1/sys/health'),
+            {
+                method: 'GET',
+            },
+        );
+
+        // Then
+        assert.equal(transportOptions.cert, undefined);
+        assert.equal(transportOptions.key, undefined);
+    });
+});

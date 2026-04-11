@@ -18,3 +18,17 @@ npm-debug.log
 
 # transpilations
 /dist
+/.test-dist
+
+# env files
+/src/.example.env
+
+# generated integration TLS fixtures
+/test/util/vault/certs/*.crt
+/test/util/vault/certs/*.csr
+/test/util/vault/certs/*.key
+/test/util/vault/certs/*.pem
+/test/util/vault/certs/*.srl
+
+# macOS
+.DS_Store

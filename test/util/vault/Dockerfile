@@ -1,4 +1,4 @@
-FROM vault:latest
+FROM hashicorp/vault:latest
 RUN mkdir -p /var/log/vault && \
     touch /var/log/vault/audit-log.json && \
     chown -R vault:vault /var/log/vault && \

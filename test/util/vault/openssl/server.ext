@@ -1,0 +1,4 @@
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = DNS:localhost, DNS:vault.local, IP:127.0.0.1

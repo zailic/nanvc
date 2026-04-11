@@ -1,40 +1,91 @@
-name: Build
+name: CI
 
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
-  
-  test:
-
-    name: Testing NANVC library through nodejs v${{ matrix.node-version }}.x on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  verify:
+    name: Verify on Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         node-version:
-          - 16
-          - 14
-        os:
-          - ubuntu-latest
+          - 20
+          - 22
+          - 24
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Build the containers stack
-        run: docker-compose up -d
-      - name: Adding host aliases  
-        run: echo "127.0.0.1 vault.local" | sudo tee -a /etc/hosts
-      - name: Install nodejs dependencies
-        run: npm install
-      - name: Linting
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
         run: npm run lint
-      - name: Run testing suite  
+
+      - name: Build package
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm test
+
+  integration:
+    name: Integration and coverage
+    runs-on: ubuntu-latest
+    needs: verify
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare integration TLS fixtures
+        run: npm run test:integration:prepare
+
+      - name: Start integration stack
+        run: docker compose up -d --build
+
+      - name: Add host alias for Vault
+        run: echo "127.0.0.1 vault.local" | sudo tee -a /etc/hosts
+      
+      - name: Wait for testing resources to be ready
+        run: sleep 30
+
+      - name: Run coverage
         run: npm run coverage
-      - name: Code coverage  
-        uses: codecov/codecov-action@v1
-        if: matrix.os == 'ubuntu-latest' && matrix.node-version == 16
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop integration stack
+        if: always()
+        run: docker compose down --volumes --remove-orphans

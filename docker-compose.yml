@@ -1,9 +1,8 @@
-version: '2'
 services:
-
   vault:
     container_name: vault.server
-    command: server
+    entrypoint: ["vault"]
+    command: server -config=/vault/config/config.hcl
     build:
       context: ./test/util/vault
     volumes:
@@ -12,7 +11,35 @@ services:
       - IPC_LOCK
     ports:
       - "8200:8200"
-  
+
+  vault_tls:
+    container_name: vault.tls.server
+    entrypoint: ["vault"]
+    command: server -config=/vault/config/config.tls.hcl
+    build:
+      context: ./test/util/vault
+    volumes:
+      - ./test/util/vault/config:/vault/config
+      - ./test/util/vault/certs:/vault/certs:ro
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8201:8200"
+
+  vault_mtls:
+    container_name: vault.mtls.server
+    entrypoint: ["vault"]
+    command: server -config=/vault/config/config.mtls.hcl
+    build:
+      context: ./test/util/vault
+    volumes:
+      - ./test/util/vault/config:/vault/config
+      - ./test/util/vault/certs:/vault/certs:ro
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8202:8200"
+
   db:
     container_name: postgresql.server
     image: postgres
