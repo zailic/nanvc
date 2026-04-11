@@ -1,4 +1,4 @@
-import { VaultAllowedHttpMethod } from './index.js';
+import type { VaultAllowedHttpMethod } from './index.js';
 export type VaultPayload = Record<string, unknown>;
 export type HttpMethod = Uppercase<VaultAllowedHttpMethod>;
 export type RequestOptions = {
