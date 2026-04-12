@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is inspired by Keep a Changelog, with the current work tracked under `Unreleased` until you decide the next version number.
 
-## [Unreleased] - 2026-04-11
+## 1.2.0 - 2026-04-12
 
 ### Added
 
