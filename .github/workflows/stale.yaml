@@ -6,14 +6,13 @@ on:
 
 jobs:
   stale:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/stale@v3
+    - uses: actions/stale@v10
       with:
         stale-issue-message: 'This issue has become stale and will be closed automatically within a period of time. Sorry about that.'
         stale-pr-message: 'This pull request has become stale and will be closed automatically within a period of time. Sorry about that.'
         stale-issue-label: 'no-issue-activity'
         stale-pr-label: 'no-pr-activity'
-        days-before-stale: 90 
+        days-before-stale: 90

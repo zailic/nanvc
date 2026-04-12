@@ -1,11 +1,11 @@
-import { VaultCommandMetadata, VaultCommandValidationSchema } from './common';
+import type { VaultCommandSchema, VaultCommandSpec } from './spec.js';
 
 export interface VaultRemountPayloadRequest {
     from: string;
     to: string;
 }
 
-export const VaultRemountJsonSchema: VaultCommandValidationSchema =  {
+export const remountSchema: VaultCommandSchema =  {
     req: {
         properties: {
             from: {
@@ -19,8 +19,8 @@ export const VaultRemountJsonSchema: VaultCommandValidationSchema =  {
     },
 };
 
-export const VaultRemountCommandMetadata: VaultCommandMetadata = {
+export const remountSpec: VaultCommandSpec = {
     method: 'POST',
     path: '/sys/remount',
-    acceptedCodes: [204],
+    successCodes: [200,204],
 };

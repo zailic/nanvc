@@ -1,4 +1,4 @@
-import { VaultCommandMetadata, VaultCommandValidationSchema } from './common';
+import type { VaultCommandSchema, VaultCommandSpec } from './spec.js';
 
 export interface VaultInitPayloadRequest {
     pgp_keys?: Array<string>;
@@ -11,7 +11,7 @@ export interface VaultInitPayloadRequest {
     recovery_pgp_keys?: Array<string>;
 }
 
-export const VaultInitJsonSchema: VaultCommandValidationSchema = {
+export const initSchema: VaultCommandSchema = {
     req: {
         properties: {
             pgp_keys: {
@@ -33,15 +33,15 @@ export const VaultInitJsonSchema: VaultCommandValidationSchema = {
     },
 };
 
-export const VaultIsInitializedCommandMetadata: VaultCommandMetadata = {
+export const isInitializedSpec: VaultCommandSpec = {
     method: 'GET',
     path: '/sys/init',
-    acceptedCodes: [200],
+    successCodes: [200],
 };
 
-export const VaultInitCommandMetadata: VaultCommandMetadata = {
+export const initSpec: VaultCommandSpec = {
     method: 'PUT',
     path: '/sys/init',
-    schema: VaultInitJsonSchema,
-    acceptedCodes: [200],
+    schema: initSchema,
+    successCodes: [200],
 };

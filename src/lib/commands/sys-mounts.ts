@@ -1,9 +1,10 @@
-import { VaultCommandMetadata, VaultCommandValidationSchema } from './common';
+import type { VaultCommandSchema, VaultCommandSpec } from './spec.js';
 
 export interface VaultMountsPayloadRequest {
     type: string;
     description?: string;
     options?: VaultMountTypeConfig;
+    plugin_name?: string;
     plungin_name?: string;
     local?: boolean;
     seal_wrap?: boolean;
@@ -12,11 +13,11 @@ export interface VaultMountsPayloadRequest {
 export interface VaultMountTypeConfig {
     default_lease_ttl?: string;
     max_lease_ttl?: string;
-    force_no_cache?: string;
+    force_no_cache?: boolean;
     plugin_name?: string;
 }
 
-export const VaultMountsJsonSchema: VaultCommandValidationSchema =  {
+export const mountsSchema: VaultCommandSchema =  {
     req: {
         properties: {
             description: {
@@ -36,21 +37,21 @@ export const VaultMountsJsonSchema: VaultCommandValidationSchema =  {
     },
 };
 
-export const VaultMountsCommandMetadata: VaultCommandMetadata = {
+export const mountsSpec: VaultCommandSpec = {
     method: 'GET',
     path: '/sys/mounts',
-    acceptedCodes: [200],
+    successCodes: [200],
 };
 
-export const VaultMountCommandMetadata: VaultCommandMetadata = {
+export const mountSpec: VaultCommandSpec = {
     method: 'POST',
     path: '/sys/mounts/:path',
-    schema: VaultMountsJsonSchema,
-    acceptedCodes: [204, 200],
+    schema: mountsSchema,
+    successCodes: [204, 200],
 };
 
-export const VaultUnmountCommandMetadata: VaultCommandMetadata = {
+export const unmountSpec: VaultCommandSpec = {
     method: 'DELETE',
     path: '/sys/mounts/:path',
-    acceptedCodes: [204],
+    successCodes: [204],
 };

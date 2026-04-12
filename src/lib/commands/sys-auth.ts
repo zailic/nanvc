@@ -1,13 +1,13 @@
-import { VaultCommandMetadata, VaultCommandValidationSchema } from './common';
+import type { VaultCommandSchema, VaultCommandSpec } from './spec.js';
 
 export interface VaultAuthPayloadRequest {
     type: string;
     description?: string;
-    config?: object;
+    config?: Record<string, unknown>;
     plugin_name?: string;
 }
 
-export const VaultAuthJsonSchema: VaultCommandValidationSchema =  {
+export const authSchema: VaultCommandSchema =  {
     req: {
         properties: {
             type: {
@@ -27,21 +27,21 @@ export const VaultAuthJsonSchema: VaultCommandValidationSchema =  {
     },
 };
 
-export const VaultAuthsCommandMetadata: VaultCommandMetadata = {
+export const authsSpec: VaultCommandSpec = {
     method: 'GET',
     path: '/sys/auth',
-    acceptedCodes: [200],
+    successCodes: [200],
 };
 
-export const VaultEnableAuthCommandMetadata: VaultCommandMetadata = {
+export const enableAuthSpec: VaultCommandSpec = {
     method: 'POST',
     path: '/sys/auth/:path',
-    schema: VaultAuthJsonSchema,
-    acceptedCodes: [204],
+    schema: authSchema,
+    successCodes: [204],
 };
 
-export const VaultDisableAuthCommandMetadata: VaultCommandMetadata = {
+export const disableAuthSpec: VaultCommandSpec = {
     method: 'DELETE',
     path: '/sys/auth/:path',
-    acceptedCodes: [204],
+    successCodes: [204],
 };

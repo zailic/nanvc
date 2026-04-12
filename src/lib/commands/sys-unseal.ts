@@ -1,11 +1,11 @@
-import { VaultCommandMetadata, VaultCommandValidationSchema } from './common';
+import type { VaultCommandSchema, VaultCommandSpec } from './spec.js';
 
 export interface VaultUnsealPayloadRequest {
     key: string;
     reset?: boolean;
 }
 
-export const VaultUnsealJsonSchema: VaultCommandValidationSchema = {
+export const unsealSchema: VaultCommandSchema = {
     req: {
         properties: {
             key: { type: 'string' },
@@ -15,9 +15,9 @@ export const VaultUnsealJsonSchema: VaultCommandValidationSchema = {
     },
 };
 
-export const VaultUnsealCommandMetadata: VaultCommandMetadata = {
+export const unsealSpec: VaultCommandSpec = {
     method: 'PUT',
     path: '/sys/unseal',
-    schema: VaultUnsealJsonSchema,
-    acceptedCodes: [200],
+    schema: unsealSchema,
+    successCodes: [200],
 };

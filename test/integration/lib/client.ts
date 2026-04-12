@@ -1,209 +1,212 @@
-import { suite, test } from '@testdeck/mocha';
-import * as chai from 'chai';
-import { VaultClient } from './../../../src/lib/client';
-import { VaultResponse } from '../../../src/lib/metadata/common';
-import { VaultRemountPayloadRequest } from '../../../src/lib/metadata/sys-remount';
-import { VaultAuthPayloadRequest } from '../../../src/lib/metadata/sys-auth';
+import assert from 'node:assert/strict';
+import { VaultClient } from './../../../src/lib/client.js';
+import { VaultResponse } from '../../../src/lib/commands/spec.js';
+import type { VaultRemountPayloadRequest } from '../../../src/lib/commands/sys-remount.js';
+import type { VaultAuthPayloadRequest } from '../../../src/lib/commands/sys-auth.js';
 
-const expect = chai.expect;
 
-@suite('VaultClient integration test cases.')
-class VaultClientIntegrationTest {
+const asObject = (value: unknown): Record<string, unknown> => value as Record<string, unknown>;
+const asStringArray = (value: unknown): string[] => value as string[];
+const asString = (value: unknown): string => value as string;
+const hasOwn = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
+const assertNotEmpty = (value: string | unknown[]): void => assert.notEqual(value.length, 0);
+const assertInstanceOf = <T extends abstract new (...args: never[]) => unknown>(
+    value: unknown,
+    ctor: T,
+): void => assert.ok(value instanceof ctor);
+const assertOneOf = <T>(value: T, expected: readonly T[]): void => assert.ok(expected.includes(value));
 
-    private client: VaultClient;
-    public static rootToken: string;
-    public static unsealKey: string;
+let rootToken: string;
+let unsealKey: string;
 
-    public before() {
-        const args = [null, 'http://vault.local:8200'];
-        if (VaultClientIntegrationTest.rootToken) {
-            args.push(VaultClientIntegrationTest.rootToken);
+describe('VaultClient integration test cases.', function () {
+
+    let client: VaultClient;
+
+    beforeEach(async function () {
+        const args: [string?, string?] = ['http://vault.local:8200'];
+        if (rootToken) {
+            args.push(rootToken);
         }
-        // tslint:disable-next-line:new-parens
-        this.client = new (Function.prototype.bind.apply(VaultClient, args));
-    }
+        client = new VaultClient(...args);
 
-    @test('vault initialisation process')
-    public async vaultInitialisationProcess() {
+        const initStatus = await client.isInitialized();
+        const initStatusData = asObject(initStatus.apiResponse);
+
+        if (initStatusData.initialized !== true) {
+            const initResponse = await client.init({ secret_shares: 1, secret_threshold: 1 });
+            const initData = asObject(initResponse.apiResponse);
+
+            assert.equal(initResponse.succeeded, true);
+            assert.equal(asStringArray(initData.keys).length, 1);
+            assert.equal(asStringArray(initData.keys_base64).length, 1);
+            assertNotEmpty(asString(initData.root_token));
+            assert.equal(initResponse.errorMessage, undefined);
+
+            rootToken = asString(initData.root_token);
+            unsealKey = asStringArray(initData.keys)[0];
+            client.token = rootToken;
+        }
+
+        const statusResponse = await client.status();
+        const statusData = asObject(statusResponse.apiResponse);
+
+        if (statusData.sealed === true && unsealKey) {
+            const unsealResponse = await client.unseal({
+                key: unsealKey,
+            });
+
+            assert.equal(unsealResponse.succeeded, true);
+        }
+    });
+
+    it('vault initialisation process should fail if is already initialized', async function () {
         // Given
         const payload = { secret_shares: 1, secret_threshold: 1 };
 
         // When
-        const vaultResponse = await this.client.init(payload);
+        const vaultResponse = await client.init(payload);
 
         // Then
-        expect(vaultResponse.succeeded).to.be.true;
-        expect(vaultResponse.apiResponse.keys.length).equals(1);
-        expect(vaultResponse.apiResponse.keys_base64.length).equals(1);
-        expect(vaultResponse.apiResponse.root_token).not.empty;
-        expect(vaultResponse.errorMessage).is.undefined;
+        assert.equal(vaultResponse.succeeded, false);
+        assert.equal(vaultResponse.httpStatusCode, 400);
+    });
 
-        VaultClientIntegrationTest.rootToken = vaultResponse.apiResponse.root_token;
-        VaultClientIntegrationTest.unsealKey = vaultResponse.apiResponse.keys[0];
-        // testing  token setter
-        this.client.token = VaultClientIntegrationTest.rootToken;
-        expect(this.client.token).equals(VaultClientIntegrationTest.rootToken);
-
-    }
-
-    @test('vault initialisation process should fail if is already initialized')
-    public async vaultInitialisationProcessShouldFail() {
-        // Given
-        const payload = { secret_shares: 1, secret_threshold: 1 };
-
-        // When
-        const vaultResponse = await this.client.init(payload);
-
-        // Then
-        expect(vaultResponse.succeeded).to.be.false;
-        expect(vaultResponse.httpStatusCode).equals(400);
-    }
-
-    @test('should get initialization status')
-    public async shouldGetIntializationStatus() {
+    it('should get initialization status', async function () {
         // Given
 
         // When
-        const expectedResult = await this.client.isInitialized();
+        const expectedResult = await client.isInitialized();
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-        expect(expectedResult.apiResponse.initialized).to.be.true;
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+        assert.equal(asObject(expectedResult.apiResponse).initialized, true);
+    });
 
-    @test('should fail tv4 validation')
-    public async shouldFailTv4Validation() {
+    it('should fail tv4 validation', async function () {
         // Given
 
         // When
-        // @ts-ignore
-        const expectedResult = await this.client.unseal({ key: 123 });
+        // @ts-expect-error testing invalid payload that should fail tv4 validation
+        const expectedResult = await client.unseal({ key: 123 });
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.false;
-        expect(expectedResult.httpStatusCode).to.be.undefined;
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, false);
+        assert.equal(expectedResult.httpStatusCode, undefined);
+    });
 
-    @test('should unseal vault')
-    public async shouldUnsealVault() {
+    it('should unseal vault', async function () {
         // Given
 
         // When
-        const expectedResult = await this.client.unseal({
-            key: VaultClientIntegrationTest.unsealKey,
+        const expectedResult = await client.unseal({
+            key: unsealKey,
         });
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+    });
 
-    @test('should seal vault')
-    public async shouldSealVault() {
+    it('should seal vault', async function () {
         // Given
 
         // When
-        const expectedResult = await this.client.seal();
+        const expectedResult = await client.seal();
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-        expect(expectedResult.httpStatusCode).equals(204);
-        await this.client.unseal({
-            key: VaultClientIntegrationTest.unsealKey,
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+        assert.equal(expectedResult.httpStatusCode, 204);
+        await client.unseal({
+            key: unsealKey,
         });
-    }
+    });
 
-    @test('should write a secret')
-    public async shouldWriteSecret() {
+    it('should write a secret', async function () {
         // Given
         const path = '/secret/integration-tests/my-secret',
             secret = { foo: 'bar' };
         // When
         // ensures the secret path is mounted
-        await this.client.mount('secret', { type: 'kv' });
-        const expectedResult = await this.client.write(path, secret);
+        await client.mount('secret', { type: 'kv' });
+        const expectedResult = await client.write(path, secret);
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+    });
 
-    @test('should update a secret')
-    public async shouldUpdateSecret() {
+    it('should update a secret', async function () {
         // Given
         const path = '/secret/integration-tests/my-secret',
             secret = { foo: 'bar-updated' };
 
         // When
-        const expectedResult = await this.client.update(path, secret);
+        const expectedResult = await client.update(path, secret);
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+    });
 
-    @test('should read a secret')
-    public async shouldReadSecret() {
+    it('should read a secret', async function () {
         // Given
         const path = '/secret/integration-tests/my-secret';
         // When
-        const expectedResult = await this.client.read(path);
+        const expectedResult = await client.read(path);
+        const responseData = asObject(asObject(expectedResult.apiResponse).data);
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-        expect(expectedResult.apiResponse.data.foo).equals('bar-updated');
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+        assert.equal(asString(responseData.foo), 'bar-updated');
+    });
 
-    @test('should delete a secret')
-    public async shoulddeleteSecret() {
+    it('should delete a secret', async function () {
         // Given
         const path = '/secret/integration-tests/my-secret';
 
         // When
-        const expectedResult = await this.client.delete(path);
+        const expectedResult = await client.delete(path);
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-        const checkDeleteResult = await this.client.read(path);
-        expect(checkDeleteResult.succeeded).to.be.false;
-        expect(checkDeleteResult.httpStatusCode).equals(404);
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+        const checkDeleteResult = await client.read(path);
+        assert.equal(checkDeleteResult.succeeded, false);
+        assert.equal(checkDeleteResult.httpStatusCode, 404);
+    });
 
-    @test('should get status')
-    public async shouldGetStatus() {
+    it('should get status', async function () {
         // Given
 
         // When
-        const expectedResult = await this.client.status();
+        const expectedResult = await client.status();
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
 
-        expect(expectedResult.apiResponse.t).equals(1);
-        expect(expectedResult.apiResponse.n).equals(1);
-    }
+        assert.equal(asObject(expectedResult.apiResponse).t, 1);
+        assert.equal(asObject(expectedResult.apiResponse).n, 1);
+    });
 
-    @test('should retrieve audit stats')
-    public async shouldGetAuditStats() {
+    it('should retrieve audit stats', async function () {
         // Given
 
         // When
-        const expectedResult = await this.client.audits();
+        const expectedResult = await client.audits();
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-        expect(expectedResult.httpStatusCode).equals(200);
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+        assert.equal(expectedResult.httpStatusCode, 200);
+    });
 
-    @test('should enable audit')
-    public async shouldEnableAudit() {
+    it('should enable audit', async function () {
         // Given
         const payload = {
             type: 'file',
@@ -213,56 +216,77 @@ class VaultClientIntegrationTest {
         };
 
         // When
-        const expectedResult = await this.client.enableAudit('/test-audit', payload);
+        const expectedResult = await client.enableAudit('/test-audit', payload);
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-        expect(expectedResult.httpStatusCode).equals(204);
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+        assert.equal(expectedResult.httpStatusCode, 204);
+    });
 
-    @test('should retrieve audit hash')
-    public async shouldRetrieveAuditHash() {
+    it('should retrieve audit hash', async function () {
         // Given
 
         // When
-        const vaultResponse = await this.client.auditHash('/test-audit', { input: 'foo' });
+        const vaultResponse = await client.auditHash('/test-audit', { input: 'foo' });
 
         // Then
-        expect(vaultResponse).to.be.an.instanceof(VaultResponse);
-        expect(vaultResponse.succeeded).to.be.true;
-        expect(vaultResponse.apiResponse.hash).to.not.be.empty;
-    }
+        assertInstanceOf(vaultResponse, VaultResponse);
+        assert.equal(vaultResponse.succeeded, true);
+        assertNotEmpty(asString(asObject(vaultResponse.apiResponse).hash));
+    });
 
-    @test('should disable audit')
-    public async shouldDisableAudit() {
+    it('should disable audit', async function () {
         // Given
 
         // When
-        const expectedResult = await this.client.disableAudit('/test-audit');
+        const expectedResult = await client.disableAudit('/test-audit');
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-        expect(expectedResult.httpStatusCode).equals(204);
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+        assert.equal(expectedResult.httpStatusCode, 204);
+    });
 
-    @test('should retrieve policy list')
-    public async shouldRetrivePolicyList() {
+    it('should retrieve policy list', async function () {
         // Given
 
         // When
-        const expectedResult = await this.client.policies();
+        const expectedResult = await client.policies();
 
         // Then
-        expect(expectedResult).to.be.an.instanceof(VaultResponse);
-        expect(expectedResult.succeeded).to.be.true;
-        expect(expectedResult.httpStatusCode).equals(200);
-        expect(expectedResult.apiResponse.keys).to.be.an('array').that.is.not.empty;
-    }
+        assertInstanceOf(expectedResult, VaultResponse);
+        assert.equal(expectedResult.succeeded, true);
+        assert.equal(expectedResult.httpStatusCode, 200);
+        assert.ok(Array.isArray(asObject(expectedResult.apiResponse).keys));
+        assertNotEmpty(asStringArray(asObject(expectedResult.apiResponse).keys));
+    });
 
-    @test('should validate dynamic credentials flow')
-    public async checkDynamicCredentialsSupport() {
+    it('should add and remove a policy', async function () {
+        // Given
+        const policyName = 'integration-policy';
+        const payload = {
+            policy: 'path "secret/*" { capabilities = ["create", "read", "update", "delete", "list"] }',
+        };
+
+        // When
+        const addPolicyResult = await client.addPolicy(policyName, payload);
+        const policiesAfterAddResult = await client.policies();
+        const removePolicyResult = await client.removePolicy(policyName);
+        const policiesAfterRemoveResult = await client.policies();
+        const policiesAfterAdd = asStringArray(asObject(policiesAfterAddResult.apiResponse).keys);
+        const policiesAfterRemove = asStringArray(asObject(policiesAfterRemoveResult.apiResponse).keys);
+
+        // Then
+        assert.equal(addPolicyResult.httpStatusCode, 204);
+        assert.equal(policiesAfterAddResult.httpStatusCode, 200);
+        assert.equal(policiesAfterAdd.includes(policyName), true);
+        assert.equal(removePolicyResult.httpStatusCode, 204);
+        assert.equal(policiesAfterRemoveResult.httpStatusCode, 200);
+        assert.equal(policiesAfterRemove.includes(policyName), false);
+    });
+
+    it('should validate dynamic credentials flow', async function () {
         // Given
         const payload = {
             type: 'database',
@@ -282,31 +306,33 @@ class VaultClientIntegrationTest {
         };
 
         // Then
-        const mountResult = await this.client.mount('database', payload);
-        const writePgConnSetupResult = await this.client.write('database/config/postgresql', pgSetupPayload);
-        const writePgReadonlyRoleResult = await this.client.write('database/roles/readonly', readonlyRolePayload);
-        const credsReadonlyResult = await this.client.read('database/creds/readonly');
-        const mountsResult = await this.client.mounts();
-        const unmountResult = await this.client.unmount('database');
-        const mountsAfterDbUnmountResult = await this.client.mounts();
+        const mountResult = await client.mount('database', payload);
+        const writePgConnSetupResult = await client.write('database/config/postgresql', pgSetupPayload);
+        const writePgReadonlyRoleResult = await client.write('database/roles/readonly', readonlyRolePayload);
+        const credsReadonlyResult = await client.read('database/creds/readonly');
+        const mountsResult = await client.mounts();
+        const unmountResult = await client.unmount('database');
+        const mountsAfterDbUnmountResult = await client.mounts();
+        const credsData = asObject(asObject(credsReadonlyResult.apiResponse).data);
+        const mountsData = asObject(asObject(mountsResult.apiResponse).data);
+        const mountsAfterUnmountData = asObject(asObject(mountsAfterDbUnmountResult.apiResponse).data);
 
         // When
-        expect(mountResult.httpStatusCode).equals(204);
-        expect(writePgConnSetupResult.httpStatusCode).equals(200);
-        expect(writePgReadonlyRoleResult.httpStatusCode).equals(204);
-        expect(credsReadonlyResult.apiResponse.data.username).is.not.empty;
-        expect(credsReadonlyResult.apiResponse.data.password).is.not.empty;
-        expect(mountsResult.httpStatusCode).equals(200);
-        expect(mountsResult.apiResponse.data).to.have.ownProperty('database/');
-        expect(mountsResult.apiResponse.data).to.have.ownProperty('secret/');
-        expect(mountsResult.apiResponse.data).to.have.ownProperty('sys/');
-        expect(unmountResult.httpStatusCode).equals(204);
-        expect(mountsAfterDbUnmountResult.apiResponse.data).not.ownProperty('database/');
+        assert.equal(mountResult.httpStatusCode, 204);
+        assert.equal(writePgConnSetupResult.httpStatusCode, 200);
+        assert.equal(writePgReadonlyRoleResult.httpStatusCode, 204);
+        assertNotEmpty(asString(credsData.username));
+        assertNotEmpty(asString(credsData.password));
+        assert.equal(mountsResult.httpStatusCode, 200);
+        assert.equal(hasOwn(mountsData, 'database/'), true);
+        assert.equal(hasOwn(mountsData, 'secret/'), true);
+        assert.equal(hasOwn(mountsData, 'sys/'), true);
+        assert.equal(unmountResult.httpStatusCode, 204);
+        assert.equal(hasOwn(mountsAfterUnmountData, 'database/'), false);
 
-    }
+    });
 
-    @test('should validate remount command')
-    public async testRemountCommand() {
+    it('should validate remount command', async function () {
         // Given
         const payload: VaultRemountPayloadRequest = {
             from: 'secret',
@@ -314,18 +340,18 @@ class VaultClientIntegrationTest {
         };
 
         // Then
-        const remountResult = await this.client.remount(payload);
-        const mountsResult = await this.client.mounts();
+        const remountResult = await client.remount(payload);
+        const mountsResult = await client.mounts();
+        const mountsData = asObject(asObject(mountsResult.apiResponse).data);
 
         // When
-        expect(remountResult.httpStatusCode).equals(204);
-        expect(mountsResult.httpStatusCode).equals(200);
-        expect(mountsResult.apiResponse.data).not.ownProperty('secret/');
-        expect(mountsResult.apiResponse.data).to.have.ownProperty('secret-new/');
-    }
+        assertOneOf(remountResult.httpStatusCode, [200, 204]);
+        assert.equal(mountsResult.httpStatusCode, 200);
+        assert.equal(hasOwn(mountsData, 'secret/'), false);
+        assert.equal(hasOwn(mountsData, 'secret-new/'), true);
+    });
 
-    @test('Should validate auth flow')
-    public async shouldValidateAuthFlow() {
+    it('Should validate auth flow', async function () {
         // Given
         const userpassAuthPayload: VaultAuthPayloadRequest = {
             type: 'userpass',
@@ -337,22 +363,25 @@ class VaultClientIntegrationTest {
         };
 
         // Then
-        const enableAuthResult = await this.client.enableAuth('userpass', userpassAuthPayload);
-        const authResult = await this.client.auths();
-        const createUserResult = await this.client.write('/auth/userpass/users/integration', createUserPayload);
-        const listUsersResult = await this.client.list('/auth/userpass/users');
-        const disableAuthResult = await this.client.disableAuth('userpass');
-        const authResultAfterDisablingUserpass = await this.client.auths();
+        const enableAuthResult = await client.enableAuth('userpass', userpassAuthPayload);
+        const authResult = await client.auths();
+        const createUserResult = await client.write('/auth/userpass/users/integration', createUserPayload);
+        const listUsersResult = await client.list('/auth/userpass/users');
+        const disableAuthResult = await client.disableAuth('userpass');
+        const authResultAfterDisablingUserpass = await client.auths();
+        const authData = asObject(asObject(authResult.apiResponse).data);
+        const listUsersData = asObject(asObject(listUsersResult.apiResponse).data);
+        const authDataAfterDisable = asObject(asObject(authResultAfterDisablingUserpass.apiResponse).data);
 
         // When
-        expect(authResult.httpStatusCode).equals(200);
-        expect(enableAuthResult.httpStatusCode).equals(204);
-        expect(createUserResult.httpStatusCode).equals(204);
-        expect(authResult.apiResponse.data).to.have.ownProperty('userpass/');
-        expect('integration').to.be.oneOf(listUsersResult.apiResponse.data.keys);
-        expect(disableAuthResult.httpStatusCode).equals(204);
-        expect(authResultAfterDisablingUserpass.httpStatusCode).equals(200);
-        expect(authResultAfterDisablingUserpass.apiResponse.data).not.ownProperty('userpass/');
+        assert.equal(authResult.httpStatusCode, 200);
+        assert.equal(enableAuthResult.httpStatusCode, 204);
+        assert.equal(createUserResult.httpStatusCode, 204);
+        assert.equal(hasOwn(authData, 'userpass/'), true);
+        assertOneOf('integration', asStringArray(listUsersData.keys));
+        assert.equal(disableAuthResult.httpStatusCode, 204);
+        assert.equal(authResultAfterDisablingUserpass.httpStatusCode, 200);
+        assert.equal(hasOwn(authDataAfterDisable, 'userpass/'), false);
 
-    }
-}
+    });
+});

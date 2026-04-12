@@ -1,196 +1,231 @@
-# nanvc - Not Another Node Vault Client
+# nanvc
 
 [![build status](https://github.com/zailic/nanvc/actions/workflows/main.yaml/badge.svg)](https://github.com/zailic/nanvc/actions/workflows/main.yaml)
 [![code coverage](https://codecov.io/gh/zailic/nanvc/branch/master/graph/badge.svg?token=DWUB3ADSQG)](https://codecov.io/gh/zailic/nanvc)
 
-This is a [Vault](https://www.vaultproject.io/) client written in typescript.
+`nanvc` is a small TypeScript client for the HashiCorp Vault HTTP API.
 
-# Table of contents
-* [Install](#install)
-* [How to use it](#how-to-use-it)
-    * [ES5](#es5)
-    * [ES6](#es6)
-* [What is supported](#what-is-supported)
-* [TODO list](#todo-list)
+## Requirements
+
+- Node.js `>= 20`
+- npm
 
 ## Install
-``` bash
-# requires nodejs >= 14
-npm install nanvc --save
+
+```bash
+npm install nanvc
 ```
-## How to use it
 
-The VaultClient constructor takes three optional arguments:
-- vault cluster address - if not passed in, defaults to NANVC_VAULT_CLUSER_ADDRESS environment variable otherwise it will take 'http://127.0.0.1:8200' value
-- vault auth token - if not passed in, defaults to NANVC_VAULT_AUTH_TOKEN env. variable, otherwise will be set to null
-- vault api version - if not passed in, defaults to NANVC_VAULT_API_VERSION environment variable, otherwise is set internaly to 'v1'
+## Usage
 
-### ES5
+The `VaultClient` constructor accepts three optional arguments:
 
-```javascript
-var VaultClient = require('nanvc');
-var vault = new VaultClient('http://vault.local:8200');
-vault.init({ 
-        secret_shares: 1, 
-        secret_threshold: 1 
-    })
-    .then(function (result) { // unseal vault
-        console.log("Unsealing vault");
-        console.log(result);
-        if (!result.succeeded) {
-            throw new Error(result.errorMessage);
-        }
-        var keys = result.apiResponse.keys;
-        vault.token = result.apiResponse.root_token;
-        return vault.unseal({
-            secret_shares: 1,
-            key: keys[0]
-        });
-    })
-    .then(function (response) { // write a secret
-        console.log("Writing a secret");
-        return vault.write(
-            '/secret/my-app/my-secret', { 
-                'foo': 'my-password' 
-            }
-        )
-    })
-    .then(function(response) { // update a secret
-        console.log(response);
-        console.log("Updating secret");
-        return vault.update(
-            '/secret/my-app/my-secret', { 
-                'foo': 'my-updated-password' 
-            }
-        );  
-    })
-    .then(function(response){ // read a secret
-        console.log(response);
-        console.log("Reading a secret");
-        return vault.read('/secret/my-app/my-secret');
-    })
-    .then(function(response){ // delete a secret
-        console.log(response);
-        console.log("Deleting a secret");
-        return vault.delete('/secret/my-app/my-secret');
-    })
-    .then(function(response){ // handle delete response 
-        console.log(response);
-    })
-    .catch(console.error);
-```
-### ES6
-```javascript
-import VaultClient from "nanvc";
-let vault = new VaultClient('http://vault.local:8200');
+1. Vault cluster address
+2. Vault auth token
+3. Vault API version
 
-async function main() {
-    try {
-        let initResponse = await vault.init({
-            secret_shares: 1,
-            secret_threshold: 1
-        });
+If omitted, the client uses:
 
-        if (initResponse.succeeded) {
-            console.log(initResponse);
-            vault.token = initResponse.apiResponse.root_token;
-            let unsealResponse = await vault.unseal({
-                secret_shares: 1,
-                key: initResponse.apiResponse.keys[0]
-            });
-            if (!unsealResponse.succeeded) {
-                throw new Error(unsealResponse.errorMessage);
-            }
-        } else {
-            throw new Error(initResponse.errorMessage);
-        }
-        // write a secret
-        let writeSecretResponse = await vault.write('/secret/my-app/my-secret', { 'foo': 'my-password' });
-        console.log(writeSecretResponse);
-        // update a secret
-        let updateSecretResponse = await vault.update('/secret/my-app/my-secret', { 'foo': 'my-updated-password' });
-        console.log(updateSecretResponse);
-        // read a secret
-        let mySecretQueryResponse = await vault.read('/secret/my-app/my-secret');
-        let mySecret = mySecretQueryResponse.succeeded && mySecretQueryResponse.apiResponse.data.foo;
-        console.log(mySecretQueryResponse);
-        // delete a secret
-        let mySecretDeleteQueryResponse = await vault.delete('/secret/my-app/my-secret');
-        let mySecretIsDeleted = mySecretDeleteQueryResponse.succeeded;
-        console.log(mySecretDeleteQueryResponse);
-    } catch (e) {
-        throw (e);
+- `NANVC_VAULT_CLUSTER_ADDRESS`
+- `NANVC_VAULT_AUTH_TOKEN`
+- `NANVC_VAULT_API_VERSION`
+
+and falls back to:
+
+- cluster address: `http://127.0.0.1:8200`
+- auth token: `null`
+- API version: `v1`
+
+### CommonJS
+
+Starting with version 1.2.0, `nanvc` is published as an ESM-only package. CommonJS consumers need to use dynamic `import()` to load the module.
+
+
+### TypeScript / ESM
+
+```ts
+import VaultClient from 'nanvc';
+
+const vault = new VaultClient('http://vault.local:8200');
+
+async function main(): Promise<void> {
+    const initResponse = await vault.init({
+        secret_shares: 1,
+        secret_threshold: 1,
+    });
+
+    if (!initResponse.succeeded || !initResponse.apiResponse) {
+        throw new Error(initResponse.errorMessage ?? 'Vault init failed');
     }
 
+    const initData = initResponse.apiResponse as {
+        keys: string[];
+        root_token: string;
+    } | undefined;
+    
+    if (!initData?.keys?.length || !initData.root_token) {
+        throw new Error(initResponse.errorMessage ?? 'Vault init returned no keys or root token');
+    }
+    
+    vault.token = initData.root_token;
+    
+    await vault.unseal({
+        key: initData.keys[0],
+    });
+    
+    await vault.write('/secret/my-app/my-secret', {
+        foo: 'my-password',
+    });
+
+    const secretResponse = await vault.read('/secret/my-app/my-secret');
+    console.log(secretResponse.apiResponse);
 }
 
-main().then().catch(console.error);
-
+main().catch(console.error);
 ```
-## What is supported
 
-Vault Rest API Call | Http Method | Client Library Method | Tested
---------------------|-------------|-----------------------|-------
-/:path|GET|VaultClient.read(secretPath: string)| Yes
-/:path|POST|VaultClient.write(secretPath: string, secretData: object)| Yes
-/:path|PUT|VaultClient.update(secretPath: string, secretData: object)| Yes
-/:path|DELETE|VaultClient.delete(secretPath: string)| Yes
-/:path|LIST|VaultClient.list(path: string)| Yes
-/sys/audit|GET|VaultClient.audits()|Yes
-/sys/audit/:name|PUT|VaultClient.enableAudit(auditName: string)|Yes
-/sys/audit/:name|DELETE|VaultClient.disableAudit(auditName: string)|Yes
-/sys/audit-hash/:path|POST|VaultClient.auditHash(path: string, payload: object)|Yes
-/sys/auth|GET|VaultClient.auths()|Yes
-/sys/auth|POST|VaultClient.enableAuth(path: string, payload: object)| Yes
-/sys/auth|DELETE|VaultClient.disableAuth(path: string)| Yes
-/sys/capabilities|POST|N/A|N/A
-/sys/capabilities-accessor|POST|N/A|N/A
-/sys/capabilities-self|POST|N/A|N/A
-/sys/config/auditing|GET|N/A|N/A
-/sys/config/control-group|GET|N/A|N/A
-/sys/config/cors|GET|N/A|N/A
-/sys/control-group|POST|N/A|N/A
-/sys/generate-root|GET|N/A|N/A
-/sys/health|HEAD|N/A|N/A
-/sys/health|GET|N/A|N/A
-/sys/init|GET|VaultClient.isInitialized()|Yes
-/sys/init|PUT|VaultClient.init(initData: object)|Yes
-/sys/key-status|GET|N/A|N/A
-/sys/leader|GET|N/A|N/A
-/sys/leases|PUT|N/A|N/A
-/sys/leases|LIST|N/A|N/A
-/sys/license|GET|N/A|N/A
-/sys/mfa|N/A|N/A|N/A
-/sys/mounts|GET|VaultClient.mounts()|Yes
-/sys/mounts/:mount_point|POST|VaultClient.mount(path: string, mountOptions: object)|Yes
-/sys/mounts/:mount_point|DELETE|VaultClient.unmount(path: string)|Yes
-/sys/mounts/:mount_point/tune|POST|N/A|N/A
-/sys/plugins/reload/backend|PUT|N/A|N/A
-/sys/plugins/catalog|LIST|N/A|N/A
-/sys/plugins/catalog/:catalog_name|PUT|N/A|N/A
-/sys/plugins/catalog/:catalog_name|GET|N/A|N/A
-/sys/plugins/catalog/:catalog_name|DELETE|N/A|N/A
-/sys/policy|GET|VaultClient.policies()|No
-/sys/policy|PUT|VaultClient.addPolicy(policyName: string, policyData: obkect )|No
-/sys/policy|DELETE|VaultClient.removePolicy(policyName: string)|No
-/sys/policies|N/A|N/A|N/a
-/sys/raw|N/A|N/A|N/A
-/sys/rekey|N/A|N/A|N/A
-/sys/rekey-recovery-key|N/A|N/A|N/A
-/sys/remount|POST|VaultClient.remount(remountData: object)|Yes
-/sys/replication|N/A|N/A|N/A
-/sys/rotate|N/A|N/A|N/A
-/sys/seal|PUT|VaultClient.seal()|Yes
-/sys/seal-status|GET|VaultClient.status()|Yes
-/sys/step-down|N/A|N/A|N/A
-/sys/tools|N/A|N/A|N/A
-/sys/unseal|PUT|VaultClient.unseal(unsealData: object)|Yes
-/sys/wrapping/lookup|N/A|N/A|N/A
-/sys/wrapping/rewrap|N/A|N/A|N/A
-/sys/wrapping/unwrap|N/A|N/A|N/A
-/sys/wrapping/wrap|N/A|N/A|N/A
+### Optional mTLS
 
-## TODO list
-- [x] Better documentation(API, more samples, what is supported and what is NOT)
-- [ ] Full support for ["System Backend Commands"](https://www.vaultproject.io/api/system/index.html)
-- [x] Typescript declarations - it will bring IDE intellisense for tools like Vscode, IntelliJ IDEA, Atom, etc
+TLS client authentication is optional and disabled by default. Existing constructor calls keep working as-is.
+
+For HTTPS Vault clusters that only need a custom CA, you can pass just `ca`:
+
+```ts
+import VaultClient from 'nanvc';
+
+const vault = new VaultClient({
+    clusterAddress: 'https://vault.local:8200',
+    authToken: process.env.VAULT_TOKEN ?? null,
+    tls: {
+        ca: process.env.VAULT_CA_PEM,
+        rejectUnauthorized: true,
+    },
+});
+```
+
+For HTTPS Vault clusters that require mTLS, use the object-based constructor:
+
+```ts
+import VaultClient from 'nanvc';
+
+const vault = new VaultClient({
+    clusterAddress: 'https://vault.local:8200',
+    authToken: process.env.VAULT_TOKEN ?? null,
+    apiVersion: 'v1',
+    tls: {
+        ca: process.env.VAULT_CA_PEM,
+        cert: process.env.VAULT_CLIENT_CERT_PEM,
+        key: process.env.VAULT_CLIENT_KEY_PEM,
+        passphrase: process.env.VAULT_CLIENT_KEY_PASSPHRASE,
+        rejectUnauthorized: true,
+    },
+});
+```
+
+The `tls` block supports:
+
+- `ca`
+- `cert`
+- `key`
+- `passphrase`
+- `rejectUnauthorized`
+
+## API
+
+Implemented client methods:
+
+- `read(path)`
+- `write(path, payload)`
+- `update(path, payload)`
+- `delete(path)`
+- `list(path)`
+- `audits()`
+- `auditHash(path, payload)`
+- `auths()`
+- `enableAudit(path, payload)`
+- `disableAudit(path)`
+- `enableAuth(path, payload)`
+- `disableAuth(path)`
+- `isInitialized()`
+- `init(payload)`
+- `mount(path, payload)`
+- `mounts()`
+- `policies()`
+- `addPolicy(name, payload)`
+- `removePolicy(name)`
+- `remount(payload)`
+- `seal()`
+- `status()`
+- `unmount(path)`
+- `unseal(payload)`
+
+Every call resolves to a `VaultResponse` with:
+
+- `succeeded`
+- `httpStatusCode`
+- `apiResponse`
+- `errorMessage`
+
+## Development
+
+```bash
+npm install
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
+### Test commands
+
+```bash
+npm run test:unit
+npm run test:integration
+npm run test:all
+```
+
+### Integration tests
+
+Integration tests expect local Vault-related services from `docker-compose.yml`:
+
+```bash
+npm run test:integration:prepare
+docker compose up -d
+npm run test:integration
+```
+
+The prepared fixtures start three Vault listeners for integration coverage:
+
+- plain HTTP on `http://vault.local:8200`
+- HTTPS with a custom CA on `https://127.0.0.1:8201`
+- HTTPS with required client certificates on `https://127.0.0.1:8202`
+
+## Project layout
+
+```text
+src/
+  lib/
+    client.ts
+    commands/
+test/
+```
+
+The `src/lib/commands` layer defines the command specs and payload types used by `VaultClient`.
+
+## Status
+
+This library covers a focused subset of the Vault API, mainly:
+
+- secret CRUD operations
+- initialization and seal management
+- mounts
+- audits
+- auth backends
+- policies
+- remount
+
+It does not aim to expose the full Vault API surface yet.
+
+## License
+
+MIT

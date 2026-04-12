@@ -2,31 +2,61 @@ name: NPM publish
 
 on:
   release:
-    types: [published]
+    types:
+      - published
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
-  build:
+  publish:
+    name: Publish package
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.release.target_commitish }}
-      - name: Use nodejs v14
-        uses: actions/setup-node@v1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
-          node-version: 14
-          registry-url: 'https://registry.npmjs.org'
-      - name: Build the containers stack (integration tests dependency)
-        run: docker-compose up -d
-      - name: Adding host aliases (integration tests requirement)  
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare integration TLS fixtures
+        run: npm run test:integration:prepare
+
+      - name: Start integration stack
+        run: docker compose up -d --build
+
+      - name: Add host alias for Vault
         run: echo "127.0.0.1 vault.local" | sudo tee -a /etc/hosts
-      - name: Install nodejs dependencies
-        run: npm install
-      - name: Run tests
+
+      - name: Wait for testing resources to be ready
+        run: sleep 30
+
+      - name: Run full test suite
         run: npm run test:all
-      - name: Build the package
+
+      - name: Build package
         run: npm run build
-      - run: npm publish
+
+      - name: Publish package
+        run: npm publish --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop integration stack
+        if: always()
+        run: docker compose down --volumes --remove-orphans
