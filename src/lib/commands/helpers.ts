@@ -9,6 +9,8 @@ export type RequestOptions = {
     url?: string;
 };
 
+export const MAX_URL_PART_LENGTH = 500;
+
 export function buildRequestOptions(
     baseUrl: string,
     request: RequestOptions,
@@ -37,6 +39,10 @@ export function buildRequestOptions(
 export function joinUrl(...parts: string[]): string {
     return parts
         .map((part, index) => {
+            if (part.length > MAX_URL_PART_LENGTH) {
+                throw new Error(`URL part at index ${index} exceeds maximum length of ${MAX_URL_PART_LENGTH} characters`);
+            }
+
             if (index === 0) {
                 return part.replace(/\/+$/g, '');
             }

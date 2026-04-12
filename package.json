@@ -34,12 +34,11 @@
     "exports": {
         ".": {
             "types": "./dist/main.d.ts",
-            "import": "./dist/main.js",
-            "default": "./dist/main.js"
+            "import": "./dist/main.js"
         }
     },
     "scripts": {
-        "clean": "rimraf dist .test-dist coverage .nyc_output",
+        "clean": "rimraf dist coverage .nyc_output",
         "typecheck": "tsc -p tsconfig.json",
         "build": "npm run clean && tsc -p tsconfig.build.json",
         "lint": "eslint .",

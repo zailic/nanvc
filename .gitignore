@@ -18,7 +18,6 @@ npm-debug.log
 
 # transpilations
 /dist
-/.test-dist
 
 # env files
 /src/.example.env

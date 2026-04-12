@@ -7,7 +7,6 @@ export default defineConfig(
         ignores: [
             'coverage/**',
             'dist/**',
-            '.test-dist/**',
             'node_modules/**',
         ],
     },

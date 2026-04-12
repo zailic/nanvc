@@ -259,7 +259,7 @@ describe('VaultClient integration test cases.', function () {
         assert.equal(expectedResult.succeeded, true);
         assert.equal(expectedResult.httpStatusCode, 200);
         assert.ok(Array.isArray(asObject(expectedResult.apiResponse).keys));
-        assertNotEmpty(asString(asObject(expectedResult.apiResponse).keys));
+        assertNotEmpty(asStringArray(asObject(expectedResult.apiResponse).keys));
     });
 
     it('should add and remove a policy', async function () {

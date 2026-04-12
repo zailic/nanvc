@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createSandbox } from 'sinon';
 import { VaultClient } from './../../../src/lib/client.js';
 import { VaultResponse } from '../../../src/lib/commands/spec.js';
-import { buildRequestOptions } from '../../../src/lib/commands/helpers.js';
+import { buildRequestOptions, MAX_URL_PART_LENGTH } from '../../../src/lib/commands/helpers.js';
 
 import type { SinonSandbox } from 'sinon';
 
@@ -118,6 +118,28 @@ describe('VaultClient unit test cases.', function () {
         // Then
         assert.equal(opts.url, 'https://fake.cluster.address:8200/v1/sys/policy/integration-policy');
         assert.equal(opts.body, undefined);
+    });
+
+    it('throw an error if URL part exceeds maximum length', function () {
+        // Given
+        const longString = 'a'.repeat(MAX_URL_PART_LENGTH + 1);
+        const requestData = {
+            url: 'https://fake.cluster.address:8200',
+            headers: {
+                'X-Vault-Token': 'fake-token',
+            },
+        } as Parameters<typeof buildRequestOptions>[1];
+
+        // When / Then
+        assert.throws(() => {
+            buildRequestOptions(
+                client.getBaseUrl(),
+                requestData,
+                'GET',
+                '/sys/mounts/:mount_point',
+                [longString],
+            );
+        }, new RegExp(`URL part at index 1 exceeds maximum length of ${MAX_URL_PART_LENGTH} characters`));
     });
 
     it('apiRequest method should be called within dynamic methods', async function () {

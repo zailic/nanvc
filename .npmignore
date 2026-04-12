@@ -12,10 +12,7 @@
 /.nyc_output
 /coverage
 
-# misc
-/dist
-/.test-dist
-/.example.env
+# src and test files
 src/
 test/
 

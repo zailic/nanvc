@@ -137,7 +137,7 @@ export class VaultClient {
     public async apiRequest(commandSpec: VaultCommandSpec, ...restOfArgs: unknown[]): Promise<VaultResponse> {
         const requestData = this.buildRequestOptions(commandSpec, restOfArgs);
         const partialVaultResponse: PartialVaultResponse = {};
-
+        let requestSucceeded: boolean | undefined;
         try {
             if (commandSpec.schema?.req) {
                 const tv4ValidationResult = tv4.validate(requestData.json, commandSpec.schema.req);
@@ -149,8 +149,10 @@ export class VaultClient {
             const responseBody = this.parseResponseBody(response.body);
 
             partialVaultResponse.httpStatusCode = response.status;
-
-            if (response.ok) {
+            requestSucceeded = Array.isArray(commandSpec.successCodes)
+                ? commandSpec.successCodes.includes(response.status)
+                : response.ok;
+            if (requestSucceeded) {
                 partialVaultResponse.apiResponse = responseBody as VaultApiResponse;
             } else {
                 partialVaultResponse.errorMessage = this.extractResponseErrorMessage(responseBody, response.statusText);
@@ -159,7 +161,16 @@ export class VaultClient {
             partialVaultResponse.errorMessage = err instanceof Error ? err.message : String(err);
         }
 
-        return VaultResponse.fromPartial(partialVaultResponse);
+        const vaultResponse = VaultResponse.fromPartial(partialVaultResponse) as VaultResponse & { succeeded?: boolean };
+        if (typeof requestSucceeded === 'boolean') {
+            Object.defineProperty(vaultResponse, 'succeeded', {
+                value: requestSucceeded,
+                enumerable: true,
+                configurable: true,
+            });
+        }
+
+        return vaultResponse;
     }
 
     public getBaseUrl(): string {
@@ -181,9 +192,9 @@ export class VaultClient {
         };
 
         return buildRequestOptions(
-            this.getBaseUrl(), 
-            request, 
-            commandSpec.method, 
+            this.getBaseUrl(),
+            request,
+            commandSpec.method,
             commandSpec.path, args,
         );
     }

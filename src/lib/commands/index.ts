@@ -46,6 +46,7 @@ export { unsealSpec } from './sys-unseal.js';
 
 export { buildRequestOptions } from './helpers.js';
 export { joinUrl } from './helpers.js';
+export { MAX_URL_PART_LENGTH } from './helpers.js';
 
 export const commandSpecs: Readonly<Record<string, VaultCommandSpec>> = {
     audits: auditsSpec,

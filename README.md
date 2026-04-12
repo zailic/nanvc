@@ -38,11 +38,8 @@ and falls back to:
 
 ### CommonJS
 
-```js
-const VaultClient = require('nanvc');
+Starting with version 1.2.0, `nanvc` is published as an ESM-only package. CommonJS consumers need to use dynamic `import()` to load the module.
 
-const vault = new VaultClient('http://vault.local:8200');
-```
 
 ### TypeScript / ESM
 
@@ -57,21 +54,25 @@ async function main(): Promise<void> {
         secret_threshold: 1,
     });
 
-    if (!initResponse.succeeded || !initResponse.apiResponse?.initialized) {
+    if (!initResponse.succeeded || !initResponse.apiResponse) {
         throw new Error(initResponse.errorMessage ?? 'Vault init failed');
     }
 
     const initData = initResponse.apiResponse as {
         keys: string[];
         root_token: string;
-    };
-
+    } | undefined;
+    
+    if (!initData?.keys?.length || !initData.root_token) {
+        throw new Error(initResponse.errorMessage ?? 'Vault init returned no keys or root token');
+    }
+    
     vault.token = initData.root_token;
-
+    
     await vault.unseal({
         key: initData.keys[0],
     });
-
+    
     await vault.write('/secret/my-app/my-secret', {
         foo: 'my-password',
     });
@@ -182,8 +183,6 @@ npm run test:unit
 npm run test:integration
 npm run test:all
 ```
-
-The test flow compiles test files into `.test-dist` before running Mocha.
 
 ### Integration tests
 

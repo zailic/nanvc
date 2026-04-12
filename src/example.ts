@@ -1,5 +1,5 @@
 // import VaultClient from 'nanvc';
-import { VaultClient } from './lib/client.js'; 
+import { VaultClient } from './lib/client.js';
 import { writeFileSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -16,7 +16,12 @@ async function vaultInitAndUnseal(vault: VaultClient): Promise<void> {
     const initData = initResponse.apiResponse as {
         keys: string[];
         root_token: string;
-    };
+    } | undefined;
+    
+    if (!initData?.keys?.length || !initData.root_token) {
+        throw new Error(initResponse.errorMessage ?? 'Vault init returned no keys or root token');
+    }
+
     // this is for demonstration purposes only, do not
     // do this in production
     updateEnvFile(initData);
@@ -63,18 +68,18 @@ async function main(): Promise<void> {
 
     // let's check is vault is initialized
     const isInitializedResponse = await vault.isInitialized();
-    
+
     if (!isInitializedResponse.succeeded || !isInitializedResponse.apiResponse?.initialized) {
         await vaultInitAndUnseal(vault);
     }
-    
+
     // if vault is already initialized, we need to unseal it before making any other requests
     const unsealKey = process.env.NANVC_VAULT_UNSEAL_KEY;
     if (!unsealKey) {
         throw new Error('NANVC_VAULT_UNSEAL_KEY environment variable is not set');
     }
     const unsealResponse = await vault.unseal({
-            key: unsealKey,
+        key: unsealKey,
     });
 
     if (!unsealResponse.succeeded) {
@@ -89,10 +94,10 @@ async function main(): Promise<void> {
     });
     const secretResponse = await vault.read('/secret/my-app/my-secret');
     console.log(secretResponse);
-    
+
     const auditResponse = await vault.enableAudit('/test-audit', {
         type: 'file',
-        options: {  
+        options: {
             path: '/var/log/vault/audit-log.json',
         },
     });
