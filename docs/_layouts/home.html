@@ -1,0 +1,46 @@
+---
+layout: default
+---
+
+<section class="hero">
+  <div class="shell">
+    <div class="hero__content">
+      <p class="eyebrow">TypeScript Vault Client</p>
+      <h1>{{ site.title }}</h1>
+      <p class="hero__lede">A focused guide to working with the Vault API through nanvc, from your first request to typed v2 workflows and contributor docs.</p>
+      <div class="hero__actions">
+        <a class="button button--primary" href="{{ '/getting-started/' | relative_url }}">Get Started</a>
+        <a class="button button--secondary" href="{{ '/api-v2/' | relative_url }}">Explore v2 API</a>
+      </div>
+    </div>
+    <div class="hero__panel">
+{% highlight ts %}
+import { VaultClientV2 } from 'nanvc';
+// ...
+const vault = new VaultClientV2();
+// Authenticate using the RoleID and SecretID to retrieve a Vault 
+// token. Assuming here that roleId and secretId are already defined,
+// e.g. derived from environment variables or other strategies.
+await vault.auth.loginWithAppRole({
+  role_id: roleId,
+  secret_id: secretId,
+}).unwrap();
+// Read a secret from Vault using the authenticated client token
+const secret = await vault.read('secret', 'mysql/webapp', {
+  engineVersion: 2,
+}).unwrap();
+
+{% endhighlight %}
+    </div>
+  </div>
+</section>
+
+<section class="home-content">
+  <div class="shell">
+    <article class="doc-card">
+      <div class="doc-card__body">
+        {{ content }}
+      </div>
+    </article>
+  </div>
+</section>

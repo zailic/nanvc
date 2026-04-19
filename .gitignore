@@ -8,7 +8,6 @@
 # misc
 npm-debug.log
 
-
 # ts-node
 /ts-node-*
 
@@ -19,8 +18,8 @@ npm-debug.log
 # transpilations
 /dist
 
-# env files
-/src/.example.env
+# ignore all .env files
+*.env 
 
 # generated integration TLS fixtures
 /test/util/vault/certs/*.crt
@@ -31,3 +30,7 @@ npm-debug.log
 
 # macOS
 .DS_Store
+
+# GitHub Pages
+/.cache
+/_site
