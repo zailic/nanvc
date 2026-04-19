@@ -1,0 +1,20 @@
+---
+layout: default
+---
+
+<section class="doc-page">
+  <div class="shell">
+    <article class="doc-card">
+      <header class="doc-card__header">
+        <p class="eyebrow">Documentation</p>
+        <h1>{{ page.title }}</h1>
+        {% if page.description %}
+          <p class="page-intro">{{ page.description }}</p>
+        {% endif %}
+      </header>
+      <div class="doc-card__body">
+        {{ content }}
+      </div>
+    </article>
+  </div>
+</section>

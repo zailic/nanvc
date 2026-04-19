@@ -9,7 +9,9 @@
   },
   "include": [
     "./**/*.ts",
-    "../src/**/*.ts"
+    "../src/**/*.ts",
+    "../examples/app-role/main.ts",
+    "../examples/app-role-v1/main.ts"
   ],
   "exclude": [
     "node_modules"

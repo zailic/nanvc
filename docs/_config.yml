@@ -1,0 +1,24 @@
+title: nanvc
+description: A focused TypeScript client for the HashiCorp Vault HTTP API
+markdown: kramdown
+permalink: pretty
+baseurl: ""
+
+header_pages:
+  - index.md
+  - getting-started.md
+  - api-v1.md
+  - api-v2.md
+  - error-handling.md
+  - contributing.md
+
+plugins:
+  - jekyll-feed
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: page
+
+highlighter: rouge

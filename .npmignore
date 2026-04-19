@@ -5,6 +5,9 @@
 /.idea
 /.vscode
 
+# OS/editor noise
+.DS_Store
+
 # ts-node
 /ts-node-*
 
@@ -12,14 +15,24 @@
 /.nyc_output
 /coverage
 
-# src and test files
+# docs site
+/.cache
+/_site
+/docs
+/Gemfile
+/Gemfile.lock
+
+# source, examples, and test files
 src/
+examples/
 test/
 
 # github
 .github/
 
-# tooling
+# generation inputs and tooling
+/openapi
+/scripts
 .mocharc.json
 eslint.config.mjs
 npm-debug.log

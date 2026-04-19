@@ -1,6 +1,6 @@
 {
     "name": "nanvc",
-    "description": "Not Another Node Vault Client :)",
+    "description": "A focused TypeScript client for the HashiCorp Vault HTTP API.",
     "version": "1.2.0",
     "author": {
         "name": "Ionut Zailic",
@@ -10,11 +10,14 @@
     "keywords": [
         "hashicorp",
         "vault",
-        "consul",
-        "aws",
+        "hashicorp-vault",
         "secrets",
-        "manage",
-        "client"
+        "secret-management",
+        "typescript",
+        "nodejs",
+        "api-client",
+        "devops",
+        "security"
     ],
     "repository": {
         "type": "git",
@@ -39,16 +42,29 @@
     },
     "scripts": {
         "clean": "rimraf dist coverage .nyc_output",
+        "docs:serve": "bundle exec jekyll serve --source docs --livereload",
+        "generate:v2:openapi": "node ./scripts/generate-v2-openapi-types.mjs",
+        "generate:v2:docs": "node ./scripts/generate-v2-docs.mjs",
         "typecheck": "tsc -p tsconfig.json",
         "build": "npm run clean && tsc -p tsconfig.build.json",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "test:integration:prepare": "sh ./test/util/vault/generate-certs.sh",
+        "test:integration:reset": "docker compose down --volumes --remove-orphans && docker compose up -d --build && npm run test:integration:wait",
+        "test:integration:wait": "sleep 30",
+        "test:integration:legacy": "mocha --config .mocharc.json \"test/integration/lib/**/*.ts\"",
+        "test:integration:v2": "mocha --config .mocharc.json \"test/integration/v2/**/*.ts\"",
+        "test:integration:all": "npm run test:integration:prepare && npm run test:integration:reset && npm run test:integration:legacy && npm run test:integration:reset && npm run test:integration:v2",
+        "test:integration": "npm run test:integration:all",
         "test": "npm run test:unit",
         "test:unit": "mocha --config .mocharc.json \"test/unit/**/*.ts\"",
-        "test:integration": "mocha --config .mocharc.json \"test/integration/**/*.ts\"",
-        "test:all": "mocha --config .mocharc.json \"test/unit/**/*.ts\" \"test/integration/**/*.ts\"",
-        "coverage": "nyc npm run test:all",
+        "test:all": "npm run test:unit && npm run test:integration:all",
+        "coverage": "npm run coverage:clean && npm run coverage:unit && npm run test:integration:prepare && npm run test:integration:reset && npm run coverage:integration:legacy && npm run test:integration:reset && npm run coverage:integration:v2 && npm run coverage:report",
+        "coverage:clean": "rimraf coverage .nyc_output",
+        "coverage:unit": "nyc --silent --clean=false npm run test:unit",
+        "coverage:integration:legacy": "nyc --silent --clean=false npm run test:integration:legacy",
+        "coverage:integration:v2": "nyc --silent --clean=false npm run test:integration:v2",
+        "coverage:report": "nyc report",
         "prepack": "npm run build"
     },
     "nyc": {

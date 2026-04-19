@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 
 The format is inspired by Keep a Changelog, with the current work tracked under `Unreleased` until you decide the next version number.
 
+## Unreleased
+
+### Added
+
+- Added the v2 client surface built around `VaultClientV2`, `RawVaultClient`, structured `VaultClientError`, and Rust-inspired promise-like `Result<T>` helpers.
+- Added typed v2 support for common Vault workflows, including:
+  - system health, readiness, mount, init, and unseal helpers
+  - auth method and AppRole helpers
+  - KV v1 helpers
+  - common KV v2 helpers for read, write, list, and soft-delete
+- Added Vault CLI-style KV shortcuts on `VaultClientV2`: `read`, `write`, `delete`, and `list`, defaulting to KV v1 with explicit `{ engineVersion: 2 }` support for KV v2.
+- Added `RawVaultClient` typed overloads generated from selected Vault OpenAPI paths, plus the OpenAPI target and generation scripts.
+- Added dedicated v2 unit and integration test coverage.
+- Added GitHub Pages documentation under `docs/`, including Getting Started, API v1/v2 references, error handling, and contributing guidance.
+- Added AppRole examples for both client generations:
+  - `examples/app-role` for `VaultClientV2`
+  - `examples/app-role-v1` for the original `VaultClient`
+- Added README files for each AppRole example with local Docker Compose setup and run instructions.
+- Added a GitHub Pages workflow for publishing the documentation site.
+
+### Changed
+
+- Updated package metadata and README positioning around a focused TypeScript Vault client, with `VaultClientV2` documented as the forward-looking client.
+- Renamed v2 constructor options to align with the original client: `clusterAddress` and `authToken`.
+- Refocused documentation examples on application workflows with an existing token instead of promoting Vault initialization and unseal flows as first-contact examples.
+- Moved operator-oriented v2 system methods such as init and unseal into a separate generated docs category.
+- Documented that `secret.kv.v2` intentionally covers the common KV v2 workflow and is not a complete implementation of every KV v2 OpenAPI operation.
+- Expanded documentation footer, navigation, and project links for users arriving from GitHub or npm.
+- Updated `.npmignore` for the current docs, examples, OpenAPI, and tooling layout.
+- Updated CI and publish workflows so integration and coverage scripts own their own Docker setup/reset lifecycle.
+- Updated coverage collection so unit, legacy integration, and v2 integration suites run as separate nyc-wrapped commands while preserving raw coverage data until the final report.
+- Updated integration coverage to reset Docker-backed Vault state between the legacy and v2 integration suites.
+
+### Removed
+
+- Removed the old `src/example.ts` example in favor of maintained examples under `examples/`.
+
 ## 1.2.0 - 2026-04-12
 
 ### Added
