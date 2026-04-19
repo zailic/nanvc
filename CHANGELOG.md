@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 ## Unreleased
 
+## 2.0.0 - 2026-04-20
+
 ### Added
 
 - Added the v2 client surface built around `VaultClientV2`, `RawVaultClient`, structured `VaultClientError`, and Rust-inspired promise-like `Result<T>` helpers.

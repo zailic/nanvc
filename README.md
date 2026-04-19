@@ -6,6 +6,7 @@
 `nanvc` is a small TypeScript client for the HashiCorp Vault HTTP API.
 
 Full documentation is available at [zailic.github.io/nanvc](https://zailic.github.io/nanvc/).
+Release notes are available in the [changelog](CHANGELOG.md).
 
 New development is focused on `VaultClientV2`, the typed client built on top of `RawVaultClient`.
 The original `VaultClient` remains available for compatibility, but it is expected to be deprecated and removed in a future major release.
