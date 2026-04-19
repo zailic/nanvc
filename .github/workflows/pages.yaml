@@ -36,6 +36,8 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Build docs
         run: bundle exec jekyll build --source docs --destination _site
