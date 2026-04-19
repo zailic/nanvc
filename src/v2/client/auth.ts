@@ -1,6 +1,7 @@
 import type { RawVaultClient } from '../core/raw-client.js';
-import { err, ok, Result, ResultTuple, toResult } from '../core/result.js';
-import { components } from '../generated/vault-openapi.js';
+import type { Result, ResultTuple } from '../core/result.js';
+import type { components } from '../generated/vault-openapi.js';
+import { err, ok, toResult } from '../core/result.js';
 import { normalize } from 'path';
 
 export type VaultAuthMethodRequest = components['schemas']['AuthEnableMethodRequest'];

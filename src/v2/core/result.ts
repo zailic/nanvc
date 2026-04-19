@@ -1,4 +1,4 @@
-import { VaultClientError } from '../transport/errors.js';
+import type { VaultClientError } from '../transport/errors.js';
 
 export type Ok<T> = readonly [data: T, error: null];
 export type Err<E> = readonly [data: null, error: E];
@@ -58,19 +58,20 @@ export function toResult<T, E = VaultClientError>(
     // Rust like unwrapErr for cases where the caller expects an error and 
     // wants to get it directly, throwing if it's actually an Ok value
     result.unwrapErr = async (): Promise<E> => {
-        const [_, error] = await promise;
+        const [data, error] = await promise;
 
         if (!error) {
             throw new Error('Called unwrapErr on an Ok value');
         }
-
+        void data;
         return error as E;
     };
 
     // Rust like intoErr for cases where the caller just wants to check the
     // error without throwing
     result.intoErr = async (): Promise<E | null> => {
-        const [_, error] = await promise;
+        const [data, error] = await promise;
+        void data;
         return error;
     };
 
