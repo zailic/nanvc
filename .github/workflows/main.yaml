@@ -32,6 +32,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify generated v2 docs
+        run: |
+          npm run generate:v2:docs
+          git diff --exit-code docs/api-v2.md
+
       - name: Typecheck
         run: npm run typecheck
 
