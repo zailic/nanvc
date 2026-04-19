@@ -267,26 +267,59 @@ function resolvePathTemplate(
     pathTemplate: string,
     pathParams?: Record<string, string>,
 ): string {
+    const normalizedTemplate = stripLeadingSlashes(pathTemplate);
     if (!pathParams) {
-        return pathTemplate.replace(/^\/+/g, '');
+        return normalizedTemplate;
     }
 
-    return pathTemplate
-        .replace(/\{([^}]+)\}/g, (_, key: string) => {
-            const value = pathParams[key];
-            if (typeof value !== 'string') {
-                throw new VaultClientError({
-                    code: 'VALIDATION_ERROR',
-                    details: { key, pathParams, pathTemplate },
-                    message: `Missing path parameter: ${key}`,
-                });
-            }
+    let resolvedPath = '';
+    let cursor = 0;
 
-            return value
-                .replace(/^\/+/g, '')
-                .split('/')
-                .map((part) => encodeURIComponent(part))
-                .join('/');
-        })
-        .replace(/^\/+/g, '');
+    while (cursor < normalizedTemplate.length) {
+        const openIndex = normalizedTemplate.indexOf('{', cursor);
+        if (openIndex === -1) {
+            resolvedPath += normalizedTemplate.slice(cursor);
+            break;
+        }
+
+        const closeIndex = normalizedTemplate.indexOf('}', openIndex + 1);
+        if (closeIndex === -1) {
+            resolvedPath += normalizedTemplate.slice(cursor);
+            break;
+        }
+
+        resolvedPath += normalizedTemplate.slice(cursor, openIndex);
+
+        const key = normalizedTemplate.slice(openIndex + 1, closeIndex);
+        const value = pathParams[key];
+        if (typeof value !== 'string') {
+            throw new VaultClientError({
+                code: 'VALIDATION_ERROR',
+                details: { key, pathParams, pathTemplate },
+                message: `Missing path parameter: ${key}`,
+            });
+        }
+
+        resolvedPath += encodePathParameter(value);
+        cursor = closeIndex + 1;
+    }
+
+    return resolvedPath;
+}
+
+function encodePathParameter(value: string): string {
+    return stripLeadingSlashes(value)
+        .split('/')
+        .map((part) => encodeURIComponent(part))
+        .join('/');
+}
+
+function stripLeadingSlashes(value: string): string {
+    let index = 0;
+
+    while (index < value.length && value[index] === '/') {
+        index += 1;
+    }
+
+    return value.slice(index);
 }

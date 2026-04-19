@@ -114,6 +114,23 @@ describe('RawVaultClient unit test cases.', function () {
         } satisfies VaultRequestOptions);
     });
 
+    it('should resolve malformed template-like paths without regex backtracking', async function () {
+        const transportStub = sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
+        const client = new RawVaultClient();
+        const path = `/${'{{|'.repeat(1000)}tail`;
+
+        await client.get(path, {
+            params: {
+                path: {
+                    unused: 'value',
+                },
+            },
+        });
+
+        assert.equal(transportStub.calledOnce, true);
+        assert.equal(transportStub.firstCall.firstArg.path, path.slice(1));
+    });
+
     it('should throw a validation error when a required path parameter is missing', function () {
         const client = new RawVaultClient();
 
