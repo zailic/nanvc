@@ -1,8 +1,9 @@
 title: nanvc
 description: A focused TypeScript client for the HashiCorp Vault HTTP API
+url: "https://zailic.github.io"
 markdown: kramdown
 permalink: pretty
-baseurl: ""
+baseurl: "/nanvc"
 
 header_pages:
   - index.md

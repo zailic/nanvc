@@ -8,7 +8,7 @@ on:
       - docs/**
       - Gemfile
       - Gemfile.lock
-      - .github/workflows/pages.yml
+      - .github/workflows/pages.yaml
   workflow_dispatch:
 
 permissions:
