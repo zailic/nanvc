@@ -5,12 +5,22 @@ import tseslint from 'typescript-eslint';
 export default defineConfig(
     {
         ignores: [
+            '_site/**',
             'coverage/**',
             'dist/**',
             'node_modules/**',
         ],
     },
     js.configs.recommended,
+    {
+        files: ['docs/assets/js/**/*.js'],
+        languageOptions: {
+            globals: {
+                document: 'readonly',
+                window: 'readonly',
+            },
+        },
+    },
     ...tseslint.configs.recommended,
     {
         files: ['**/*.ts'],
