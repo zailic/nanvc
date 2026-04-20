@@ -23,7 +23,7 @@
         "type": "git",
         "url": "https://github.com/zailic/nanvc.git"
     },
-    "homepage": "https://github.com/zailic/nanvc",
+    "homepage": "https://zailic.github.io/nanvc",
     "bugs": {
         "url": "https://github.com/zailic/nanvc/issues"
     },
@@ -42,7 +42,8 @@
     },
     "scripts": {
         "clean": "rimraf dist coverage .nyc_output",
-        "docs:serve": "bundle exec jekyll serve --source docs --livereload",
+        "docs:prepare": "node ./scripts/generate-docs-changelog.mjs",
+        "docs:serve": "npm run docs:prepare && bundle exec jekyll serve --source docs --livereload",
         "generate:v2:openapi": "node ./scripts/generate-v2-openapi-types.mjs",
         "generate:v2:docs": "node ./scripts/generate-v2-docs.mjs",
         "typecheck": "tsc -p tsconfig.json",
@@ -111,6 +112,7 @@
         "sinon": "^21.0.3",
         "typescript": "^6.0.0",
         "typescript-eslint": "^8.58.0",
-        "tsx": "^4.21.0"
+        "tsx": "^4.21.0",
+        "serialize-javascript": "^7.0.5"
     }
 }

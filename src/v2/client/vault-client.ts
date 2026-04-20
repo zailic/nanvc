@@ -1,5 +1,6 @@
 import { RawVaultClient } from '../core/raw-client.js';
-import type { Result } from '../core/result.js';
+import { err, ok, toResult, type Result, type ResultTuple } from '../core/result.js';
+import { VaultClientError } from '../transport/errors.js';
 import type { VaultClientOptions } from '../transport/types.js';
 import { VaultAuthClient } from './auth.js';
 import { VaultSecretClient } from './secret.js';
@@ -55,7 +56,12 @@ export class VaultClient {
         pathOrOptions?: string | VaultKvShortcutDeleteOptions,
         maybeOptions?: VaultKvShortcutDeleteOptions,
     ): Result<void> {
-        const { mount, path, options } = resolveKvShortcutRef(pathOrMount, pathOrOptions, maybeOptions);
+        const [ref, resolveError] = resolveKvShortcutRef(pathOrMount, pathOrOptions, maybeOptions);
+        if (resolveError) {
+            return errorResult(resolveError);
+        }
+
+        const { mount, path, options } = ref;
 
         if (isKvV2Shortcut(options)) {
             return this.secret.kv.v2.delete(mount, path);
@@ -75,7 +81,12 @@ export class VaultClient {
         pathOrOptions?: string | VaultKvShortcutListOptions,
         maybeOptions?: VaultKvShortcutListOptions,
     ): Result<string[]> {
-        const { mount, path, options } = resolveKvShortcutRef(pathOrMount, pathOrOptions, maybeOptions, true);
+        const [ref, resolveError] = resolveKvShortcutRef(pathOrMount, pathOrOptions, maybeOptions, true);
+        if (resolveError) {
+            return errorResult(resolveError);
+        }
+
+        const { mount, path, options } = ref;
 
         if (isKvV2Shortcut(options)) {
             return this.secret.kv.v2.list(mount, path);
@@ -106,7 +117,12 @@ export class VaultClient {
         pathOrOptions?: string | VaultKvShortcutReadOptions,
         maybeOptions?: VaultKvShortcutReadOptions,
     ): Result<T | VaultKvV2ReadResponse<T>> {
-        const { mount, path, options } = resolveKvShortcutRef(pathOrMount, pathOrOptions, maybeOptions);
+        const [ref, resolveError] = resolveKvShortcutRef(pathOrMount, pathOrOptions, maybeOptions);
+        if (resolveError) {
+            return errorResult(resolveError);
+        }
+
+        const { mount, path, options } = ref;
 
         if (isKvV2Shortcut(options)) {
             return this.secret.kv.v2.read<T>(mount, path, {
@@ -150,14 +166,22 @@ export class VaultClient {
         const payload = typeof pathOrPayload === 'string' ? payloadOrOptions : pathOrPayload;
 
         if (!isRecord(payload)) {
-            throw new Error('VaultClient.write requires a payload object');
+            return errorResult(new VaultClientError({
+                code: 'VALIDATION_ERROR',
+                message: 'VaultClient.write requires a payload object',
+            }));
         }
 
-        const { mount, path, options } = resolveKvShortcutRef(
+        const [ref, resolveError] = resolveKvShortcutRef(
             pathOrMount,
             typeof pathOrPayload === 'string' ? pathOrPayload : payloadOrOptions as VaultKvShortcutWriteOptions | undefined,
             maybeOptions,
         );
+        if (resolveError) {
+            return errorResult(resolveError);
+        }
+
+        const { mount, path, options } = ref;
 
         if (isKvV2Shortcut(options)) {
             const writeOptions = options as VaultKvShortcutV2WriteOptions;
@@ -177,31 +201,34 @@ function resolveKvShortcutRef<TOptions extends VaultKvShortcutReadOptions>(
     pathOrOptions?: string | TOptions,
     maybeOptions?: TOptions,
     allowEmptyPath = false,
-): {
+): ResultTuple<{
     mount: string;
     options?: TOptions;
     path: string;
-} {
+}> {
     if (typeof pathOrOptions === 'string') {
-        return {
+        return ok({
             mount: pathOrMount,
             options: maybeOptions,
             path: pathOrOptions,
-        };
+        });
     }
 
     const [mount, ...pathSegments] = pathOrMount.split('/').filter(Boolean);
     const path = pathSegments.join('/');
 
     if (!mount || (!allowEmptyPath && !path)) {
-        throw new Error(`Expected a KV secret path like "secret/my-app/my-secret", got "${pathOrMount}"`);
+        return err(new VaultClientError({
+            code: 'VALIDATION_ERROR',
+            message: `Expected a KV secret path like "secret/my-app/my-secret", got "${pathOrMount}"`,
+        }));
     }
 
-    return {
+    return ok({
         mount,
         options: pathOrOptions,
         path,
-    };
+    });
 }
 
 function isKvV2Shortcut(options: VaultKvShortcutReadOptions | undefined): options is VaultKvShortcutV2ReadOptions {
@@ -210,4 +237,8 @@ function isKvV2Shortcut(options: VaultKvShortcutReadOptions | undefined): option
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function errorResult<T>(error: VaultClientError): Result<T> {
+    return toResult(Promise.resolve(err(error) as ResultTuple<T>));
 }

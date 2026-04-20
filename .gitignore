@@ -34,3 +34,4 @@ npm-debug.log
 # GitHub Pages
 /.cache
 /_site
+/docs/changelog.md
