@@ -2,6 +2,8 @@ import type { RawVaultClient } from '../core/raw-client.js';
 import type { Result, ResultTuple } from '../core/result.js';
 import type { components } from '../generated/vault-openapi.js';
 import { err, ok, toResult } from '../core/result.js';
+import { VaultClientError } from '../transport/errors.js';
+
 import { normalize } from 'path';
 
 export type VaultAuthMethodRequest = components['schemas']['AuthEnableMethodRequest'];
@@ -260,7 +262,11 @@ export class VaultAuthClient {
         maybePayload?: VaultAppRoleLoginRequest,
     ): Result<VaultAppRoleLoginResponse> {
         return toResult((async (): Promise<ResultTuple<VaultAppRoleLoginResponse>> => {
-            const approleRef = resolveAppRoleLoginParams(approleMountPathOrPayload, maybePayload);
+            const [approleRef, resolveError] = resolveAppRoleLoginParams(approleMountPathOrPayload, maybePayload);
+            if (resolveError) {
+                return err(resolveError);
+            }
+
             const [data, error] = await this.raw.post('/auth/{approle_mount_path}/login', {
                 body: approleRef.payload,
                 params: {
@@ -416,23 +422,26 @@ function hasVaultDataEnvelope<T>(response: T | { data?: T }): response is { data
 function resolveAppRoleLoginParams(
     approleMountPathOrPayload: string | VaultAppRoleLoginRequest,
     maybePayload?: VaultAppRoleLoginRequest,
-): {
+): ResultTuple<{
     approle_mount_path: string;
     payload: VaultAppRoleLoginRequest;
-} {
+}> {
     if (typeof approleMountPathOrPayload === 'string') {
         if (!maybePayload) {
-            throw new Error('VaultAuthClient.loginWithAppRole requires a payload object');
+            return err(new VaultClientError({
+                code: 'VALIDATION_ERROR',
+                message: 'VaultAuthClient.loginWithAppRole requires a payload object',
+            }));
         }
 
-        return {
+        return ok({
             approle_mount_path: normalize(approleMountPathOrPayload),
             payload: maybePayload,
-        };
+        });
     }
 
-    return {
+    return ok({
         approle_mount_path: 'approle',
         payload: approleMountPathOrPayload,
-    };
+    });
 }

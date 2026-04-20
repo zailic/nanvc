@@ -6,6 +6,19 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 ## Unreleased
 
+### Added
+
+- Added README links to the changelog and maintained AppRole examples.
+- Added a docs favicon and npm icon link in the documentation footer.
+- Added a generated documentation changelog page sourced from the root `CHANGELOG.md`.
+- Added focused v2 unit coverage for `Result` helpers, Node transport request shaping, auth edge cases, system helpers, and KV v1/v2 error handling.
+
+### Changed
+
+- Updated the package homepage to the GitHub Pages documentation site.
+- Updated the GitHub Pages workflow to generate the docs changelog before building.
+- Changed v2 AppRole login, KV v1 helpers, and high-level KV shortcut validation to return `VaultClientError` results instead of throwing synchronous exceptions.
+
 ## 2.0.0 - 2026-04-20
 
 ### Added

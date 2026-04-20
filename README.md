@@ -225,6 +225,11 @@ The `tls` block supports:
 - `passphrase`
 - `rejectUnauthorized`
 
+## Examples
+
+- [AppRole example with `VaultClientV2`](examples/app-role/README.md)
+- [AppRole example with the original `VaultClient`](examples/app-role-v1/README.md)
+
 ## API
 
 For the typed v2 client, see the [VaultClientV2 API reference](https://zailic.github.io/nanvc/api-v2/).

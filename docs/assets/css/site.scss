@@ -533,26 +533,31 @@ ol {
   text-underline-offset: 0.18em;
 }
 
-.site-footer__github {
+.site-footer__social {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.95rem;
+}
+
+.site-footer__social-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
-  margin-top: 0.95rem;
   border-radius: 999px;
   color: var(--accent-strong);
   background: rgba(15, 108, 92, 0.08);
   transition: transform 140ms ease, background-color 140ms ease, color 140ms ease;
 }
 
-.site-footer__github:hover {
+.site-footer__social-link:hover {
   transform: translateY(-1px);
   background: rgba(15, 108, 92, 0.14);
   color: var(--accent);
 }
 
-.site-footer__github svg {
+.site-footer__social-link svg {
   width: 1.3rem;
   height: 1.3rem;
   fill: currentColor;

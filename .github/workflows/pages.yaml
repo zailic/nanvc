@@ -6,8 +6,11 @@ on:
       - master
     paths:
       - docs/**
+      - CHANGELOG.md
       - Gemfile
       - Gemfile.lock
+      - package.json
+      - scripts/generate-docs-changelog.mjs
       - .github/workflows/pages.yaml
   workflow_dispatch:
 
@@ -38,6 +41,9 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
+      - name: Generate docs changelog
+        run: npm run docs:prepare
 
       - name: Build docs
         run: bundle exec jekyll build --source docs --destination _site
