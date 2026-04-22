@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 ### Added
 
+- Added `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md` to document contribution expectations and community standards.
 - Added README links to the changelog and maintained AppRole examples.
 - Added a docs favicon and npm icon link in the documentation footer.
 - Added a generated documentation changelog page sourced from the root `CHANGELOG.md`.
@@ -15,6 +16,7 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 ### Changed
 
+- Trimmed development and project layout details from the README in favor of the dedicated contributing guide.
 - Updated the package homepage to the GitHub Pages documentation site.
 - Updated the GitHub Pages workflow to generate the docs changelog before building.
 - Changed v2 AppRole login, KV v1 helpers, and high-level KV shortcut validation to return `VaultClientError` results instead of throwing synchronous exceptions.

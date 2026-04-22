@@ -26,7 +26,7 @@ npm install nanvc
 
 ### TypeScript / ESM
 
-```ts
+```js
 import { VaultClientV2 } from 'nanvc';
 
 const vault = new VaultClientV2({
@@ -34,12 +34,12 @@ const vault = new VaultClientV2({
     authToken: process.env.VAULT_TOKEN ?? null,
 });
 
-async function main(): Promise<void> {
+async function main() {
     await vault.write('secret/my-app/my-secret', {
         foo: 'my-password',
     }).unwrap();
 
-    const secret = await vault.read<{ foo: string }>('secret/my-app/my-secret').unwrap();
+    const secret = await vault.read('secret/my-app/my-secret').unwrap();
     console.log(secret.foo);
 }
 
@@ -268,78 +268,11 @@ Every call resolves to a `VaultResponse` with:
 - `apiResponse`
 - `errorMessage`
 
-## Development
+## Contributing
 
-For the v2 OpenAPI type generator inputs and module layout, see [openapi/README.md](openapi/README.md).
+Contributions are welcome. Please read the [contributing guide](CONTRIBUTING.md) before opening an issue or pull request.
 
-```bash
-npm install
-npm run generate:v2:openapi
-npm run generate:v2:docs
-npm run typecheck
-npm run lint
-npm test
-npm run build
-```
-
-### Test commands
-
-```bash
-npm run test:unit
-npm run test:integration
-npm run test:integration:legacy
-npm run test:integration:v2
-npm run test:integration:all
-npm run test:all
-npm run coverage
-```
-
-### Integration tests
-
-Integration tests expect local Vault-related services from `docker-compose.yml`:
-
-```bash
-npm run test:integration:prepare
-docker compose up -d
-npm run test:integration
-```
-
-To run both integration suites reliably against fresh Vault state, use:
-
-```bash
-npm run test:integration:all
-```
-
-That command regenerates local TLS fixtures, recreates the Docker stack, runs the legacy integration suite, recreates the stack again, and then runs the v2 suite.
-
-The coverage task follows the same reset boundary. It runs unit tests, resets the
-Docker stack for the legacy integration suite, resets it again for the v2 suite,
-and only then generates the final nyc report.
-
-The prepared fixtures start three Vault listeners for integration coverage:
-
-- plain HTTP on `http://vault.local:8200`
-- HTTPS with a custom CA on `https://127.0.0.1:8201`
-- HTTPS with required client certificates on `https://127.0.0.1:8202`
-
-## Project layout
-
-```text
-src/
-  lib/
-    client.ts
-    commands/
-  v2/
-    client/
-    core/
-    transport/
-docs/
-examples/
-test/
-```
-
-The `src/lib/commands` layer defines the command specs and payload types used by `VaultClient`.
-The `src/v2` layer contains the typed client, raw transport client, result helpers, and generated Vault OpenAPI types.
+This project follows a [Code of Conduct](CODE_OF_CONDUCT.md) to help keep the community welcoming and respectful.
 
 ## Status
 
