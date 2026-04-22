@@ -41,17 +41,17 @@ describe('Logger unit test cases.', function () {
             {
                 context: undefined,
                 level: 'info',
-                message: '19:09:07.042 nanvc INFO   info message meta="{\\"retry\\":false}" path="sys mounts" status=200',
+                message: '19:09:07.042 nanvc INFO info message meta="{\\"retry\\":false}" path="sys mounts" status=200',
             },
             {
                 context: undefined,
                 level: 'warn',
-                message: '19:09:07.042 nanvc WARN   warn message',
+                message: '19:09:07.042 nanvc WARN warn message',
             },
             {
                 context: undefined,
                 level: 'error',
-                message: '19:09:07.042 nanvc ERROR  error message',
+                message: '19:09:07.042 nanvc ERROR error message',
             },
         ]);
     });
@@ -64,7 +64,7 @@ describe('Logger unit test cases.', function () {
 
         logger.debug('vault request started');
 
-        assert.deepEqual(calls, ['19:09:07.042 nanvc DEBUG  vault request started']);
+        assert.deepEqual(calls, ['19:09:07.042 nanvc DEBUG vault request started']);
     });
 
     it('should colorize log level prefixes when colors are enabled', function () {
@@ -105,7 +105,7 @@ describe('Logger unit test cases.', function () {
         });
 
         assert.deepEqual(calls, [
-            '19:09:07.042 nanvc INFO   info message circularValue=[unserializable] symbolValue=Symbol(nanvc)',
+            '19:09:07.042 nanvc INFO info message circularValue=[unserializable] symbolValue=Symbol(nanvc)',
         ]);
     });
 });

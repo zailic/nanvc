@@ -7,7 +7,7 @@ export type NanvcLogger = {
     warn(message: string, context?: Record<string, unknown>): void;
 };
 
-type LogSink = Partial<NanvcLogger>;
+type LogSink = Partial<Record<Exclude<NanvcLogLevel, 'silent'>, (message: string) => void>>;
 
 type LoggerOptions = {
     colors?: boolean;
@@ -22,7 +22,7 @@ const logLevelPriority: Record<NanvcLogLevel, number> = {
     debug: 4,
 };
 
-const defaultSink: NanvcLogger = {
+const defaultSink: Required<LogSink> = {
     debug: console.debug.bind(console),
     error: console.error.bind(console),
     info: console.info.bind(console),
@@ -64,7 +64,7 @@ const logLevelColor: Record<Exclude<NanvcLogLevel, 'silent'>, color> = {
     warn: color.FgYellow,
 };
 
-const logLevelAbrev: Record<Exclude<NanvcLogLevel, 'silent'>, string> = {
+const logLevelAbbrev: Record<Exclude<NanvcLogLevel, 'silent'>, string> = {
     debug: 'DBG',
     error: 'ERR',
     info: 'INF',
@@ -145,10 +145,10 @@ function formatLogMessage(
     const timestamp = formatTimestamp(time);
 
     if (colors !== true) {
-        return `${timestamp} nanvc ${padLevel(level)} ${message}${formattedContext}`;
+        return `${timestamp} nanvc ${level.toUpperCase()} ${message}${formattedContext}`;
     }
 
-    return `${color.Dim}${timestamp}${color.Reset} ${color.Bright}nanvc${color.Reset} ${logLevelColor[level]}${logLevelAbrev[level]}${color.Reset} ${message}${formattedContext}`;
+    return `${color.Dim}${timestamp}${color.Reset} ${color.Bright}nanvc${color.Reset} ${logLevelColor[level]}${logLevelAbbrev[level]}${color.Reset} ${message}${formattedContext}`;
 }
 
 function formatContext(context?: Record<string, unknown>, colors?: boolean): string {
@@ -200,11 +200,6 @@ function supportsColorOutput(): boolean {
     }
 
     return process.stdout.isTTY === true || process.stderr.isTTY === true;
-}
-
-function padLevel(level: string): string {
-    const maxLevelLength = Math.max(...Object.keys(logLevelPriority).map((l) => l.length));
-    return level.toUpperCase().padEnd(maxLevelLength, ' ');
 }
 
 function formatTimestamp(time: Date): string {
