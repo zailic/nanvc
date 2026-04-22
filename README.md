@@ -2,6 +2,8 @@
 
 [![build status](https://github.com/zailic/nanvc/actions/workflows/main.yaml/badge.svg)](https://github.com/zailic/nanvc/actions/workflows/main.yaml)
 [![code coverage](https://codecov.io/gh/zailic/nanvc/branch/master/graph/badge.svg?token=DWUB3ADSQG)](https://codecov.io/gh/zailic/nanvc)
+![npm](https://img.shields.io/npm/v/nanvc)
+![downloads](https://img.shields.io/npm/dm/nanvc)
 
 `nanvc` is a small TypeScript client for the HashiCorp Vault HTTP API.
 
