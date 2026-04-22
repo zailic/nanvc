@@ -4,6 +4,7 @@ import { request as httpsRequest } from 'node:https';
 import type { RequestOptions as NodeHttpsRequestOptions } from 'node:https';
 import tv4 from 'tv4';
 
+import { createLoggerFromEnv, type NanvcLogger } from '../logger.js';
 import {
     type HttpMethod,
     type PartialVaultResponse,
@@ -37,6 +38,7 @@ export type VaultClientOptions = {
     apiVersion?: string;
     authToken?: string | null;
     clusterAddress?: string;
+    logger?: NanvcLogger;
     tls?: VaultClientTlsOptions;
 };
 
@@ -44,6 +46,7 @@ export class VaultClient {
     private _clusterAddress: string;
     private _authToken: string | null;
     private _apiVersion: string;
+    private _logger: NanvcLogger;
     private _tls?: VaultClientTlsOptions;
 
     constructor();
@@ -70,6 +73,7 @@ export class VaultClient {
             this._clusterAddress = clusterAddressOrOptions.clusterAddress ?? defaults.clusterAddress;
             this._authToken = clusterAddressOrOptions.authToken ?? defaults.authToken;
             this._apiVersion = clusterAddressOrOptions.apiVersion ?? defaults.apiVersion;
+            this._logger = clusterAddressOrOptions.logger ?? createLoggerFromEnv();
             this._tls = clusterAddressOrOptions.tls;
             return;
         }
@@ -77,6 +81,7 @@ export class VaultClient {
         this._clusterAddress = clusterAddressOrOptions;
         this._authToken = authToken;
         this._apiVersion = apiVersion;
+        this._logger = createLoggerFromEnv();
         this._tls = tls;
     }
 
@@ -230,6 +235,12 @@ export class VaultClient {
         const url = new URL(requestData.url ?? '');
         const options = this.buildTransportOptions(url, requestData);
         const requestFn = url.protocol === 'https:' ? httpsRequest : httpRequest;
+        const startedAt = Date.now();
+
+        this._logger.debug('vault request started', {
+            method: requestData.method,
+            url: url.toString(),
+        });
 
         return await new Promise((resolve, reject) => {
             const req = requestFn(url, options, (response) => {
@@ -239,17 +250,47 @@ export class VaultClient {
                     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
                 });
                 response.on('end', () => {
+                    const status = response.statusCode ?? 0;
+                    const statusText = response.statusMessage ?? '';
+                    const ok = status >= 200 && status < 300;
+
+                    this._logger[ok ? 'info' : 'error']('vault request finished', {
+                        durationMs: Date.now() - startedAt,
+                        method: requestData.method,
+                        status,
+                        statusText,
+                        url: url.toString(),
+                    });
+
                     resolve({
                         body: Buffer.concat(chunks).toString('utf8'),
-                        ok: (response.statusCode ?? 0) >= 200 && (response.statusCode ?? 0) < 300,
-                        status: response.statusCode ?? 0,
-                        statusText: response.statusMessage ?? '',
+                        ok,
+                        status,
+                        statusText,
                     });
                 });
-                response.on('error', reject);
+                response.on('error', (cause) => {
+                    this._logger.error('vault response stream failed', {
+                        durationMs: Date.now() - startedAt,
+                        message: cause.message,
+                        method: requestData.method,
+                        url: url.toString(),
+                    });
+
+                    reject(cause);
+                });
             });
 
-            req.on('error', reject);
+            req.on('error', (cause) => {
+                this._logger.error('vault request failed', {
+                    durationMs: Date.now() - startedAt,
+                    message: cause.message,
+                    method: requestData.method,
+                    url: url.toString(),
+                });
+
+                reject(cause);
+            });
 
             if (requestData.body) {
                 req.write(requestData.body);

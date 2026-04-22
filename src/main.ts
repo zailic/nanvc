@@ -2,6 +2,8 @@ import { VaultClient } from './lib/client.js';
 export default VaultClient;
 export { VaultClient };
 export type { VaultClientOptions, VaultClientTlsOptions } from './lib/client.js';
+export { createLogger, createLoggerFromEnv } from './logger.js';
+export type { NanvcLogger, NanvcLogLevel } from './logger.js';
 export {
     RawVaultClient,
     VaultClientError,

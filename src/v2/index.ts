@@ -49,6 +49,8 @@ export type {
     VaultTransportResponse,
 } from './transport/types.js';
 
+export { createLogger, createLoggerFromEnv } from '../logger.js';
+export type { NanvcLogger, NanvcLogLevel } from '../logger.js';
 export { RawVaultClient } from './core/raw-client.js';
 export { err, ok } from './core/result.js';
 export { VaultClient as VaultClientV2 } from './client/vault-client.js';

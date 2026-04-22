@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 ### Added
 
+- Added optional request lifecycle logging configured with `NANVC_LOG_LEVEL`.
 - Added `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md` to document contribution expectations and community standards.
 - Added README links to the changelog and maintained AppRole examples.
 - Added a docs favicon and npm icon link in the documentation footer.
