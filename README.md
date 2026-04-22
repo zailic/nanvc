@@ -70,6 +70,17 @@ and falls back to:
 - auth token: `null`
 - API version: `v1`
 
+### Logging
+
+Logging is disabled by default. Set `NANVC_LOG_LEVEL` to enable request lifecycle logs:
+
+```bash
+NANVC_LOG_LEVEL=info node app.js
+```
+
+Supported levels are `error`, `warn`, `info`, and `debug`. Logs include a local CLI-friendly timestamp, request method, URL, status, and duration, but not tokens or request/response bodies.
+Log level prefixes are colorized when output is attached to a TTY. Set `NANVC_LOG_NO_COLOR=1` to disable colors or `NANVC_LOG_FORCE_COLOR=1` to force them.
+
 ```ts
 import VaultClient from 'nanvc';
 

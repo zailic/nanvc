@@ -1,3 +1,5 @@
+import type { NanvcLogger } from '../../logger.js';
+
 export type VaultTlsOptions = {
     ca?: string | Buffer;
     cert?: string | Buffer;
@@ -9,6 +11,7 @@ export type VaultTlsOptions = {
 export type VaultClientOptions = {
     apiVersion?: string;
     clusterAddress?: string;
+    logger?: NanvcLogger;
     timeoutMs?: number;
     tls?: VaultTlsOptions;
     authToken?: string | null;

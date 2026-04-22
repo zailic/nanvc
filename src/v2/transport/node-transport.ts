@@ -3,6 +3,7 @@ import type { RequestOptions as NodeHttpRequestOptions } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import type { RequestOptions as NodeHttpsRequestOptions } from 'node:https';
 
+import { createLoggerFromEnv } from '../../logger.js';
 import { VaultClientError } from './errors.js';
 import type {
     VaultClientOptions,
@@ -11,6 +12,8 @@ import type {
 } from './types.js';
 
 export class NodeVaultTransport {
+    private readonly logger = this.options.logger ?? createLoggerFromEnv();
+
     constructor(private readonly options: VaultClientOptions = {}) {}
 
     public async request(request: VaultRequestOptions): Promise<VaultTransportResponse> {
@@ -18,6 +21,12 @@ export class NodeVaultTransport {
         const body = request.body === undefined ? undefined : JSON.stringify(request.body);
         const requestOptions = this.buildRequestOptions(url, request, body);
         const requestFn = url.protocol === 'https:' ? httpsRequest : httpRequest;
+        const startedAt = Date.now();
+
+        this.logger.debug('vault request started', {
+            method: request.method,
+            url: url.toString(),
+        });
 
         return await new Promise((resolve, reject) => {
             const req = requestFn(url, requestOptions, (response) => {
@@ -28,15 +37,34 @@ export class NodeVaultTransport {
                 });
                 response.on('end', () => {
                     const rawBody = Buffer.concat(chunks).toString('utf8');
+                    const status = response.statusCode ?? 0;
+                    const statusText = response.statusMessage ?? '';
+                    const ok = status >= 200 && status < 300;
+
+                    this.logger[ok ? 'info' : 'error']('vault request finished', {
+                        durationMs: Date.now() - startedAt,
+                        method: request.method,
+                        status,
+                        statusText,
+                        url: url.toString(),
+                    });
+
                     resolve({
                         body: parseResponseBody(rawBody),
                         headers: response.headers,
-                        ok: (response.statusCode ?? 0) >= 200 && (response.statusCode ?? 0) < 300,
-                        status: response.statusCode ?? 0,
-                        statusText: response.statusMessage ?? '',
+                        ok,
+                        status,
+                        statusText,
                     });
                 });
                 response.on('error', (cause) => {
+                    this.logger.error('vault response stream failed', {
+                        durationMs: Date.now() - startedAt,
+                        message: cause.message,
+                        method: request.method,
+                        url: url.toString(),
+                    });
+
                     reject(new VaultClientError({
                         cause,
                         code: 'NETWORK_ERROR',
@@ -46,6 +74,13 @@ export class NodeVaultTransport {
             });
 
             req.on('error', (cause) => {
+                this.logger.error('vault request failed', {
+                    durationMs: Date.now() - startedAt,
+                    message: cause.message,
+                    method: request.method,
+                    url: url.toString(),
+                });
+
                 reject(new VaultClientError({
                     cause,
                     code: 'NETWORK_ERROR',
