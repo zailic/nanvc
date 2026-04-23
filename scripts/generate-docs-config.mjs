@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
+import { URL } from 'node:url';
 
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 

@@ -63,30 +63,6 @@ nyc's raw coverage data across separate test commands, resets Docker before the
 legacy integration suite, resets Docker again before the v2 suite, and writes
 the final report after all suites finish.
 
-## Project Structure
-
-```text
-src/
-  lib/
-    client.ts
-    commands/
-  v2/
-    client/
-    core/
-    generated/
-    transport/
-openapi/
-  targets/
-  patches/
-  vault-api-openapi.json
-scripts/
-  generate-v2-openapi-types.mjs
-  generate-v2-docs.mjs
-test/
-  unit/
-  integration/
-```
-
 ## V2 OpenAPI Type Generation
 
 The v2 raw client uses generated TypeScript types from a curated subset of the Vault OpenAPI snapshot.
