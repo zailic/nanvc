@@ -712,4 +712,4 @@ V2 uses a structured `VaultClientError` with fields such as:
 - `details`
 - `cause`
 
-See [Error Handling](./error-handling/) for more detail.
+See [Error Handling](/error-handling/) for more detail.

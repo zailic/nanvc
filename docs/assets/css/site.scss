@@ -229,7 +229,7 @@ h3 {
 
 h1 {
   margin: 0;
-  font-size: clamp(2.5rem, 7vw, 4.6rem);
+  font-size: clamp(2rem, 5vw, 2.5rem);
 }
 
 h2 {
@@ -315,9 +315,10 @@ ol {
 .site-brand__text span {
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: 0.76rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: center;
 }
 
 .site-nav {

@@ -46,7 +46,7 @@ jobs:
         run: npm run docs:prepare
 
       - name: Build docs
-        run: bundle exec jekyll build --source docs --destination _site
+        run: bundle exec jekyll build --source docs --config docs/_config.yml,docs/_config.generated.yml --destination _site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5

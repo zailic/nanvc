@@ -35,3 +35,7 @@ npm-debug.log
 /.cache
 /_site
 /docs/changelog.md
+
+# local development env/config files
+docs/_config.local.yml
+docs/_config.generated.yml
