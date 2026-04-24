@@ -245,3 +245,17 @@ main().catch(console.error);
   panel_one=minimal_example_v1
   panel_two=minimal_example_v2
 %}
+
+## Logging
+
+Logging is disabled by default. Set `NANVC_LOG_LEVEL` to enable request lifecycle logs:
+
+```bash
+NANVC_LOG_LEVEL=debug node app.js
+```
+
+Supported levels are `error`, `warn`, `info`, and `debug`. Logs include a local CLI-friendly timestamp, request method, URL, status, and duration, but not tokens or request/response bodies.
+Log level prefixes are colorized when output is attached to a TTY. Set `NANVC_LOG_NO_COLOR=1` to disable colors or `NANVC_LOG_FORCE_COLOR=1` to force them.
+{% include doc-image.html
+  image_src="/assets/images/logging_screenshot.png"
+  image_alt="Screenshot of example logging output with timestamps, methods, URLs, statuses, and durations." %}

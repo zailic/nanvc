@@ -5,6 +5,8 @@ title: Contributing
 
 Thank you for contributing to `nanvc`.
 
+This project follows a [Code of Conduct](https://github.com/zailic/nanvc/blob/master/CODE_OF_CONDUCT.md) to help keep the community welcoming and respectful.
+
 ## Local Setup
 
 ```bash

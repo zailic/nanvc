@@ -26,10 +26,7 @@ await vault.auth.loginWithAppRole({
   secret_id: secretId,
 }).unwrap();
 // Read a secret from Vault using the authenticated client token
-const secret = await vault.read('secret', 'mysql/webapp', {
-  engineVersion: 2,
-}).unwrap();
-
+const secret = await vault.read('secret/mysql/webapp').unwrap();
 {% endhighlight %}
     </div>
   </div>

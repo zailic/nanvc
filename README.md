@@ -8,7 +8,7 @@
 `nanvc` is a small TypeScript client for the HashiCorp Vault HTTP API.
 
 Full documentation is available at [zailic.github.io/nanvc](https://zailic.github.io/nanvc/).
-Release notes are available in the [changelog](CHANGELOG.md).
+Release notes are available in the [changelog](https://github.com/zailic/nanvc/CHANGELOG.md).
 
 New development is focused on `VaultClientV2`, the typed client built on top of `RawVaultClient`.
 The original `VaultClient` remains available for compatibility, but it is expected to be deprecated and removed in a future major release.
@@ -70,16 +70,6 @@ and falls back to:
 - auth token: `null`
 - API version: `v1`
 
-### Logging
-
-Logging is disabled by default. Set `NANVC_LOG_LEVEL` to enable request lifecycle logs:
-
-```bash
-NANVC_LOG_LEVEL=info node app.js
-```
-
-Supported levels are `error`, `warn`, `info`, and `debug`. Logs include a local CLI-friendly timestamp, request method, URL, status, and duration, but not tokens or request/response bodies.
-Log level prefixes are colorized when output is attached to a TTY. Set `NANVC_LOG_NO_COLOR=1` to disable colors or `NANVC_LOG_FORCE_COLOR=1` to force them.
 
 ```ts
 import VaultClient from 'nanvc';
@@ -240,8 +230,8 @@ The `tls` block supports:
 
 ## Examples
 
-- [AppRole example with `VaultClientV2`](examples/app-role/README.md)
-- [AppRole example with the original `VaultClient`](examples/app-role-v1/README.md)
+- [AppRole example with `VaultClientV2`](https://github.com/zailic/nanvc/examples/app-role/README.md)
+- [AppRole example with the original `VaultClient`](https://github.com/zailic/nanvc/examples/app-role-v1/README.md)
 
 ## API
 
@@ -281,11 +271,23 @@ Every call resolves to a `VaultResponse` with:
 - `apiResponse`
 - `errorMessage`
 
+### Logging
+
+Logging is disabled by default. Set `NANVC_LOG_LEVEL` to enable request lifecycle logs:
+
+```bash
+NANVC_LOG_LEVEL=debug node app.js
+```
+
+Supported levels are `error`, `warn`, `info`, and `debug`. Logs include a local CLI-friendly timestamp, request method, URL, status, and duration, but not tokens or request/response bodies.
+Log level prefixes are colorized when output is attached to a TTY. Set `NANVC_LOG_NO_COLOR=1` to disable colors or `NANVC_LOG_FORCE_COLOR=1` to force them.
+![Logging Screenshot](https://github.com/zailic/nanvc/docs/assets/images/logging_screenshot.png)
+
 ## Contributing
 
-Contributions are welcome. Please read the [contributing guide](CONTRIBUTING.md) before opening an issue or pull request.
+Contributions are welcome. Please read the [contributing guide](https://github.com/zailic/nanvc/CONTRIBUTING.md) before opening an issue or pull request.
 
-This project follows a [Code of Conduct](CODE_OF_CONDUCT.md) to help keep the community welcoming and respectful.
+This project follows a [Code of Conduct](https://github.com/zailic/nanvc/CODE_OF_CONDUCT.md) to help keep the community welcoming and respectful.
 
 ## Status
 

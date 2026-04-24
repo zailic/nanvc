@@ -527,6 +527,23 @@ ol {
   text-align: left;
 }
 
+.doc-image__container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 2rem 0;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background-color: var(--code-bg);
+}
+
+.doc-image__image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .site-footer {
   padding: 0 0 2.5rem;
 }
