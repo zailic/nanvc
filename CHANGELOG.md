@@ -5,6 +5,8 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 ## Unreleased
 
+## 2.0.1 - 2026-04-24
+
 ### Added
 
 - Added optional request lifecycle logging configured with `NANVC_LOG_LEVEL`.
