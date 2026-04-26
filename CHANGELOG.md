@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is inspired by Keep a Changelog, with the current work tracked under `Unreleased` until you decide the next version number.
 
 ## Unreleased
+### Added
+
+### Changed
+
+### Fixed
+
+ - broken links in docs
+ - logs with incorrect levels
 
 ## 2.0.1 - 2026-04-24
 

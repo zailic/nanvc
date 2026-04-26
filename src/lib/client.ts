@@ -254,7 +254,7 @@ export class VaultClient {
                     const statusText = response.statusMessage ?? '';
                     const ok = status >= 200 && status < 300;
 
-                    this._logger[ok ? 'info' : 'error']('vault request finished', {
+                    this._logger[ok ? 'debug' : 'error']('vault request finished', {
                         durationMs: Date.now() - startedAt,
                         method: requestData.method,
                         status,

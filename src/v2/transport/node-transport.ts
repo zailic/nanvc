@@ -41,7 +41,7 @@ export class NodeVaultTransport {
                     const statusText = response.statusMessage ?? '';
                     const ok = status >= 200 && status < 300;
 
-                    this.logger[ok ? 'info' : 'error']('vault request finished', {
+                    this.logger[ok ? 'debug' : 'error']('vault request finished', {
                         durationMs: Date.now() - startedAt,
                         method: request.method,
                         status,
