@@ -76,7 +76,7 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(setTokenSpy.calledOnceWithExactly('root-token'), true);
     });
 
-    it('should report ready when HEAD /sys/health succeeds', async function () {
+    it('should report ready when GET /sys/health succeeds', async function () {
         const requestStub = sandbox.stub(RawVaultClient.prototype, 'request').returns(
             resultOf(ok(undefined)),
         );
@@ -85,7 +85,7 @@ describe('VaultClientV2 unit test cases.', function () {
         const ready = await client.sys.isReady().unwrap();
 
         assert.equal(ready, true);
-        assert.deepEqual(requestStub.firstCall.args, ['HEAD', '/sys/health', {}]);
+        assert.deepEqual(requestStub.firstCall.args, ['GET', '/sys/health', {}]);
     });
 
     it('should get the status of the vault', async function () {
