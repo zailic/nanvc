@@ -194,8 +194,8 @@ function emitResponses(pathKey, method, responses) {
 
 function emitResponse(pathKey, method, statusCode, response) {
   const schema =
-    response?.content?.["application/json"]?.schema ??
-    responsePatches[pathKey]?.[method]?.[statusCode];
+    responsePatches[pathKey]?.[method]?.[statusCode] ??
+    response?.content?.["application/json"]?.schema;
   const description =
     typeof response?.description === "string" && response.description.length > 0
       ? response.description

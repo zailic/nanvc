@@ -6,12 +6,24 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 ## Unreleased
 ### Added
 
+- Added v2 system policy clients under `vault.sys.policies` for ACL, EGP, password, RGP, and rotation policies, including exported response and request types.
+- Added v2 response wrapping helpers under `vault.sys.wrapping` for lookup, wrap, unwrap, and rewrap workflows.
+- Added v2 API documentation for system policies and response wrapping.
+- Added a request wrapping example that demonstrates AppRole credential delivery through a short-lived wrapping token.
+- Added shared example personas for operator, admin, and app workflows across the AppRole examples.
+- Added v2 integration coverage for ACL policy and response wrapping workflows.
+- Added focused v2 unit coverage for system policy and system wrapping clients.
+
 ### Changed
+
+- Refactored the AppRole examples to use the shared persona helpers and verify the expected secret access behavior.
+- Updated OpenAPI response generation so local response patches take precedence over upstream schemas.
+- Reduced the Docker-backed integration wait delay from 30 seconds to 5 seconds.
 
 ### Fixed
 
- - broken links in docs
- - logs with incorrect levels
+- Fixed broken links in docs.
+- Fixed logs with incorrect levels.
 
 ## 2.0.1 - 2026-04-24
 

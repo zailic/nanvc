@@ -1,160 +1,75 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import assert from 'node:assert';
+
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { VaultClientV2, VaultClientError } from '../../src/main.js';
+import { AdminPersona } from '../common/personas/admin.js';
+import { AppPersona } from '../common/personas/app.js';
+import { OperatorPersona } from '../common/personas/operator.js';
+import { VaultClientError } from '../../src/main.js';
 
 const ENV_PATH = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
-
-type VaultInitMaterial = {
-    keys: string[];
-    root_token: string;
+const secretData = {
+    db_name: 'users',
+    username: 'admin',
+    password: 'passw0rd',
 };
+const assertInstanceOf = <T extends abstract new (...args: never[]) => unknown>(
+    value: unknown,
+    ctor: T,
+): void => assert.ok(value instanceof ctor);
 
 async function main(): Promise<void> {
-    const vault = new VaultClientV2();
-    
-    // Persona: operator
-    await ensureVaultIsReady(vault);
-    // Ensure the KV secrets engine is enabled at the 'secret' path
-    await ensureKvMountAvailable(vault, 'secret');
-    // Write a secret at 'secret/data/mysql/webapp' using the v2 KV client
-    vault.secret.kv.v2.write('secret', 'mysql/webapp', {
-        db_name: 'users',
-        username: 'admin',
-        password: 'passw0rd',
-    }).unwrap();
 
-    // Persona: admin
-
-    // Enable AppRole auth method
-    await vault.auth.enableAuthMethod('approle', { type: 'approle' }).unwrap();
-
-    const jenkinsPolicy = [
-        "# Read-only permission on secrets stored at 'secret/data/mysql/webapp'",
-        "path \"secret/data/mysql/webapp\" {",
-        "  capabilities = [\"read\"]",
-        "}",
-    ].join('\n');
-    // Create the policy defined above within Vault  
-    await vault.raw.post('/sys/policy/jenkins', {body: {policy: jenkinsPolicy}}).unwrap();
-
-    // Create an AppRole with the 'jenkins' policy attached
-    await vault.auth.registerAppRole('jenkins', {
-        token_policies: ['jenkins'],
-        token_ttl: '20m',
-        token_max_ttl: '30m',
-    }).unwrap();
-
-    const roleIdData = await vault.auth.getAppRoleRoleId('jenkins').unwrap();
-    const roleId = roleIdData.role_id;
-
-    const secretIdData = await vault.auth.generateAppRoleSecretId('jenkins').unwrap();
-    const secretId = secretIdData.secret_id;
-
-    // Persona: app
-    
-    // Create a new Vault client instance for the app using the retrieved token
-    const appVaultClient = new VaultClientV2({ authToken: null });
-
-    // Authenticate using the RoleID and SecretID to retrieve a Vault token
-    await appVaultClient.auth.loginWithAppRole({
-        role_id: roleId,
-        secret_id: secretId,
-    }).unwrap();
-
-    // Read the secret at 'secret/data/mysql/webapp' using the app's Vault client
-    const secretResponse = await appVaultClient.secret.kv.v2.read('secret', 'mysql/webapp').unwrap();
-
-    console.log('Retrieved secret:', secretResponse.data);
-}
-
-async function ensureVaultIsReady(vault: VaultClientV2): Promise<void> {
-    if (!await vault.sys.isReady().unwrap()) {
-        const isInitialized = await vault.sys.isInitialized().unwrap();
-        if (!isInitialized) {
-            await initializeAndUnseal(vault);
-        } else {
-            const unsealKey = process.env.NANVC_VAULT_UNSEAL_KEY;
-            if (!unsealKey) {
-                throw new Error('NANVC_VAULT_UNSEAL_KEY environment variable is not set');
-            }
-            await vault.sys.unseal({ key: unsealKey }).unwrap();
-        }
-    }
-}   
-
-async function initializeAndUnseal(vault: VaultClientV2): Promise<void> {
-    const [initData, initError] = await vault.sys.init({
-        secret_shares: 1,
-        secret_threshold: 1,
+    const operator = OperatorPersona.v2({ envPath: ENV_PATH });
+    await operator.withWorkflow(async () => {
+        await operator.ensureVaultIsReady();
+        await operator.ensureKvMountAvailable('secret');
     });
-    if (initError) {
-        throw initError;
-    }
 
-    validateInitData(initData);
-    updateEnvFile(initData);
-
-    const [, unsealError] = await vault.sys.unseal({
-        key: initData.keys[0],
-    });
-    if (unsealError) {
-        throw unsealError;
-    }
-}
-
-async function ensureKvMountAvailable(client: VaultClientV2, path: string): Promise<void> {
-    const [, error] = await client.sys.mount.enable(path, {
-        type: 'kv',
-        options: {
-            version: '2',
-        },
-    });
-    if (error && !isMountAlreadyExistsError(error)) {
-        throw error;
-    }
-}
-
-function updateEnvFile(initData: VaultInitMaterial): void {
-    const newVars = [
-        `NANVC_VAULT_UNSEAL_KEY=${initData.keys[0]}`,
-        `NANVC_VAULT_AUTH_TOKEN=${initData.root_token}`,
-    ];
-
-    let content = '';
-    try {
-        content = readFileSync(ENV_PATH, 'utf-8');
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-            throw error;
-        }
-    }
-
-    const updatedContent = content
-        .split('\n')
-        .filter((line) => !line.startsWith('NANVC_VAULT_UNSEAL_KEY=') && !line.startsWith('NANVC_VAULT_AUTH_TOKEN='))
-        .filter((line) => line.trim() !== '')
-        .concat(newVars)
-        .join('\n');
-
-    writeFileSync(ENV_PATH, `${updatedContent}\n`, 'utf-8');
-}
-
-function validateInitData(initData: VaultInitMaterial): void {
-    if (!Array.isArray(initData.keys) || initData.keys.length === 0 || !initData.root_token) {
-        throw new VaultClientError({
-            code: 'VALIDATION_ERROR',
-            details: initData,
-            message: 'Vault init returned no keys or root token',
+    const admin = AdminPersona.v2();
+    const credentials = await admin.withWorkflow(async ({ vault }) => {
+        // Creating a secret to demostrate retrieval with the AppRole credentials later in the app workflow     
+        await vault.secret.kv.v2.write('secret', 'mysql/webapp', { ...secretData }).unwrap();
+        // Enable AppRole auth method and create an AppRole with permissions to read the secret created above
+        await admin.enableAppRoleAuth();
+        const jenkinsPolicy = [
+            "# Read-only permission on secrets stored at 'secret/data/mysql/webapp'",
+            "path \"secret/data/mysql/webapp\" {",
+            "  capabilities = [\"read\"]",
+            "}",
+        ].join('\n');
+        await admin.createPolicy('jenkins', jenkinsPolicy);      
+        await admin.registerAppRole('jenkins', {
+            token_policies: ['jenkins'],
+            token_ttl: '20m',
+            token_max_ttl: '30m',
         });
-    }
-}
+        // Create credentials for the AppRole that will be used 
+        // by the persona app to authenticate and retrieve the secret
+        return admin.createAppRoleCredentials('jenkins');
+    });
 
-function isMountAlreadyExistsError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && typeof error.message === 'string'
-        && error.message.toLowerCase().includes('path is already in use');
+    const app = AppPersona.v2();
+    await app.withWorkflow(async ({ vault }) => {
+        // Authenticate with Vault using the AppRole credentials created in the admin workflow
+        await app.loginWithAppRole(credentials);
+        // Retrieve the secret created in the admin workflow using the AppRole credentials
+        const secretResponse = await vault.secret.kv.v2.read('secret', 'mysql/webapp').unwrap();
+        // let's try to delete the secret to demonstrate that the AppRole credentials don't have permissions to do so
+        const deleteError: unknown = await vault.secret.kv.v2.delete('secret', 'mysql/webapp').unwrapErr();
+        assertInstanceOf(deleteError, VaultClientError);
+        assert.strictEqual(
+            (deleteError as VaultClientError).status,
+            403,
+            'Expected a 403 Forbidden error when trying to delete the secret with insufficient permissions',
+        );
+        assert.deepStrictEqual(
+            secretResponse.data,
+            secretData,
+            "Retrieved secret data does not match the expected value",
+        );
+    });
 }
 
 main().catch((error) => {

@@ -22,7 +22,8 @@
   "include": [
     "src/**/*.ts",
     "examples/app-role/main.ts",
-    "examples/app-role-v1/main.ts"
+    "examples/app-role-v1/main.ts",
+    "examples/request-wrapping/main.ts"
   ],
   "exclude": [
     "examples",

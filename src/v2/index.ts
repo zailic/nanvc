@@ -9,12 +9,32 @@ export type {
 export type {
     VaultInitRequest,
     VaultInitResponse,
+    VaultInitStatusResponse,
     VaultMountRequest,
     VaultSealStatusResponse,
-    VaultInitStatusResponse,
     VaultUnsealRequest,
     VaultUnsealResponse,
 } from './client/sys.js';
+export type {
+    VaultAclPolicyReadResponse,
+    VaultAclPolicyWriteRequest,
+    VaultEgpPolicyReadResponse,
+    VaultEgpPolicyWriteRequest,
+    VaultPasswordPolicyGenerateResponse,
+    VaultPasswordPolicyReadResponse,
+    VaultPasswordPolicyWriteRequest,
+    VaultRgpPolicyReadResponse,
+    VaultRgpPolicyWriteRequest,
+    VaultRotationPolicyReadResponse,
+    VaultRotationPolicyWriteRequest,
+} from './client/sys-policies.js';
+export type {
+    VaultWrappingLookupResponse,
+    VaultWrappingRewrapResponse,
+    VaultWrappingUnwrapResponse,
+    VaultWrappingWrapInfo,
+    VaultWrappingWrapResponse,
+} from './client/sys-wrapping.js';
 export type {
     VaultKvV2GeneratedMetadataResponse,
     VaultKvV2GeneratedReadResponse,
@@ -57,5 +77,14 @@ export { VaultClient as VaultClientV2 } from './client/vault-client.js';
 export { VaultSecretKvV1Client } from './client/secret-kv-v1.js';
 export { VaultSecretClient } from './client/secret.js';
 export { VaultSystemClient, VaultSystemMountClient } from './client/sys.js';
+export {
+    VaultSystemPoliciesAclClient,
+    VaultSystemPoliciesClient,
+    VaultSystemPoliciesEgpClient,
+    VaultSystemPoliciesPasswordClient,
+    VaultSystemPoliciesRgpClient,
+    VaultSystemPoliciesRotationClient,
+} from './client/sys-policies.js';
+export { VaultSystemWrappingClient } from './client/sys-wrapping.js';
 export { VaultKvV2Client } from './client/secret-kv-v2.js';
 export { VaultAuthClient } from './client/auth.js';

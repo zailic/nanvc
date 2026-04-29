@@ -1,35 +1,30 @@
-# AppRole example with `VaultClient`
+# Request wrapping example with `VaultClientV2`
 
-This example mirrors the AppRole workflow using the original v1 client.
-
-It intentionally uses KV v1 for the secret path so the example can show the v1
-client's native `write` and `read` ergonomics:
+This example demonstrates an AppRole flow where the admin wraps the generated
+`role_id` and `secret_id`, then the app unwraps them before logging in:
 
 - prepare a local Vault server if needed
-- mount a KV v1 secrets engine at `credentials`
+- mount a KV v2 secrets engine at `secret`
 - write a database secret
 - enable AppRole auth
 - create a read-only policy and role
-- log in as an app with `role_id` and `secret_id`
-- read the secret with the app token
+- wrap the AppRole credentials with a short-lived wrapping token
+- unwrap the credentials as the app
+- log in as an app and read the secret with the app token
 
 The example is organized around three reusable personas from
 `examples/common/personas`:
 
-- `OperatorPersona.v1()` handles Vault readiness, initialization/unseal, `.env`
+- `OperatorPersona.v2()` handles Vault readiness, initialization/unseal, `.env`
   material, and KV mount setup.
-- `AdminPersona.v1()` configures AppRole, writes the policy, registers the role,
-  and returns `role_id` / `secret_id`.
-- `AppPersona.v1()` starts with an unauthenticated client, logs in with AppRole,
-  and reads the application secret.
+- `AdminPersona.v2()` configures AppRole, writes the policy, registers the role,
+  creates the AppRole credentials, and wraps them.
+- `AppPersona.v2()` starts with an unauthenticated client, unwraps the
+  credentials, logs in with AppRole, and reads the application secret.
 
 Each persona exposes `withWorkflow(async ({ vault }) => { ... })`, so the
-example-specific logic stays in this file while repeated setup lives in the
-common helpers.
-
-Inside the v1 personas, some AppRole calls use `apiRequest()` with a custom
-`POST 200` command spec because the original client does not expose dedicated
-AppRole helpers.
+example-specific request wrapping flow stays in this file while repeated setup
+lives in the common helpers.
 
 ## Local Vault
 
@@ -60,7 +55,7 @@ npm install
 Then run the example:
 
 ```bash
-npx tsx examples/app-role-v1/main.ts
+npx tsx examples/request-wrapping/main.ts
 ```
 
 The default client configuration points at `http://127.0.0.1:8200`, which
@@ -76,7 +71,7 @@ export NANVC_VAULT_AUTH_TOKEN=<operator-or-admin-token>
 ```
 
 If the local Vault server is initialized by this example, it writes
-`examples/app-role-v1/.env` with:
+`examples/request-wrapping/.env` with:
 
 - `NANVC_VAULT_UNSEAL_KEY`
 - `NANVC_VAULT_AUTH_TOKEN`
@@ -87,7 +82,7 @@ To reuse those values manually in a new shell:
 
 ```bash
 set -a
-. examples/app-role-v1/.env
+. examples/request-wrapping/.env
 set +a
 ```
 
