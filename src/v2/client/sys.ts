@@ -194,7 +194,7 @@ export class VaultSystemClient {
      */
     public isReady(): Result<boolean> {
         return toResult((async (): Promise<ResultTuple<boolean>> => {
-            const [data, error] = await this.raw.head('/sys/health');
+            const [data, error] = await this.raw.get('/sys/health');
             if (error) {
                 if (
                     error.code === 'HTTP_ERROR' &&
