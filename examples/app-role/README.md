@@ -10,9 +10,19 @@ This example demonstrates an AppRole flow with the v2 client:
 - log in as an app with `role_id` and `secret_id`
 - read the secret with the app token
 
-The example includes operator/admin setup so it can run against a fresh local
-Vault instance, but the application part is the final AppRole login and secret
-read.
+The example is organized around three reusable personas from
+`examples/common/personas`:
+
+- `OperatorPersona.v2()` handles Vault readiness, initialization/unseal, `.env`
+  material, and KV mount setup.
+- `AdminPersona.v2()` configures AppRole, writes the policy, registers the role,
+  and returns `role_id` / `secret_id`.
+- `AppPersona.v2()` starts with an unauthenticated client, logs in with AppRole,
+  and reads the application secret.
+
+Each persona exposes `withWorkflow(async ({ vault }) => { ... })`, so the
+example-specific logic stays in this file while repeated setup lives in the
+common helpers.
 
 ## Local Vault
 
@@ -64,7 +74,9 @@ If the local Vault server is initialized by this example, it writes
 - `NANVC_VAULT_UNSEAL_KEY`
 - `NANVC_VAULT_AUTH_TOKEN`
 
-To reuse those values in a new shell:
+The operator persona also reads this file on later runs before creating its
+client, so a previously initialized local Vault can be reused by the example.
+To reuse those values manually in a new shell:
 
 ```bash
 set -a

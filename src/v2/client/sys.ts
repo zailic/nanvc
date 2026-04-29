@@ -3,6 +3,8 @@ import { normalize } from 'path';
 import type { components } from '../generated/vault-openapi.js';
 import type { RawVaultClient } from '../core/raw-client.js';
 import { err, ok, toResult, type Result, type ResultTuple } from '../core/result.js';
+import { VaultSystemPoliciesClient } from './sys-policies.js';
+import { VaultSystemWrappingClient } from './sys-wrapping.js';
 
 export type VaultInitRequest = components['schemas']['InitializeRequest'];
 export type VaultInitStatusResponse = components['schemas']['InitializationStatusResponse'];
@@ -79,9 +81,13 @@ export class VaultSystemMountClient {
 
 export class VaultSystemClient {
     public readonly mount: VaultSystemMountClient;
+    public readonly policies: VaultSystemPoliciesClient;
+    public readonly wrapping: VaultSystemWrappingClient;
 
     constructor(private readonly raw: RawVaultClient) {
         this.mount = new VaultSystemMountClient(raw);
+        this.policies = new VaultSystemPoliciesClient(raw);
+        this.wrapping = new VaultSystemWrappingClient(raw);
     }
 
     /**
@@ -157,9 +163,7 @@ export class VaultSystemClient {
      * @end-nanvc-doc
      */
     public unseal(payload: VaultUnsealRequest): Result<VaultUnsealResponse> {
-        return this.raw.post('/sys/unseal', {
-            body: payload,
-        });
+        return this.raw.post('/sys/unseal', { body: payload });
     }
 
     /**
@@ -193,7 +197,7 @@ export class VaultSystemClient {
             const [data, error] = await this.raw.head('/sys/health');
             if (error) {
                 if (
-                    error.code === 'HTTP_ERROR' && 
+                    error.code === 'HTTP_ERROR' &&
                     error.status !== undefined &&
                     error.status != 200
                 ) {

@@ -527,6 +527,442 @@ Signatures:
 
 </details>
 
+##### System / Policies / ACL
+
+<details id="syspoliciesacldelete" markdown="1">
+<summary><code>sys.policies.acl.delete</code></summary>
+
+Delete an ACL policy.
+
+Signatures:
+
+- `sys.policies.acl.delete(name)`
+
+Example:
+
+```ts
+await vault.sys.policies.acl.delete('deploy').unwrap();
+```
+
+</details>
+
+<details id="syspoliciesacllist" markdown="1">
+<summary><code>sys.policies.acl.list</code></summary>
+
+List configured ACL policies.
+
+Signatures:
+
+- `sys.policies.acl.list()`
+
+Example:
+
+```ts
+const policies = await vault.sys.policies.acl.list().unwrap();
+```
+
+</details>
+
+<details id="syspoliciesaclread" markdown="1">
+<summary><code>sys.policies.acl.read</code></summary>
+
+Read an ACL policy by name.
+
+Signatures:
+
+- `sys.policies.acl.read(name)`
+
+Example:
+
+```ts
+const policy = await vault.sys.policies.acl.read('deploy').unwrap();
+```
+
+</details>
+
+<details id="syspoliciesaclwrite" markdown="1">
+<summary><code>sys.policies.acl.write</code></summary>
+
+Create or update an ACL policy.
+
+Signatures:
+
+- `sys.policies.acl.write(name, payload)`
+
+Example:
+
+```ts
+await vault.sys.policies.acl.write('deploy', {
+    policy: 'path "secret/*" { capabilities = ["read"] }',
+}).unwrap();
+```
+
+</details>
+
+##### System / Policies / EGP
+
+<details id="syspoliciesegpdelete" markdown="1">
+<summary><code>sys.policies.egp.delete</code></summary>
+
+Delete an endpoint governing policy.
+
+Signatures:
+
+- `sys.policies.egp.delete(name)`
+
+Example:
+
+```ts
+await vault.sys.policies.egp.delete('breakglass').unwrap();
+```
+
+</details>
+
+<details id="syspoliciesegplist" markdown="1">
+<summary><code>sys.policies.egp.list</code></summary>
+
+List configured endpoint governing policies.
+
+Signatures:
+
+- `sys.policies.egp.list()`
+
+Example:
+
+```ts
+const policies = await vault.sys.policies.egp.list().unwrap();
+```
+
+</details>
+
+<details id="syspoliciesegpread" markdown="1">
+<summary><code>sys.policies.egp.read</code></summary>
+
+Read an endpoint governing policy by name.
+
+Signatures:
+
+- `sys.policies.egp.read(name)`
+
+Example:
+
+```ts
+const policy = await vault.sys.policies.egp.read('breakglass').unwrap();
+```
+
+</details>
+
+<details id="syspoliciesegpwrite" markdown="1">
+<summary><code>sys.policies.egp.write</code></summary>
+
+Create or update an endpoint governing policy.
+
+Signatures:
+
+- `sys.policies.egp.write(name, payload)`
+
+Example:
+
+```ts
+await vault.sys.policies.egp.write('breakglass', {
+    enforcement_level: 'soft-mandatory',
+    paths: ['*'],
+    policy: 'rule main = { true }',
+}).unwrap();
+```
+
+</details>
+
+##### System / Policies / Password
+
+<details id="syspoliciespassworddelete" markdown="1">
+<summary><code>sys.policies.password.delete</code></summary>
+
+Delete a password policy.
+
+Signatures:
+
+- `sys.policies.password.delete(name)`
+
+Example:
+
+```ts
+await vault.sys.policies.password.delete('app').unwrap();
+```
+
+</details>
+
+<details id="syspoliciespasswordgenerate" markdown="1">
+<summary><code>sys.policies.password.generate</code></summary>
+
+Generate a password from an existing password policy.
+
+Signatures:
+
+- `sys.policies.password.generate(name)`
+
+Example:
+
+```ts
+const { password } = await vault.sys.policies.password.generate('app').unwrap();
+```
+
+</details>
+
+<details id="syspoliciespasswordlist" markdown="1">
+<summary><code>sys.policies.password.list</code></summary>
+
+List configured password policies.
+
+Signatures:
+
+- `sys.policies.password.list()`
+
+Example:
+
+```ts
+const policies = await vault.sys.policies.password.list().unwrap();
+```
+
+</details>
+
+<details id="syspoliciespasswordread" markdown="1">
+<summary><code>sys.policies.password.read</code></summary>
+
+Read a password policy by name.
+
+Signatures:
+
+- `sys.policies.password.read(name)`
+
+Example:
+
+```ts
+const policy = await vault.sys.policies.password.read('app').unwrap();
+```
+
+</details>
+
+<details id="syspoliciespasswordwrite" markdown="1">
+<summary><code>sys.policies.password.write</code></summary>
+
+Create or update a password policy.
+
+Signatures:
+
+- `sys.policies.password.write(name, payload)`
+
+Example:
+
+```ts
+await vault.sys.policies.password.write('app', {
+    policy: 'length = 20',
+}).unwrap();
+```
+
+</details>
+
+##### System / Policies / RGP
+
+<details id="syspoliciesrgpdelete" markdown="1">
+<summary><code>sys.policies.rgp.delete</code></summary>
+
+Delete a response governing policy.
+
+Signatures:
+
+- `sys.policies.rgp.delete(name)`
+
+Example:
+
+```ts
+await vault.sys.policies.rgp.delete('webapp').unwrap();
+```
+
+</details>
+
+<details id="syspoliciesrgplist" markdown="1">
+<summary><code>sys.policies.rgp.list</code></summary>
+
+List configured response governing policies.
+
+Signatures:
+
+- `sys.policies.rgp.list()`
+
+Example:
+
+```ts
+const policies = await vault.sys.policies.rgp.list().unwrap();
+```
+
+</details>
+
+<details id="syspoliciesrgpread" markdown="1">
+<summary><code>sys.policies.rgp.read</code></summary>
+
+Read a response governing policy by name.
+
+Signatures:
+
+- `sys.policies.rgp.read(name)`
+
+Example:
+
+```ts
+const policy = await vault.sys.policies.rgp.read('webapp').unwrap();
+```
+
+</details>
+
+<details id="syspoliciesrgpwrite" markdown="1">
+<summary><code>sys.policies.rgp.write</code></summary>
+
+Create or update a response governing policy.
+
+Signatures:
+
+- `sys.policies.rgp.write(name, payload)`
+
+Example:
+
+```ts
+await vault.sys.policies.rgp.write('webapp', {
+    enforcement_level: 'soft-mandatory',
+    policy: 'rule main = { true }',
+}).unwrap();
+```
+
+</details>
+
+##### System / Policies / Rotation
+
+<details id="syspoliciesrotationdelete" markdown="1">
+<summary><code>sys.policies.rotation.delete</code></summary>
+
+Delete a rotation retry policy.
+
+Signatures:
+
+- `sys.policies.rotation.delete(name)`
+
+Example:
+
+```ts
+await vault.sys.policies.rotation.delete('retry').unwrap();
+```
+
+</details>
+
+<details id="syspoliciesrotationread" markdown="1">
+<summary><code>sys.policies.rotation.read</code></summary>
+
+Read a rotation retry policy by name.
+
+Signatures:
+
+- `sys.policies.rotation.read(name)`
+
+Example:
+
+```ts
+const policy = await vault.sys.policies.rotation.read('retry').unwrap();
+```
+
+</details>
+
+<details id="syspoliciesrotationwrite" markdown="1">
+<summary><code>sys.policies.rotation.write</code></summary>
+
+Create or update a rotation retry policy.
+
+Signatures:
+
+- `sys.policies.rotation.write(name, payload)`
+
+Example:
+
+```ts
+await vault.sys.policies.rotation.write('retry', {
+    policy: '{"max_retries":3}',
+}).unwrap();
+```
+
+</details>
+
+##### System / Wrapping
+
+<details id="syswrappinglookup" markdown="1">
+<summary><code>sys.wrapping.lookup</code></summary>
+
+Look up wrapping properties for a given response-wrapped token.
+
+Signatures:
+
+- `sys.wrapping.lookup(token)`
+
+Example:
+
+```ts
+const info = await vault.sys.wrapping.lookup(wrappingToken).unwrap();
+```
+
+</details>
+
+<details id="syswrappingrewrap" markdown="1">
+<summary><code>sys.wrapping.rewrap</code></summary>
+
+Rotate a response-wrapped token, returning a new wrapping token for the same data.
+
+Signatures:
+
+- `sys.wrapping.rewrap(token)`
+
+Example:
+
+```ts
+const result = await vault.sys.wrapping.rewrap(oldWrappingToken).unwrap();
+const newToken = result.wrap_info?.token;
+```
+
+</details>
+
+<details id="syswrappingunwrap" markdown="1">
+<summary><code>sys.wrapping.unwrap</code></summary>
+
+Unwrap a response-wrapped token and return the original data.
+
+Signatures:
+
+- `sys.wrapping.unwrap(token)`
+
+Example:
+
+```ts
+const result = await vault.sys.wrapping.unwrap(wrappingToken).unwrap();
+const roleId = result.data?.role_id;
+```
+
+</details>
+
+<details id="syswrappingwrap" markdown="1">
+<summary><code>sys.wrapping.wrap</code></summary>
+
+Response-wrap an arbitrary JSON object with the given TTL.
+
+Signatures:
+
+- `sys.wrapping.wrap(data, ttl)`
+
+Example:
+
+```ts
+const result = await vault.sys.wrapping.wrap({ role_id: '...', secret_id: '...' }, '300s').unwrap();
+const token = result.wrap_info?.token;
+```
+
+</details>
+
 ##### System
 
 <details id="sysisinitialized" markdown="1">

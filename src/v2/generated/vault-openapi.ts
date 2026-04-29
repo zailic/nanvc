@@ -161,6 +161,79 @@ export interface components {
             seal_wrap?: boolean;
             type?: string;
         };
+        PatchedPoliciesReadAclPolicyResponse: {
+            request_id?: string;
+            lease_id?: string;
+            renewable?: boolean;
+            lease_duration?: number;
+            data?: components['schemas']['PoliciesReadAclPolicyResponse'];
+            wrap_info?: components['schemas']['WrapInfo'];
+            warnings?: string[];
+            auth?: Record<string, unknown>;
+        };
+        PoliciesGeneratePasswordFromPasswordPolicyResponse: {
+            password?: string;
+        };
+        PoliciesListAclPoliciesResponse: {
+            request_id?: string;
+            lease_id?: string;
+            renewable?: boolean;
+            lease_duration?: number;
+            data?: components['schemas']['StandardListResponse'];
+            wrap_info?: components['schemas']['WrapInfo'];
+            warnings?: string[];
+            auth?: Record<string, unknown>;
+            mount_type?: string;
+        };
+        PoliciesReadAclPolicyResponse: {
+            name?: string;
+            policy?: string;
+            rules?: string;
+        };
+        PoliciesReadEgpPolicyResponse: {
+            enforcement_level?: string;
+            name?: string;
+            paths?: string[];
+            policy?: string;
+        };
+        PoliciesReadPasswordPolicyResponse: {
+            entropy_source?: string;
+            policy?: string;
+        };
+        PoliciesReadRgpPolicyResponse: {
+            enforcement_level?: string;
+            name?: string;
+            policy?: string;
+        };
+        PoliciesReadRotationPolicyResponse: {
+            policy?: string;
+        };
+        PoliciesWriteAclPolicyRequest: {
+            policy?: string;
+        };
+        PoliciesWritePasswordPolicyRequest: {
+            entropy_source?: string;
+            policy?: string;
+        };
+        PoliciesWriteRotationPolicyRequest: {
+            policy?: string;
+        };
+        ReadWrappingProperties2Response: {
+            creation_path?: string;
+            creation_time?: string;
+            creation_ttl?: string;
+        };
+        ReadWrappingPropertiesRequest: {
+            token?: string;
+        };
+        ReadWrappingPropertiesResponse: {
+            creation_path?: string;
+            creation_time?: string;
+            creation_ttl?: string;
+        };
+        RewrapRequest: {
+            token?: string;
+        };
         SealStatusResponse: {
             build_date?: string;
             cluster_id?: string;
@@ -185,6 +258,15 @@ export interface components {
         StandardListResponse: {
             keys?: string[];
         };
+        SystemWritePoliciesEgpNameRequest: {
+            enforcement_level?: string;
+            paths?: string[];
+            policy?: string;
+        };
+        SystemWritePoliciesRgpNameRequest: {
+            enforcement_level?: string;
+            policy?: string;
+        };
         UnsealRequest: {
             key?: string;
             migrate?: boolean;
@@ -207,6 +289,34 @@ export interface components {
             t?: number;
             type?: string;
             version?: string;
+        };
+        UnwrapRequest: {
+            token?: string;
+        };
+        WrapInfo: {
+            token?: string;
+            accessor?: string;
+            ttl?: number;
+            creation_time?: string;
+            creation_path?: string;
+            wrapped_accessor?: string;
+        };
+        WrappingLookupData: {
+            creation_path?: string;
+            creation_time?: string;
+            creation_ttl?: number;
+        };
+        WrappingLookupResponse: {
+            data?: components['schemas']['WrappingLookupData'];
+        };
+        WrappingRewrapResponse: {
+            wrap_info?: components['schemas']['WrapInfo'];
+        };
+        WrappingUnwrapResponse: {
+            data?: Record<string, unknown>;
+        };
+        WrappingWrapResponse: {
+            wrap_info?: components['schemas']['WrapInfo'];
         };
     };
 }
@@ -601,6 +711,357 @@ export interface paths {
             };
         };
     };
+    '/sys/wrapping/lookup': {
+        get: {
+            parameters: {
+                query: {
+                    token?: string;
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['WrappingLookupResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['ReadWrappingPropertiesRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['WrappingLookupResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/sys/wrapping/rewrap': {
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['RewrapRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['WrappingRewrapResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/sys/wrapping/unwrap': {
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['UnwrapRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['WrappingUnwrapResponse'];
+                    };
+                };
+                204: {
+                    description: "No content";
+                };
+            };
+        };
+    };
+    '/sys/wrapping/wrap': {
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': Record<string, unknown>;
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['WrappingWrapResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/sys/policies/acl/': {
+        get: {
+            parameters: {
+                query: {
+                    list: "true";
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['PoliciesListAclPoliciesResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/sys/policies/acl/{name}': {
+        parameters: {
+            path: {
+                name: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "OK";
+                };
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['PatchedPoliciesReadAclPolicyResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['PoliciesWriteAclPolicyRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/sys/policies/egp/': {
+        get: {
+            parameters: {
+                query: {
+                    list: "true";
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['StandardListResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/sys/policies/egp/{name}': {
+        parameters: {
+            path: {
+                name: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "empty body";
+                };
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['PoliciesReadEgpPolicyResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['SystemWritePoliciesEgpNameRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/sys/policies/password/': {
+        get: {
+            parameters: {
+                query: {
+                    list: "true";
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['StandardListResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/sys/policies/password/{name}': {
+        parameters: {
+            path: {
+                name: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "OK";
+                };
+            };
+        };
+        get: {
+            responses: {
+                204: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['PoliciesReadPasswordPolicyResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['PoliciesWritePasswordPolicyRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/sys/policies/password/{name}/generate': {
+        parameters: {
+            path: {
+                name: string;
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['PoliciesGeneratePasswordFromPasswordPolicyResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/sys/policies/rgp/': {
+        get: {
+            parameters: {
+                query: {
+                    list: "true";
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['StandardListResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/sys/policies/rgp/{name}': {
+        parameters: {
+            path: {
+                name: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "empty body";
+                };
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['PoliciesReadRgpPolicyResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['SystemWritePoliciesRgpNameRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/sys/policies/rotation/{name}': {
+        parameters: {
+            path: {
+                name: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "OK";
+                };
+            };
+        };
+        get: {
+            responses: {
+                204: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['PoliciesReadRotationPolicyResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['PoliciesWriteRotationPolicyRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "OK";
+                };
+            };
+        };
+    };
 }
 
 export const unauthenticatedOperations = {
@@ -619,5 +1080,9 @@ export const unauthenticatedOperations = {
     },
     "/sys/health": {
         get: true,
+    },
+    "/sys/wrapping/lookup": {
+        get: true,
+        post: true,
     },
 } as const;

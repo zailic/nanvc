@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { VaultClientError, VaultClientV2 } from '../../../src/v2/index.js';
 
@@ -14,6 +17,7 @@ type VaultInitMaterial = {
 let rootToken: string;
 let unsealKey: string;
 
+const ENV_PATH = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
 const asString = (value: unknown): string => value as string;
 
 describe('VaultClientV2 integration test cases.', function () {
@@ -105,6 +109,104 @@ describe('VaultClientV2 integration test cases.', function () {
         assert.equal(mountError, null);
         assert.equal(unmountData, undefined);
         assert.equal(unmountError, null);
+    });
+
+    it('should list, write, read and delete ACL policies through sys.policies.acl', async function () {
+        const policyName = 'integration-policy-v2';
+        const policyBody = 'path "secret/*" { capabilities = ["read"] }';
+
+        await client.sys.policies.acl.delete(policyName).unwrapOr(undefined);
+
+        try {
+            const [beforeList, beforeListError] = await client.sys.policies.acl.list();
+            const [writeData, writeError] = await client.sys.policies.acl.write(policyName, {
+                policy: policyBody,
+            });
+            const [readData, readError] = await client.sys.policies.acl.read(policyName);
+            const [afterList, afterListError] = await client.sys.policies.acl.list();
+
+            assert.equal(beforeListError, null);
+            assert.equal(Array.isArray(beforeList), true);
+            assert.equal(writeError, null);
+            assert.equal(writeData, undefined);
+            assert.equal(readError, null);
+            assert.equal(readData.data?.name, policyName);
+            assert.equal(readData.data?.policy, policyBody);
+            assert.equal(afterListError, null);
+            assert.equal(afterList.includes(policyName), true);
+        } finally {
+            const [deleteData, deleteError] = await client.sys.policies.acl.delete(policyName);
+            const [finalList, finalListError] = await client.sys.policies.acl.list();
+
+            assert.equal(deleteError, null);
+            assert.equal(deleteData, undefined);
+            assert.equal(finalListError, null);
+            assert.equal(finalList.includes(policyName), false);
+        }
+    });
+
+    it('should wrap, lookup, rewrap and unwrap a secret payload', async function () {
+        const payload = { role_id: 'test-role', secret_id: 'test-secret' };
+        const ttl = '300s';
+
+        const [wrapResult, wrapError] = await client.sys.wrapping.wrap(payload, ttl);
+
+        assert.equal(wrapError, null);
+        assert.equal(typeof wrapResult.wrap_info?.token, 'string');
+        assert.equal(asString(wrapResult.wrap_info?.token).length > 0, true);
+        assert.equal(typeof wrapResult.wrap_info?.creation_path, 'string');
+
+        const wrappingToken = asString(wrapResult.wrap_info?.token);
+
+        const [lookupResult, lookupError] = await client.sys.wrapping.lookup(wrappingToken);
+
+        assert.equal(lookupError, null);
+        assert.equal(typeof lookupResult.creation_path, 'string');
+        assert.equal(lookupResult.creation_path?.includes('wrapping/wrap'), true);
+        assert.equal(typeof lookupResult.creation_time, 'string');
+        assert.equal(typeof lookupResult.creation_ttl, 'number');
+        assert.equal(lookupResult.creation_ttl, 300);
+
+        const [rewrapResult, rewrapError] = await client.sys.wrapping.rewrap(wrappingToken);
+
+        assert.equal(rewrapError, null);
+        assert.equal(typeof rewrapResult.wrap_info?.token, 'string');
+        assert.equal(asString(rewrapResult.wrap_info?.token).length > 0, true);
+        assert.notEqual(rewrapResult.wrap_info?.token, wrappingToken);
+
+        const newWrappingToken = asString(rewrapResult.wrap_info?.token);
+
+        const [unwrapResult, unwrapError] = await client.sys.wrapping.unwrap(newWrappingToken);
+
+        assert.equal(unwrapError, null);
+        assert.deepEqual(unwrapResult.data, payload);
+    });
+
+    it('should return an error when looking up an invalid wrapping token', async function () {
+        const [result, error] = await client.sys.wrapping.lookup('invalid-token');
+
+        assert.equal(result, null);
+        assert.equal(error instanceof VaultClientError, true);
+        assert.equal(error?.code, 'HTTP_ERROR');
+    });
+
+    it('should return an error when unwrapping an already-consumed token', async function () {
+        const payload = { key: 'value' };
+
+        const [wrapResult, wrapError] = await client.sys.wrapping.wrap(payload, '300s');
+
+        assert.equal(wrapError, null);
+
+        const wrappingToken = asString(wrapResult.wrap_info?.token);
+
+        await client.sys.wrapping.unwrap(wrappingToken);
+
+        const [result, error] = await client.sys.wrapping.unwrap(wrappingToken);
+
+        assert.equal(result, null);
+        assert.equal(error instanceof VaultClientError, true);
+        assert.equal(error?.code, 'HTTP_ERROR');
+        assert.equal(error?.status, 400);
     });
 
     it('should enable, read and detect an auth method', async function () {
@@ -209,6 +311,7 @@ describe('VaultClientV2 integration test cases.', function () {
         const mountPath = 'secret-v2-test';
         const secretPath = 'integration-v2/my-secret';
 
+        await ensureMountRemoved(client, mountPath);
         await ensureKvV2MountAvailable(client, mountPath);
 
         const [writeData, writeError] = await client.secret.kv.v2.write(mountPath, secretPath, { foo: 'bar-kv2' });
@@ -235,6 +338,8 @@ describe('VaultClientV2 integration test cases.', function () {
 });
 
 async function ensureInitializedAndUnsealed(client: VaultClientV2): Promise<void> {
+    loadEnvFile();
+
     rootToken ||= process.env.NANVC_VAULT_AUTH_TOKEN ?? '';
     unsealKey ||= process.env.NANVC_VAULT_UNSEAL_KEY ?? '';
 
@@ -256,6 +361,7 @@ async function ensureInitializedAndUnsealed(client: VaultClientV2): Promise<void
         rootToken = initData.root_token;
         unsealKey = initData.keys[0];
         client.setToken(rootToken);
+        updateEnvFile(initData);
     }
 
     if (!rootToken || !unsealKey) {
@@ -314,6 +420,61 @@ function validateInitData(initData: VaultInitMaterial): void {
     assert.equal(Array.isArray(initData.keys), true);
     assert.equal(initData.keys.length > 0, true);
     assert.equal(Boolean(initData.root_token), true);
+}
+
+function loadEnvFile(): void {
+    let content: string;
+    try {
+        content = readFileSync(ENV_PATH, 'utf8');
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return;
+        }
+
+        throw error;
+    }
+
+    for (const line of content.split('\n')) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine || trimmedLine.startsWith('#')) {
+            continue;
+        }
+
+        const separatorIndex = trimmedLine.indexOf('=');
+        if (separatorIndex === -1) {
+            continue;
+        }
+
+        process.env[trimmedLine.slice(0, separatorIndex)] = trimmedLine.slice(separatorIndex + 1);
+    }
+}
+
+function updateEnvFile(initData: VaultInitMaterial): void {
+    const newVars = [
+        `NANVC_VAULT_AUTH_TOKEN=${initData.root_token}`,
+        `NANVC_VAULT_UNSEAL_KEY=${initData.keys[0]}`,
+    ];
+
+    let content: string;
+    try {
+        content = readFileSync(ENV_PATH, 'utf8');
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+            throw error;
+        }
+        content = '';
+    }
+
+    const updatedContent = content
+        .split('\n')
+        .filter((line) => !line.startsWith('NANVC_VAULT_AUTH_TOKEN=') && !line.startsWith('NANVC_VAULT_UNSEAL_KEY='))
+        .filter((line) => line.trim() !== '')
+        .concat(newVars)
+        .join('\n');
+
+    writeFileSync(ENV_PATH, `${updatedContent}\n`, 'utf8');
+    process.env.NANVC_VAULT_AUTH_TOKEN = initData.root_token;
+    process.env.NANVC_VAULT_UNSEAL_KEY = initData.keys[0];
 }
 
 function isMountAlreadyExistsError(error: VaultClientError): boolean {

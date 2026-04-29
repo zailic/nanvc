@@ -55,7 +55,7 @@
     "lint:fix": "eslint . --fix",
     "test:integration:prepare": "sh ./test/util/vault/generate-certs.sh",
     "test:integration:reset": "docker compose down --volumes --remove-orphans && docker compose up -d --build && npm run test:integration:wait",
-    "test:integration:wait": "sleep 30",
+    "test:integration:wait": "sleep 5",
     "test:integration:legacy": "mocha --config .mocharc.json \"test/integration/lib/**/*.ts\"",
     "test:integration:v2": "mocha --config .mocharc.json \"test/integration/v2/**/*.ts\"",
     "test:integration:all": "npm run test:integration:prepare && npm run test:integration:reset && npm run test:integration:legacy && npm run test:integration:reset && npm run test:integration:v2",
