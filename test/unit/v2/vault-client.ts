@@ -170,8 +170,15 @@ describe('VaultClientV2 unit test cases.', function () {
         const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
             resultOf(ok(undefined)),
         );
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
+        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').onFirstCall().returns(
             resultOf(ok(undefined)),
+        );
+        deleteStub.onSecondCall().returns(
+            resultOf(err(new VaultClientError({
+                code: 'HTTP_ERROR',
+                message: 'missing permission',
+                status: 403,
+            }))),
         );
         const client = new VaultClient();
 
@@ -179,11 +186,13 @@ describe('VaultClientV2 unit test cases.', function () {
             type: 'kv',
         });
         const [disableData, disableError] = await client.sys.mount.disable('/secret/');
+        const disableErrorExpected = await client.sys.mount.disable('/secret/').unwrapErr();
 
         assert.equal(enableData, undefined);
         assert.equal(enableError, null);
         assert.equal(disableData, undefined);
         assert.equal(disableError, null);
+        assert.equal(disableErrorExpected.code, 'HTTP_ERROR');
         assert.deepEqual(postStub.firstCall.args, [
             '/sys/mounts/{path}',
             {
@@ -595,7 +604,7 @@ describe('VaultClientV2 unit test cases.', function () {
         const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
             resultOf(ok({ data: {} })),
         );
-        
+
         const [readData, readError] = await client.secret.kv.v1.read('secret');
 
         assert.equal(readData, null);
@@ -607,7 +616,7 @@ describe('VaultClientV2 unit test cases.', function () {
         const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
             resultOf(ok(undefined)),
         );
-        
+
         const [writeData, writeError] = await client.secret.kv.v1.write('secret', {});
 
         assert.equal(writeData, null);
@@ -777,11 +786,17 @@ describe('VaultClientV2 unit test cases.', function () {
         const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
             resultOf(ok(undefined)),
         );
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').returns(
+        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').onFirstCall().returns(
             resultOf(ok({
                 data: {
                     keys: ['demo'],
                 },
+            })),
+        );
+        // here we simulate scenario where list data is not enveloped in a "data" property
+        listStub.onSecondCall().returns(
+            resultOf(ok({
+                keys: ['demo'],
             })),
         );
         const client = new VaultClient();
@@ -795,6 +810,7 @@ describe('VaultClientV2 unit test cases.', function () {
             version: 3,
         }).unwrap();
         const keys = await client.list('secret-v2', 'apps', { engineVersion: 2 }).unwrap();
+        const keys2 = await client.list('secret-v2', 'apps', { engineVersion: 2 }).unwrap();
         const [deleteData, deleteError] = await client.delete('secret-v2', 'apps/demo', { engineVersion: 2 });
 
         assert.equal(writeData, undefined);
@@ -806,6 +822,7 @@ describe('VaultClientV2 unit test cases.', function () {
             },
         });
         assert.deepEqual(keys, ['demo']);
+        assert.deepEqual(keys2, ['demo']);
         assert.equal(deleteData, undefined);
         assert.equal(deleteError, null);
         assert.deepEqual(postStub.firstCall.args[1], {
@@ -1131,5 +1148,111 @@ describe('VaultClientV2 unit test cases.', function () {
 
         assert.deepEqual(getStub.firstCall.args[1]?.params?.query, { depth: 2, version: 1 });
     });
+
+    it('should surface raw client errors from new kv2 methods', async function () {
+        const clientError = new VaultClientError({
+            code: 'HTTP_ERROR',
+            message: 'Vault said no',
+            status: 403,
+        });
+        const client = new VaultClient();
+
+        // patch and patchMetadata both delegate to raw.patch
+        const patchStub = sandbox.stub(RawVaultClient.prototype, 'patch').returns(
+            resultOf(err(clientError)),
+        );
+
+        const [patchData, patchError] = await client.secret.kv.v2.patch('secret-v2', 'apps/demo', { foo: 'bar' });
+        assert.equal(patchData, null);
+        assert.equal(patchError, clientError);
+
+        const [patchMetaData, patchMetaError] = await client.secret.kv.v2.patchMetadata('secret-v2', 'apps/demo', { max_versions: 5 });
+        assert.equal(patchMetaData, null);
+        assert.equal(patchMetaError, clientError);
+
+        assert.equal(patchStub.callCount, 2);
+
+        // deleteVersions, undeleteVersions, destroyVersions, writeMetadata, writeConfig all delegate to raw.post
+        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(err(clientError)),
+        );
+
+        const [deleteVersionsData, deleteVersionsError] = await client.secret.kv.v2.deleteVersions('secret-v2', 'apps/demo', [1]);
+        assert.equal(deleteVersionsData, null);
+        assert.equal(deleteVersionsError, clientError);
+
+        const [undeleteVersionsData, undeleteVersionsError] = await client.secret.kv.v2.undeleteVersions('secret-v2', 'apps/demo', [1]);
+        assert.equal(undeleteVersionsData, null);
+        assert.equal(undeleteVersionsError, clientError);
+
+        const [destroyVersionsData, destroyVersionsError] = await client.secret.kv.v2.destroyVersions('secret-v2', 'apps/demo', [1]);
+        assert.equal(destroyVersionsData, null);
+        assert.equal(destroyVersionsError, clientError);
+
+        const [writeMetaData, writeMetaError] = await client.secret.kv.v2.writeMetadata('secret-v2', 'apps/demo', { max_versions: 5 });
+        assert.equal(writeMetaData, null);
+        assert.equal(writeMetaError, clientError);
+
+        const [writeConfigData, writeConfigError] = await client.secret.kv.v2.writeConfig('secret-v2', { max_versions: 5 });
+        assert.equal(writeConfigData, null);
+        assert.equal(writeConfigError, clientError);
+
+        assert.equal(postStub.callCount, 5);
+
+        // readMetadata, readConfig, readSubkeys all delegate to raw.get
+        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(err(clientError)),
+        );
+
+        const [readMetaData, readMetaError] = await client.secret.kv.v2.readMetadata('secret-v2', 'apps/demo');
+        assert.equal(readMetaData, null);
+        assert.equal(readMetaError, clientError);
+
+        const [readConfigData, readConfigError] = await client.secret.kv.v2.readConfig('secret-v2');
+        assert.equal(readConfigData, null);
+        assert.equal(readConfigError, clientError);
+
+        const [readSubkeysData, readSubkeysError] = await client.secret.kv.v2.readSubkeys('secret-v2', 'apps/demo');
+        assert.equal(readSubkeysData, null);
+        assert.equal(readSubkeysError, clientError);
+
+        assert.equal(getStub.callCount, 3);
+
+        // deleteMetadata delegates to raw.delete
+        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
+            resultOf(err(clientError)),
+        );
+
+        const [deleteMetaData, deleteMetaError] = await client.secret.kv.v2.deleteMetadata('secret-v2', 'apps/demo');
+        assert.equal(deleteMetaData, null);
+        assert.equal(deleteMetaError, clientError);
+
+        assert.equal(deleteStub.callCount, 1);
+    });
+
+    it('should surface resolveKvShortcutRef validation errors', async function () {
+        const client = new VaultClient();
+
+        const [deleteData, deleteError] = await client.delete('invalid-path');
+        const [listData, listError] = await client.list('');
+        const [writeData, writeError] = await client.write('invalid-path', { foo: 'bar' });
+
+        assert.equal(deleteData, null);
+        assert.equal(deleteError instanceof VaultClientError, true);
+        assert.equal(deleteError?.code, 'VALIDATION_ERROR');
+        assert.equal(deleteError?.message, 'Expected a KV secret path like "secret/my-app/my-secret", got "invalid-path"');
+
+        assert.equal(listData, null);
+        assert.equal(listError instanceof VaultClientError, true);
+        assert.equal(listError?.code, 'VALIDATION_ERROR');
+        assert.equal(listError?.message, 'Expected a KV secret path like "secret/my-app/my-secret", got ""');
+
+        assert.equal(writeData, null);
+        assert.equal(writeError instanceof VaultClientError, true);
+        assert.equal(writeError?.code, 'VALIDATION_ERROR');
+        assert.equal(writeError?.message, 'Expected a KV secret path like "secret/my-app/my-secret", got "invalid-path"');
+
+    });
+
 });
 

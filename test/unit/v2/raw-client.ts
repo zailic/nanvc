@@ -148,6 +148,15 @@ describe('RawVaultClient unit test cases.', function () {
         });
     });
 
+    it('should route patch through request with the PATCH method', async function () {
+        const client = new RawVaultClient();
+        const requestStub = sandbox.stub(client, 'request').resolves([undefined, null]);
+
+        await client.patch('/sys/test');
+
+        assert.equal(requestStub.calledOnceWithExactly('PATCH', '/sys/test', {}), true);
+    });
+
     it('should route delete through request with the DELETE method', async function () {
         const client = new RawVaultClient();
         const requestStub = sandbox.stub(client, 'request').resolves([undefined, null]);

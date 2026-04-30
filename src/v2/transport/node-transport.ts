@@ -81,6 +81,11 @@ export class NodeVaultTransport {
                     url: url.toString(),
                 });
 
+                if (cause instanceof VaultClientError) {
+                    reject(cause);
+                    return;
+                }
+
                 reject(new VaultClientError({
                     cause,
                     code: 'NETWORK_ERROR',

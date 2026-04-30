@@ -126,10 +126,30 @@ export function isMountAlreadyExistsError(error: VaultClientError): boolean {
 }
 
 export function isInvalidTokenError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && error.status === 403
-        && typeof error.message === 'string'
-        && error.message.toLowerCase().includes('invalid token');
+    if (error.code !== 'HTTP_ERROR' || error.status !== 403) {
+        return false;
+    }
+
+    const msg = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+    if (msg.includes('invalid token') || msg.includes('permission denied')) {
+        return true;
+    }
+
+    // Also inspect responseBody.errors[], which is where RawVaultClient
+    // sources the error message from — Vault returns {"errors":["permission denied"]}
+    // for stale/revoked tokens just as often as "invalid token".
+    const body = error.responseBody;
+    if (body && typeof body === 'object') {
+        const errors = (body as { errors?: unknown }).errors;
+        if (Array.isArray(errors)) {
+            return errors.some(
+                (e) => typeof e === 'string'
+                    && (e.toLowerCase().includes('invalid token') || e.toLowerCase().includes('permission denied')),
+            );
+        }
+    }
+
+    return false;
 }
 
 export function toExampleAuthError(error: VaultClientError, envPath: string | undefined): Error {

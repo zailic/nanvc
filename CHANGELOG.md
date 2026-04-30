@@ -21,7 +21,7 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 - Refactored the AppRole examples to use the shared persona helpers and verify the expected secret access behavior.
 - Updated examples to share `examples/.env` runtime material across workflows and print consistent success banners.
 - Updated OpenAPI response generation so local response patches take precedence over upstream schemas.
-- Reduced the Docker-backed integration wait delay from an hardcoded 30 seconds to a wait loop that polls Vault's health endpoint until it's ready.
+- Reduced the Docker-backed integration wait delay from a hardcoded 30 seconds to a wait loop that polls Vault's health endpoint until it's ready.
 
 ### Fixed
 

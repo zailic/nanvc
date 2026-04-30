@@ -151,7 +151,7 @@ async function main(): Promise<void> {
         }).unwrap();
 
         // ── Step 1: Check the engine version ──────────────────────────────────
-        // writeConfig initialises the engine; readConfig confirms max_versions=0 (default = 10).
+        // readConfig confirms that the KV v2 engine configuration is readable.
         const engineConfig = await vault.secret.kv.v2.readConfig(MOUNT).unwrap();
         assert.ok(engineConfig.max_versions !== undefined, 'Engine config must be readable');
 
