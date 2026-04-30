@@ -36,12 +36,18 @@ export type {
     VaultWrappingWrapResponse,
 } from './client/sys-wrapping.js';
 export type {
+    VaultKvV2ConfigureOptions,
+    VaultKvV2GeneratedConfigurationResponse,
     VaultKvV2GeneratedMetadataResponse,
     VaultKvV2GeneratedReadResponse,
+    VaultKvV2GeneratedSubkeysResponse,
     VaultKvV2GeneratedWriteRequest,
     VaultKvV2GeneratedWriteResponse,
+    VaultKvV2MetadataWriteOptions,
+    VaultKvV2PatchOptions,
     VaultKvV2ReadOptions,
     VaultKvV2ReadResponse,
+    VaultKvV2SubkeysOptions,
     VaultKvV2VersionMetadata,
     VaultKvV2WriteOptions,
 } from './client/secret-kv-v2.js';
@@ -56,11 +62,11 @@ export type {
     VaultAuthMethodRequest,
     VaultAuthReadConfigurationResponse,
 } from './client/auth.js';
-export { VaultClientError } from './transport/errors.js';
+export { VaultClientError } from './core/errors.js';
 export type {
     VaultClientErrorCode,
     VaultClientErrorInput,
-} from './transport/errors.js';
+} from './core/errors.js';
 export type {
     VaultClientOptions,
     VaultRequestMethod,

@@ -3,7 +3,7 @@ import { createSandbox } from 'sinon';
 
 import { VaultClient } from '../../../src/v2/client/vault-client.js';
 import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
-import { VaultClientError } from '../../../src/v2/transport/errors.js';
+import { VaultClientError } from '../../../src/v2/core/errors.js';
 import { err, ok, toResult } from '../../../src/v2/core/result.js';
 
 import type { components } from '../../../src/v2/generated/vault-openapi.js';
@@ -899,4 +899,237 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(listError, clientError);
         assert.equal(listStub.calledOnce, true);
     });
+
+    it('should route kv2 patch through the data path with merge-patch content type', async function () {
+        const patchStub = sandbox.stub(RawVaultClient.prototype, 'patch').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.patch('secret-v2', 'apps/demo', { foo: 'updated' });
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.equal(patchStub.calledOnce, true);
+        assert.equal(patchStub.firstCall.args[0], '/{kv_v2_mount_path}/data/{path}');
+        assert.deepEqual(patchStub.firstCall.args[1]?.headers, {
+            'Content-Type': 'application/merge-patch+json',
+        });
+        assert.deepEqual(patchStub.firstCall.args[1]?.body, {
+            data: { foo: 'updated' },
+        });
+        assert.deepEqual(patchStub.firstCall.args[1]?.params?.path, {
+            kv_v2_mount_path: 'secret-v2',
+            path: 'apps/demo',
+        });
+    });
+
+    it('should route kv2 patch with cas option', async function () {
+        const patchStub = sandbox.stub(RawVaultClient.prototype, 'patch').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.patch('secret-v2', 'apps/demo', { foo: 'updated' }, { cas: 3 });
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.deepEqual(patchStub.firstCall.args[1]?.body, {
+            data: { foo: 'updated' },
+            options: { cas: 3 },
+        });
+    });
+
+    it('should route kv2 deleteVersions through the delete path', async function () {
+        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.deleteVersions('secret-v2', 'apps/demo', [1, 2]);
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.equal(postStub.calledOnce, true);
+        assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/delete/{path}');
+        assert.deepEqual(postStub.firstCall.args[1]?.body, { versions: [1, 2] });
+        assert.deepEqual(postStub.firstCall.args[1]?.params?.path, {
+            kv_v2_mount_path: 'secret-v2',
+            path: 'apps/demo',
+        });
+    });
+
+    it('should route kv2 undeleteVersions through the undelete path', async function () {
+        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.undeleteVersions('secret-v2', 'apps/demo', [1]);
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.equal(postStub.calledOnce, true);
+        assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/undelete/{path}');
+        assert.deepEqual(postStub.firstCall.args[1]?.body, { versions: [1] });
+    });
+
+    it('should route kv2 destroyVersions through the destroy path', async function () {
+        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.destroyVersions('secret-v2', 'apps/demo', [1, 2]);
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.equal(postStub.calledOnce, true);
+        assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/destroy/{path}');
+        assert.deepEqual(postStub.firstCall.args[1]?.body, { versions: [1, 2] });
+    });
+
+    it('should unwrap kv2 readMetadata into the data envelope', async function () {
+        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(ok({
+                data: {
+                    current_version: 2,
+                    max_versions: 10,
+                    versions: { '1': { destroyed: false }, '2': { destroyed: false } },
+                },
+            })),
+        );
+        const client = new VaultClient();
+
+        const meta = await client.secret.kv.v2.readMetadata('secret-v2', 'apps/demo').unwrap();
+
+        assert.equal(meta.current_version, 2);
+        assert.equal(meta.max_versions, 10);
+        assert.equal(getStub.calledOnce, true);
+        assert.equal(getStub.firstCall.args[0], '/{kv_v2_mount_path}/metadata/{path}');
+        assert.deepEqual(getStub.firstCall.args[1]?.params?.path, {
+            kv_v2_mount_path: 'secret-v2',
+            path: 'apps/demo',
+        });
+    });
+
+    it('should route kv2 writeMetadata through the metadata path', async function () {
+        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.writeMetadata('secret-v2', 'apps/demo', { max_versions: 5 });
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.equal(postStub.calledOnce, true);
+        assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/metadata/{path}');
+        assert.deepEqual(postStub.firstCall.args[1]?.body, { max_versions: 5 });
+    });
+
+    it('should route kv2 patchMetadata through the metadata patch path', async function () {
+        const patchStub = sandbox.stub(RawVaultClient.prototype, 'patch').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.patchMetadata('secret-v2', 'apps/demo', { cas_required: true });
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.equal(patchStub.calledOnce, true);
+        assert.equal(patchStub.firstCall.args[0], '/{kv_v2_mount_path}/metadata/{path}');
+        assert.deepEqual(patchStub.firstCall.args[1]?.body, { cas_required: true });
+    });
+
+    it('should route kv2 deleteMetadata through the metadata delete path', async function () {
+        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.deleteMetadata('secret-v2', 'apps/demo');
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.equal(deleteStub.calledOnce, true);
+        assert.equal(deleteStub.firstCall.args[0], '/{kv_v2_mount_path}/metadata/{path}');
+        assert.deepEqual(deleteStub.firstCall.args[1]?.params?.path, {
+            kv_v2_mount_path: 'secret-v2',
+            path: 'apps/demo',
+        });
+    });
+
+    it('should unwrap kv2 readConfig into the data envelope', async function () {
+        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(ok({
+                data: {
+                    max_versions: 10,
+                    cas_required: false,
+                    delete_version_after: '0s',
+                },
+            })),
+        );
+        const client = new VaultClient();
+
+        const config = await client.secret.kv.v2.readConfig('secret-v2').unwrap();
+
+        assert.equal(config.max_versions, 10);
+        assert.equal(config.cas_required, false);
+        assert.equal(getStub.calledOnce, true);
+        assert.equal(getStub.firstCall.args[0], '/{kv_v2_mount_path}/config');
+        assert.deepEqual(getStub.firstCall.args[1]?.params?.path, {
+            kv_v2_mount_path: 'secret-v2',
+        });
+    });
+
+    it('should route kv2 writeConfig through the config path', async function () {
+        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(ok(undefined)),
+        );
+        const client = new VaultClient();
+
+        const [data, error] = await client.secret.kv.v2.writeConfig('secret-v2', { max_versions: 20 });
+
+        assert.equal(data, undefined);
+        assert.equal(error, null);
+        assert.equal(postStub.calledOnce, true);
+        assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/config');
+        assert.deepEqual(postStub.firstCall.args[1]?.body, { max_versions: 20 });
+    });
+
+    it('should unwrap kv2 readSubkeys into the data envelope', async function () {
+        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(ok({
+                data: {
+                    subkeys: { foo: null, bar: { nested: null } },
+                    metadata: { version: 2 },
+                },
+            })),
+        );
+        const client = new VaultClient();
+
+        const subkeys = await client.secret.kv.v2.readSubkeys('secret-v2', 'apps/demo').unwrap();
+
+        assert.deepEqual(subkeys.subkeys, { foo: null, bar: { nested: null } });
+        assert.equal(getStub.calledOnce, true);
+        assert.equal(getStub.firstCall.args[0], '/{kv_v2_mount_path}/subkeys/{path}');
+        assert.deepEqual(getStub.firstCall.args[1]?.params?.path, {
+            kv_v2_mount_path: 'secret-v2',
+            path: 'apps/demo',
+        });
+    });
+
+    it('should pass depth and version options to kv2 readSubkeys', async function () {
+        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(ok({ data: { subkeys: {} } })),
+        );
+        const client = new VaultClient();
+
+        await client.secret.kv.v2.readSubkeys('secret-v2', 'apps/demo', { depth: 2, version: 1 }).unwrap();
+
+        assert.deepEqual(getStub.firstCall.args[1]?.params?.query, { depth: 2, version: 1 });
+    });
 });
+

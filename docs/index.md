@@ -28,6 +28,7 @@ Use this site if you want to:
 ## Quick Links
 
 - [Getting Started](./getting-started/)
+- [Examples](./examples/)
 - [API Reference: VaultClient](./api-v1/)
 - [API Reference: VaultClientV2 and RawVaultClient](./api-v2/)
 - [Error Handling](./error-handling/)

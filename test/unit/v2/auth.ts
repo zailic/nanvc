@@ -3,7 +3,7 @@ import { createSandbox } from 'sinon';
 
 import { VaultAuthClient } from '../../../src/v2/client/auth.js';
 import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
-import { VaultClientError } from '../../../src/v2/transport/errors.js';
+import { VaultClientError } from '../../../src/v2/core/errors.js';
 import { err, ok, toResult } from '../../../src/v2/core/result.js';
 
 import type { VaultAppRoleLoginRequest } from '../../../src/v2/client/auth.js';

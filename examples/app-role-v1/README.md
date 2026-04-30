@@ -16,8 +16,8 @@ client's native `write` and `read` ergonomics:
 The example is organized around three reusable personas from
 `examples/common/personas`:
 
-- `OperatorPersona.v1()` handles Vault readiness, initialization/unseal, `.env`
-  material, and KV mount setup.
+- `OperatorPersona.v1()` handles Vault readiness, initialization/unseal, shared
+  `examples/.env` material, and KV mount setup.
 - `AdminPersona.v1()` configures AppRole, writes the policy, registers the role,
   and returns `role_id` / `secret_id`.
 - `AppPersona.v1()` starts with an unauthenticated client, logs in with AppRole,
@@ -75,20 +75,27 @@ export NANVC_VAULT_CLUSTER_ADDRESS=http://127.0.0.1:8200
 export NANVC_VAULT_AUTH_TOKEN=<operator-or-admin-token>
 ```
 
-If the local Vault server is initialized by this example, it writes
-`examples/app-role-v1/.env` with:
+If the local Vault server is initialized by any example, it writes the shared
+`examples/.env` file with:
 
 - `NANVC_VAULT_UNSEAL_KEY`
 - `NANVC_VAULT_AUTH_TOKEN`
 
-The operator persona also reads this file on later runs before creating its
-client, so a previously initialized local Vault can be reused by the example.
-To reuse those values manually in a new shell:
+The operator persona reads this file on later runs before creating its client,
+so the same initialized local Vault can be reused across all examples. To reuse
+those values manually in a new shell:
 
 ```bash
 set -a
-. examples/app-role-v1/.env
+. examples/.env
 set +a
 ```
 
-The `.env` file is local runtime material and should not be committed.
+The shared `examples/.env` file is local runtime material and should not be
+committed.
+
+Shell-exported environment variables take precedence over values in
+`examples/.env`. If Vault reports `invalid token`, the shared env file probably
+belongs to another Vault instance or an older Docker volume. Export a valid
+`NANVC_VAULT_AUTH_TOKEN`, or delete `examples/.env` and reset local Vault with
+the fresh-state commands above.

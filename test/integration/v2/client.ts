@@ -335,6 +335,150 @@ describe('VaultClientV2 integration test cases.', function () {
         assert.deepEqual(deletedSecret.data, {});
         assert.equal(deletedSecret.metadata.version, 1);
     });
+
+    it('should patch, deleteVersions, undeleteVersions, destroyVersions and deleteMetadata on kv v2', async function () {
+        const mountPath = 'secret-v2-test';
+        const secretPath = 'integration-v2/versioned-secret';
+
+        await ensureMountRemoved(client, mountPath);
+        await ensureKvV2MountAvailable(client, mountPath);
+
+        // Write v1
+        const [writeV1, writeV1Error] = await client.secret.kv.v2.write(mountPath, secretPath, { foo: 'v1', bar: 'original' });
+        assert.equal(writeV1Error, null);
+        void writeV1;
+
+        // Patch to produce v2 (merge-patch)
+        const [patchData, patchError] = await client.secret.kv.v2.patch(mountPath, secretPath, { foo: 'v2-patched' });
+        assert.equal(patchError, null);
+        void patchData;
+
+        // Read v2 (latest)
+        const [v2Secret, v2ReadError] = await client.secret.kv.v2.read<{ foo: string; bar: string }>(mountPath, secretPath);
+        assert.equal(v2ReadError, null);
+        assert.equal(v2Secret.data.foo, 'v2-patched');
+        assert.equal(v2Secret.metadata.version, 2);
+
+        // Soft-delete v1
+        const [deleteVersionsData, deleteVersionsError] = await client.secret.kv.v2.deleteVersions(mountPath, secretPath, [1]);
+        assert.equal(deleteVersionsError, null);
+        void deleteVersionsData;
+
+        // Read v1 - should surface deleted metadata
+        const [v1Deleted, v1DeletedError] = await client.secret.kv.v2.read<{ foo: string }>(mountPath, secretPath, { version: 1 });
+        assert.equal(v1DeletedError, null);
+        assert.equal(typeof v1Deleted.metadata.deletion_time, 'string');
+
+        // Undelete v1
+        const [undeleteData, undeleteError] = await client.secret.kv.v2.undeleteVersions(mountPath, secretPath, [1]);
+        assert.equal(undeleteError, null);
+        void undeleteData;
+
+        // Read v1 again - should be accessible now
+        const [v1Restored, v1RestoredError] = await client.secret.kv.v2.read<{ foo: string }>(mountPath, secretPath, { version: 1 });
+        assert.equal(v1RestoredError, null);
+        assert.equal(v1Restored.data.foo, 'v1');
+
+        // Destroy v1 permanently
+        const [destroyData, destroyError] = await client.secret.kv.v2.destroyVersions(mountPath, secretPath, [1]);
+        assert.equal(destroyError, null);
+        void destroyData;
+
+        // Read v1 metadata to confirm destroyed=true
+        const [metaAfterDestroy, metaAfterDestroyError] = await client.secret.kv.v2.readMetadata(mountPath, secretPath);
+        assert.equal(metaAfterDestroyError, null);
+        const versionsAfterDestroy = metaAfterDestroy.versions as Record<string, { destroyed: boolean }>;
+        assert.equal(versionsAfterDestroy['1']?.destroyed, true);
+
+        // Delete all metadata for this secret
+        const [deleteMetaData, deleteMetaError] = await client.secret.kv.v2.deleteMetadata(mountPath, secretPath);
+        assert.equal(deleteMetaError, null);
+        void deleteMetaData;
+
+        // Confirm the secret metadata is gone (deleteMetadata removes all versions and metadata)
+        const [, deletedMetaError] = await client.secret.kv.v2.readMetadata(mountPath, secretPath);
+        assert.equal(deletedMetaError?.status, 404);
+    });
+
+    it('should read and write kv v2 metadata for a secret', async function () {
+        const mountPath = 'secret-v2-test';
+        const secretPath = 'integration-v2/metadata-secret';
+
+        await ensureMountRemoved(client, mountPath);
+        await ensureKvV2MountAvailable(client, mountPath);
+
+        const [, writeError] = await client.secret.kv.v2.write(mountPath, secretPath, { key: 'val' });
+        assert.equal(writeError, null);
+
+        // Write metadata
+        const [writeMeta, writeMetaError] = await client.secret.kv.v2.writeMetadata(mountPath, secretPath, {
+            max_versions: 5,
+            custom_metadata: { owner: 'test-suite' },
+        });
+        assert.equal(writeMetaError, null);
+        void writeMeta;
+
+        // Read metadata back
+        const [meta, metaError] = await client.secret.kv.v2.readMetadata(mountPath, secretPath);
+        assert.equal(metaError, null);
+        assert.equal(meta.max_versions, 5);
+        assert.deepEqual((meta.custom_metadata as Record<string, string>)['owner'], 'test-suite');
+
+        // Patch metadata
+        const [patchMeta, patchMetaError] = await client.secret.kv.v2.patchMetadata(mountPath, secretPath, {
+            max_versions: 10,
+        });
+        assert.equal(patchMetaError, null);
+        void patchMeta;
+
+        const [metaAfterPatch, metaAfterPatchError] = await client.secret.kv.v2.readMetadata(mountPath, secretPath);
+        assert.equal(metaAfterPatchError, null);
+        assert.equal(metaAfterPatch.max_versions, 10);
+    });
+
+    it('should read and write the kv v2 engine configuration', async function () {
+        const mountPath = 'secret-v2-config-test';
+
+        await ensureMountRemoved(client, mountPath);
+        await ensureKvV2MountAvailable(client, mountPath);
+
+        // Write config
+        const [writeConfig, writeConfigError] = await client.secret.kv.v2.writeConfig(mountPath, {
+            max_versions: 7,
+            cas_required: false,
+        });
+        assert.equal(writeConfigError, null);
+        void writeConfig;
+
+        // Read config back
+        const [config, configError] = await client.secret.kv.v2.readConfig(mountPath);
+        assert.equal(configError, null);
+        assert.equal(config.max_versions, 7);
+        assert.equal(config.cas_required, false);
+
+        await ensureMountRemoved(client, mountPath);
+    });
+
+    it('should read kv v2 subkeys for a secret', async function () {
+        const mountPath = 'secret-v2-test';
+        const secretPath = 'integration-v2/subkeys-secret';
+
+        await ensureMountRemoved(client, mountPath);
+        await ensureKvV2MountAvailable(client, mountPath);
+
+        const [, writeError] = await client.secret.kv.v2.write(mountPath, secretPath, {
+            foo: 'bar',
+            nested: { a: 1, b: 2 },
+        });
+        assert.equal(writeError, null);
+
+        const [subkeys, subkeysError] = await client.secret.kv.v2.readSubkeys(mountPath, secretPath);
+        assert.equal(subkeysError, null);
+        assert.equal(typeof subkeys.subkeys, 'object');
+        const sk = subkeys.subkeys as Record<string, unknown>;
+        assert.equal('foo' in sk, true);
+        assert.equal('nested' in sk, true);
+    });
 });
 
 async function ensureInitializedAndUnsealed(client: VaultClientV2): Promise<void> {

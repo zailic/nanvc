@@ -4,6 +4,7 @@ import {
     expectSuccessOrAlreadyExists,
     isMountAlreadyExistsError,
     loadEnvFile,
+    toExampleAuthError,
     updateEnvFile,
     validateInitData,
     validateV2InitData,
@@ -68,7 +69,7 @@ export class OperatorPersona<V extends VaultClientVersion> {
             },
         });
         if (error && !isMountAlreadyExistsError(error)) {
-            throw error;
+            throw toExampleAuthError(error, this.options.envPath);
         }
     }
 

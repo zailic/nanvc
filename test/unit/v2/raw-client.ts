@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createSandbox } from 'sinon';
 
 import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
-import { VaultClientError } from '../../../src/v2/transport/errors.js';
+import { VaultClientError } from '../../../src/v2/core/errors.js';
 import { NodeVaultTransport } from '../../../src/v2/transport/node-transport.js';
 
 import type { SinonSandbox } from 'sinon';

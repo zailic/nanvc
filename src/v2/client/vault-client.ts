@@ -1,6 +1,6 @@
 import { RawVaultClient } from '../core/raw-client.js';
 import { err, ok, toResult, type Result, type ResultTuple } from '../core/result.js';
-import { VaultClientError } from '../transport/errors.js';
+import { VaultClientError } from '../core/errors.js';
 import type { VaultClientOptions } from '../transport/types.js';
 import { VaultAuthClient } from './auth.js';
 import { VaultSecretClient } from './secret.js';

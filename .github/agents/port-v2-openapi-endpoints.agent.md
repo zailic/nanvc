@@ -52,7 +52,7 @@ Workflow:
 7. Export any new public types from `src/v2/index.ts` and `src/main.ts` when they are part of the public API.
 8. Add focused unit tests that match the existing style in `test/unit/v2`.
 9. Add or update v2 integration tests under `test/integration/v2` for newly ported endpoints, especially when Vault behavior, path handling, authentication, generated response envelopes, or state changes need real-server coverage.
-10. If the public v2 API surface changes, add or update `@nanvc-doc` blocks in the relevant source files, then run `npm run generate:v2:docs`. Do not manually edit `docs/api-v2.md`; it is generated output.
+10. If the public v2 API surface changes, add or update `@nanvc-doc` blocks in the relevant source files, then run `npm run generate:docs`. Do not manually edit `docs/api-v2.md`; it is generated output.
 11. Run verification commands and report what passed or why something could not be run.
 
 Implementation guidelines:
@@ -62,7 +62,7 @@ Implementation guidelines:
 - Normalize path parameters consistently with existing code.
 - Return `Result<T>` from v2 client methods.
 - Convert Vault `data` envelopes only when that is already the local pattern for the domain.
-- Keep generated files generated: update OpenAPI targets/patches and run `npm run generate:v2:openapi` for `src/v2/generated/vault-openapi.ts`; update `@nanvc-doc` source comments and run `npm run generate:v2:docs` for `docs/api-v2.md`.
+- Keep generated files generated: update OpenAPI targets/patches and run `npm run generate:v2:openapi` for `src/v2/generated/vault-openapi.ts`; update `@nanvc-doc` source comments and run `npm run generate:docs` for `docs/api-v2.md`.
 - Do not stop at unit tests for new endpoint coverage. Add integration coverage when the endpoint can be exercised against the local Vault test environment, and use the observed request/response behavior to guide OpenAPI patches or client fixes.
 - Mention explicitly if an integration test was skipped or is not practical, especially when the endpoint depends on Vault Enterprise features, external services, or state that the local test environment cannot provide.
 - Do not introduce broad abstractions unless they clearly reduce repeated logic and match existing patterns.

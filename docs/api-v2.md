@@ -410,6 +410,57 @@ await vault.secret.kv.v2.delete('secret-v2', 'apps/demo').unwrap();
 
 </details>
 
+<details id="secretkvv2deletemetadata" markdown="1">
+<summary><code>secret.kv.v2.deleteMetadata</code></summary>
+
+Permanently delete all versions and metadata for a KV v2 secret path.
+
+Signatures:
+
+- `secret.kv.v2.deleteMetadata(mount, path)`
+
+Example:
+
+```ts
+await vault.secret.kv.v2.deleteMetadata('secret-v2', 'apps/demo').unwrap();
+```
+
+</details>
+
+<details id="secretkvv2deleteversions" markdown="1">
+<summary><code>secret.kv.v2.deleteVersions</code></summary>
+
+Soft-delete specific versions of a KV v2 secret.
+
+Signatures:
+
+- `secret.kv.v2.deleteVersions(mount, path, versions)`
+
+Example:
+
+```ts
+await vault.secret.kv.v2.deleteVersions('secret-v2', 'apps/demo', [1, 2]).unwrap();
+```
+
+</details>
+
+<details id="secretkvv2destroyversions" markdown="1">
+<summary><code>secret.kv.v2.destroyVersions</code></summary>
+
+Permanently destroy specific versions of a KV v2 secret.
+
+Signatures:
+
+- `secret.kv.v2.destroyVersions(mount, path, versions)`
+
+Example:
+
+```ts
+await vault.secret.kv.v2.destroyVersions('secret-v2', 'apps/demo', [1]).unwrap();
+```
+
+</details>
+
 <details id="secretkvv2list" markdown="1">
 <summary><code>secret.kv.v2.list</code></summary>
 
@@ -423,6 +474,40 @@ Example:
 
 ```ts
 const keys = await vault.secret.kv.v2.list('secret-v2', 'apps').unwrap();
+```
+
+</details>
+
+<details id="secretkvv2patch" markdown="1">
+<summary><code>secret.kv.v2.patch</code></summary>
+
+Patch (partially update) a KV v2 secret using JSON Merge Patch semantics.
+
+Signatures:
+
+- `secret.kv.v2.patch(mount, path, payload, options?)`
+
+Example:
+
+```ts
+await vault.secret.kv.v2.patch('secret-v2', 'apps/demo', { foo: 'updated' }).unwrap();
+```
+
+</details>
+
+<details id="secretkvv2patchmetadata" markdown="1">
+<summary><code>secret.kv.v2.patchMetadata</code></summary>
+
+Partially update metadata for a KV v2 secret path.
+
+Signatures:
+
+- `secret.kv.v2.patchMetadata(mount, path, options)`
+
+Example:
+
+```ts
+await vault.secret.kv.v2.patchMetadata('secret-v2', 'apps/demo', { max_versions: 10 }).unwrap();
 ```
 
 </details>
@@ -444,6 +529,74 @@ const secret = await vault.secret.kv.v2.read<{ foo: string }>('secret-v2', 'apps
 
 </details>
 
+<details id="secretkvv2readconfig" markdown="1">
+<summary><code>secret.kv.v2.readConfig</code></summary>
+
+Read the backend-level configuration for a KV v2 mount.
+
+Signatures:
+
+- `secret.kv.v2.readConfig(mount)`
+
+Example:
+
+```ts
+const config = await vault.secret.kv.v2.readConfig('secret-v2').unwrap();
+```
+
+</details>
+
+<details id="secretkvv2readmetadata" markdown="1">
+<summary><code>secret.kv.v2.readMetadata</code></summary>
+
+Read all metadata and versions for a KV v2 secret.
+
+Signatures:
+
+- `secret.kv.v2.readMetadata(mount, path)`
+
+Example:
+
+```ts
+const meta = await vault.secret.kv.v2.readMetadata('secret-v2', 'apps/demo').unwrap();
+```
+
+</details>
+
+<details id="secretkvv2readsubkeys" markdown="1">
+<summary><code>secret.kv.v2.readSubkeys</code></summary>
+
+Read the key structure of a KV v2 secret without returning values.
+
+Signatures:
+
+- `secret.kv.v2.readSubkeys(mount, path, options?)`
+
+Example:
+
+```ts
+const subkeys = await vault.secret.kv.v2.readSubkeys('secret-v2', 'apps/demo').unwrap();
+```
+
+</details>
+
+<details id="secretkvv2undeleteversions" markdown="1">
+<summary><code>secret.kv.v2.undeleteVersions</code></summary>
+
+Restore (undelete) previously soft-deleted versions of a KV v2 secret.
+
+Signatures:
+
+- `secret.kv.v2.undeleteVersions(mount, path, versions)`
+
+Example:
+
+```ts
+await vault.secret.kv.v2.undeleteVersions('secret-v2', 'apps/demo', [1]).unwrap();
+```
+
+</details>
+
 <details id="secretkvv2write" markdown="1">
 <summary><code>secret.kv.v2.write</code></summary>
 
@@ -461,6 +614,40 @@ await vault.secret.kv.v2.write('secret-v2', 'apps/demo', {
 }, {
     cas: 1,
 }).unwrap();
+```
+
+</details>
+
+<details id="secretkvv2writeconfig" markdown="1">
+<summary><code>secret.kv.v2.writeConfig</code></summary>
+
+Update the backend-level configuration for a KV v2 mount.
+
+Signatures:
+
+- `secret.kv.v2.writeConfig(mount, options)`
+
+Example:
+
+```ts
+await vault.secret.kv.v2.writeConfig('secret-v2', { max_versions: 10 }).unwrap();
+```
+
+</details>
+
+<details id="secretkvv2writemetadata" markdown="1">
+<summary><code>secret.kv.v2.writeMetadata</code></summary>
+
+Create or update metadata for a KV v2 secret path.
+
+Signatures:
+
+- `secret.kv.v2.writeMetadata(mount, path, options)`
+
+Example:
+
+```ts
+await vault.secret.kv.v2.writeMetadata('secret-v2', 'apps/demo', { max_versions: 5 }).unwrap();
 ```
 
 </details>
@@ -1041,7 +1228,6 @@ const status = await vault.sys.status().unwrap();
 - `sys.mount.enable()` normalizes leading slashes in mount paths.
 - `secret.kv.v1.list()` supports both full paths and split `mount` / `path` arguments.
 - `secret.kv.v2` is the dedicated helper for KV secrets engine version 2 route and payload semantics.
-- `secret.kv.v2` intentionally covers the common read, write, list, and soft-delete workflow today; it is not a complete implementation of every KV v2 operation from the Vault OpenAPI specification. Use `RawVaultClient` for unsupported KV v2 endpoints.
 
 ### KV v1 Example
 

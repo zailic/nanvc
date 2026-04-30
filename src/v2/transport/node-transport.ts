@@ -4,7 +4,7 @@ import { request as httpsRequest } from 'node:https';
 import type { RequestOptions as NodeHttpsRequestOptions } from 'node:https';
 
 import { createLoggerFromEnv } from '../../logger.js';
-import { VaultClientError } from './errors.js';
+import { VaultClientError } from '../core/errors.js';
 import type {
     VaultClientOptions,
     VaultRequestOptions,
@@ -122,7 +122,7 @@ export class NodeVaultTransport {
 
         if (body) {
             headers['Content-Length'] = Buffer.byteLength(body).toString();
-            headers['Content-Type'] = 'application/json';
+            headers['Content-Type'] = headers['Content-Type'] ?? 'application/json';
         }
 
         const options: NodeHttpRequestOptions & Partial<NodeHttpsRequestOptions> = {

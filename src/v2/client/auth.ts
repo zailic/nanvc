@@ -2,7 +2,7 @@ import type { RawVaultClient } from '../core/raw-client.js';
 import type { Result, ResultTuple } from '../core/result.js';
 import type { components } from '../generated/vault-openapi.js';
 import { err, ok, toResult } from '../core/result.js';
-import { VaultClientError } from '../transport/errors.js';
+import { VaultClientError } from '../core/errors.js';
 
 import { normalize } from 'path';
 
