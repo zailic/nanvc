@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createSandbox } from 'sinon';
 
 import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
-import { VaultClientError } from '../../../src/v2/transport/errors.js';
+import { VaultClientError } from '../../../src/v2/core/errors.js';
 import { NodeVaultTransport } from '../../../src/v2/transport/node-transport.js';
 
 import type { SinonSandbox } from 'sinon';
@@ -146,6 +146,15 @@ describe('RawVaultClient unit test cases.', function () {
             assert.equal((error as VaultClientError).message, 'Missing path parameter: path');
             return true;
         });
+    });
+
+    it('should route patch through request with the PATCH method', async function () {
+        const client = new RawVaultClient();
+        const requestStub = sandbox.stub(client, 'request').resolves([undefined, null]);
+
+        await client.patch('/sys/test');
+
+        assert.equal(requestStub.calledOnceWithExactly('PATCH', '/sys/test', {}), true);
     });
 
     it('should route delete through request with the DELETE method', async function () {

@@ -1,6 +1,6 @@
 import { unauthenticatedOperations, type paths as GeneratedPaths } from '../generated/vault-openapi.js';
 import { err, ok, toResult, type Result, type ResultTuple } from './result.js';
-import { VaultClientError } from '../transport/errors.js';
+import { VaultClientError } from './errors.js';
 import { NodeVaultTransport } from '../transport/node-transport.js';
 import type {
     VaultClientOptions,
@@ -8,7 +8,7 @@ import type {
     VaultRequestOptions,
 } from '../transport/types.js';
 
-type GeneratedMethod = 'delete' | 'get' | 'head' | 'post' | 'put';
+type GeneratedMethod = 'delete' | 'get' | 'head' | 'patch' | 'post' | 'put';
 
 type PathsWithMethod<TMethod extends GeneratedMethod> = {
     [TPath in keyof GeneratedPaths]: TMethod extends keyof GeneratedPaths[TPath] ? TPath : never;
@@ -179,6 +179,15 @@ export class RawVaultClient {
     public post<TResponse>(path: string, config?: RawRequestConfig): Result<TResponse>;
     public post<TResponse>(path: string, config: RawRequestConfig = {}): Result<TResponse> {
         return this.request<TResponse>('POST', path, config);
+    }
+
+    public patch<TPath extends PathsWithMethod<'patch'>>(
+        path: TPath,
+        config?: GeneratedRequestConfig<TPath, 'patch'>,
+    ): Result<SuccessResponseOf<OperationFor<TPath, 'patch'>>>;
+    public patch<TResponse>(path: string, config?: RawRequestConfig): Result<TResponse>;
+    public patch<TResponse>(path: string, config: RawRequestConfig = {}): Result<TResponse> {
+        return this.request<TResponse>('PATCH', path, config);
     }
 
     public put<TPath extends PathsWithMethod<'put'>>(

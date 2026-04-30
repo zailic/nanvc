@@ -122,6 +122,41 @@ export interface components {
             keys: string[];
             root_token: string;
         };
+        KvV2ConfigureRequest: {
+            cas_required?: boolean;
+            delete_version_after?: string;
+            max_versions?: number;
+        };
+        KvV2DeleteVersionsRequest: {
+            versions?: number[];
+        };
+        KvV2DestroyVersionsRequest: {
+            versions?: number[];
+        };
+        KvV2PatchMetadataPathRequest: {
+            cas_required?: boolean;
+            custom_metadata?: { [key: string]: unknown; };
+            delete_version_after?: string;
+            exclude_deleted?: boolean;
+            max_versions?: number;
+        };
+        KvV2PatchRequest: {
+            data?: { [key: string]: unknown; };
+            options?: { [key: string]: unknown; };
+            version?: number;
+        };
+        KvV2PatchResponse: {
+            created_time?: string;
+            custom_metadata?: { [key: string]: unknown; };
+            deletion_time?: string;
+            destroyed?: boolean;
+            version?: number;
+        };
+        KvV2ReadConfigurationResponse: {
+            cas_required?: boolean;
+            delete_version_after?: string;
+            max_versions?: number;
+        };
         KvV2ReadMetadataResponse: {
             cas_required?: boolean;
             created_time?: string;
@@ -137,6 +172,20 @@ export interface components {
         KvV2ReadResponse: {
             data?: { [key: string]: unknown; };
             metadata?: { [key: string]: unknown; };
+        };
+        KvV2ReadSubkeysResponse: {
+            metadata?: { [key: string]: unknown; };
+            subkeys?: { [key: string]: unknown; };
+        };
+        KvV2UndeleteVersionsRequest: {
+            versions?: number[];
+        };
+        KvV2WriteMetadataRequest: {
+            cas_required?: boolean;
+            custom_metadata?: { [key: string]: unknown; };
+            delete_version_after?: string;
+            exclude_deleted?: boolean;
+            max_versions?: number;
         };
         KvV2WriteRequest: {
             data?: { [key: string]: unknown; };
@@ -533,6 +582,35 @@ export interface paths {
             };
         };
     };
+    '/{kv_v2_mount_path}/config': {
+        parameters: {
+            path: {
+                kv_v2_mount_path: string;
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['KvV2ReadConfigurationResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['KvV2ConfigureRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "No Content";
+                };
+            };
+        };
+    };
     '/{kv_v2_mount_path}/data/{path}': {
         parameters: {
             path: {
@@ -557,6 +635,21 @@ export interface paths {
                 };
             };
         };
+        patch: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['KvV2PatchRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['KvV2PatchResponse'];
+                    };
+                };
+            };
+        };
         post: {
             requestBody: {
                 content: {
@@ -573,11 +666,58 @@ export interface paths {
             };
         };
     };
+    '/{kv_v2_mount_path}/delete/{path}': {
+        parameters: {
+            path: {
+                path: string;
+                kv_v2_mount_path: string;
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['KvV2DeleteVersionsRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "No Content";
+                };
+            };
+        };
+    };
+    '/{kv_v2_mount_path}/destroy/{path}': {
+        parameters: {
+            path: {
+                path: string;
+                kv_v2_mount_path: string;
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['KvV2DestroyVersionsRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "No Content";
+                };
+            };
+        };
+    };
     '/{kv_v2_mount_path}/metadata/{path}': {
         parameters: {
             path: {
                 path: string;
                 kv_v2_mount_path: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "No Content";
+                };
             };
         };
         get: {
@@ -587,6 +727,30 @@ export interface paths {
                     content: {
                         'application/json': components['schemas']['KvV2ReadMetadataResponse'];
                     };
+                };
+            };
+        };
+        patch: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['KvV2PatchMetadataPathRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "No Content";
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['KvV2WriteMetadataRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "No Content";
                 };
             };
         };
@@ -610,6 +774,44 @@ export interface paths {
                     content: {
                         'application/json': components['schemas']['StandardListResponse'];
                     };
+                };
+            };
+        };
+    };
+    '/{kv_v2_mount_path}/subkeys/{path}': {
+        parameters: {
+            path: {
+                path: string;
+                kv_v2_mount_path: string;
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['KvV2ReadSubkeysResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/{kv_v2_mount_path}/undelete/{path}': {
+        parameters: {
+            path: {
+                path: string;
+                kv_v2_mount_path: string;
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['KvV2UndeleteVersionsRequest'];
+                };
+            };
+            responses: {
+                204: {
+                    description: "No Content";
                 };
             };
         };

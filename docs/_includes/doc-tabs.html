@@ -10,11 +10,19 @@
   </div>
 
   <div class="doc-tabs__panel" id="{{ include.id }}-panel-1">
-    {{ include.panel_one }}
+    {% if include.markdown_one %}
+      {{ include.panel_one | markdownify }}
+    {% else %}
+      {{ include.panel_one }}
+    {% endif %}
   </div>
 
   <div class="doc-tabs__panel" id="{{ include.id }}-panel-2">
-    {{ include.panel_two }}
+    {% if include.markdown_two %}
+      {{ include.panel_two | markdownify }}
+    {% else %}
+      {{ include.panel_two }}
+    {% endif %}
   </div>
 </div>
 

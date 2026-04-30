@@ -17,7 +17,7 @@ export type VaultClientOptions = {
     authToken?: string | null;
 };
 
-export type VaultRequestMethod = 'DELETE' | 'GET' | 'HEAD' | 'LIST' | 'POST' | 'PUT';
+export type VaultRequestMethod = 'DELETE' | 'GET' | 'HEAD' | 'LIST' | 'PATCH' | 'POST' | 'PUT';
 
 export type VaultRequestOptions = {
     body?: unknown;

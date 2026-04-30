@@ -48,7 +48,7 @@
     "docs:prepare": "node ./scripts/generate-docs-changelog.mjs && node ./scripts/generate-docs-config.mjs",
     "docs:serve": "npm run docs:prepare && bundle exec jekyll serve --source docs --config docs/_config.yml,docs/_config.local.yml,docs/_config.generated.yml --livereload",
     "generate:v2:openapi": "node ./scripts/generate-v2-openapi-types.mjs",
-    "generate:v2:docs": "node ./scripts/generate-v2-docs.mjs",
+    "generate:docs": "node ./scripts/generate-v2-docs.mjs && node ./scripts/generate-examples-docs.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "lint": "eslint .",

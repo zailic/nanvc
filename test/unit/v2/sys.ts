@@ -3,7 +3,7 @@ import { createSandbox } from 'sinon';
 
 import { VaultSystemWrappingClient } from '../../../src/v2/client/sys-wrapping.js';
 import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
-import { VaultClientError } from '../../../src/v2/transport/errors.js';
+import { VaultClientError } from '../../../src/v2/core/errors.js';
 import { err, ok, toResult } from '../../../src/v2/core/result.js';
 
 import type { SinonSandbox } from 'sinon';
@@ -50,8 +50,17 @@ describe('VaultSystemWrappingClient unit test cases.', function () {
             message: 'Forbidden',
             status: 403,
         });
-        sandbox.stub(RawVaultClient.prototype, 'post').returns(
+        const validationError = new VaultClientError({
+            code: 'VALIDATION_ERROR',
+            message: 'Vault wrapping lookup response did not include data',
+            responseBody: {},
+        });
+
+        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').onFirstCall().returns(
             resultOf(err(clientError)),
+        );
+        postStub.onSecondCall().returns(
+            resultOf(ok({})), // simulate invalid response without "data" property
         );
         const client = new VaultSystemWrappingClient(new RawVaultClient());
 
@@ -61,6 +70,13 @@ describe('VaultSystemWrappingClient unit test cases.', function () {
                 assert.equal(error, clientError);
                 return true;
             },
+        );
+        await assert.rejects(
+            client.lookup('s.abc123').unwrap(),
+            (error: unknown) => {
+                assert.deepEqual(error, validationError);
+                return true;
+            }
         );
     });
 

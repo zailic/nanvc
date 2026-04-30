@@ -12,7 +12,7 @@ This project follows a [Code of Conduct](https://github.com/zailic/nanvc/blob/ma
 ```bash
 npm install
 npm run generate:v2:openapi
-npm run generate:v2:docs
+npm run generate:docs
 npm run typecheck
 npm run lint
 npm test
@@ -111,7 +111,7 @@ When adding or changing a public shorthand method, add or update its doc block n
 Then run:
 
 ```bash
-npm run generate:v2:docs
+npm run generate:docs
 ```
 
 The generator updates only the marked section between:
@@ -132,7 +132,7 @@ When contributing code:
 - add integration tests when transport behavior or Vault interactions change
 - add or update `@nanvc-doc` blocks for public v2 shorthand methods
 - run `npm run generate:v2:openapi` when OpenAPI targets or patches change
-- run `npm run generate:v2:docs` when v2 shorthand docs change
+- run `npm run generate:docs` when v2 shorthand docs change
 - avoid broad refactors in the same change as a functional fix
 - keep docs in sync with exported behavior
 
@@ -154,7 +154,7 @@ For v2 shorthand methods, prefer updating the `@nanvc-doc` block and regeneratin
 Before opening a PR, it is helpful to confirm:
 
 - `npm run generate:v2:openapi` if OpenAPI inputs changed
-- `npm run generate:v2:docs` if v2 client docs changed
+- `npm run generate:docs` if v2 client docs or examples changed
 - `npm run typecheck`
 - `npm run lint`
 - `npm run test:unit`

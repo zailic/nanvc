@@ -8,6 +8,7 @@ baseurl: "/nanvc"
 header_pages:
   - index.md
   - getting-started.md
+  - examples.md
   - api-v1.md
   - api-v2.md
   - error-handling.md

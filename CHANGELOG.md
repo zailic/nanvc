@@ -10,6 +10,8 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 - Added v2 response wrapping helpers under `vault.sys.wrapping` for lookup, wrap, unwrap, and rewrap workflows.
 - Added v2 API documentation for system policies and response wrapping.
 - Added a request wrapping example that demonstrates AppRole credential delivery through a short-lived wrapping token.
+- Added a versioned KV v2 example that demonstrates write, patch, metadata, history, soft-delete, undelete, destroy, automatic deletion, and CAS workflows.
+- Added generated documentation pages for runnable examples, including guide/source tabs for each example.
 - Added shared example personas for operator, admin, and app workflows across the AppRole examples.
 - Added v2 integration coverage for ACL policy and response wrapping workflows.
 - Added focused v2 unit coverage for system policy and system wrapping clients.
@@ -17,8 +19,9 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 ### Changed
 
 - Refactored the AppRole examples to use the shared persona helpers and verify the expected secret access behavior.
+- Updated examples to share `examples/.env` runtime material across workflows and print consistent success banners.
 - Updated OpenAPI response generation so local response patches take precedence over upstream schemas.
-- Reduced the Docker-backed integration wait delay from 30 seconds to 5 seconds.
+- Reduced the Docker-backed integration wait delay from a hardcoded 30 seconds to a wait loop that polls Vault's health endpoint until it's ready.
 
 ### Fixed
 

@@ -1,7 +1,7 @@
 import type { components } from '../generated/vault-openapi.js';
 import type { RawVaultClient } from '../core/raw-client.js';
 import { err, ok, toResult, type Result, type ResultTuple } from '../core/result.js';
-import { VaultClientError } from '../transport/errors.js';
+import { VaultClientError } from '../core/errors.js';
 
 export type VaultWrappingLookupResponse = components['schemas']['WrappingLookupData'];
 export type VaultWrappingWrapInfo = components['schemas']['WrapInfo'];

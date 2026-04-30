@@ -1,4 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { VaultResponse } from '../../../src/lib/commands/index.js';
 import { VaultClientError } from '../../../src/main.js';
@@ -34,6 +36,10 @@ export function loadEnvFile(envPath: string): void {
         }
 
         const key = trimmedLine.slice(0, separatorIndex);
+        if (process.env[key] !== undefined) {
+            continue;
+        }
+
         const value = trimmedLine.slice(separatorIndex + 1);
         process.env[key] = value;
     }
@@ -117,6 +123,62 @@ export function isMountAlreadyExistsError(error: VaultClientError): boolean {
     return error.code === 'HTTP_ERROR'
         && typeof error.message === 'string'
         && isAlreadyExistsMessage(error.message);
+}
+
+export function isInvalidTokenError(error: VaultClientError): boolean {
+    if (error.code !== 'HTTP_ERROR' || error.status !== 403) {
+        return false;
+    }
+
+    const msg = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+    if (msg.includes('invalid token') || msg.includes('permission denied')) {
+        return true;
+    }
+
+    // Also inspect responseBody.errors[], which is where RawVaultClient
+    // sources the error message from — Vault returns {"errors":["permission denied"]}
+    // for stale/revoked tokens just as often as "invalid token".
+    const body = error.responseBody;
+    if (body && typeof body === 'object') {
+        const errors = (body as { errors?: unknown }).errors;
+        if (Array.isArray(errors)) {
+            return errors.some(
+                (e) => typeof e === 'string'
+                    && (e.toLowerCase().includes('invalid token') || e.toLowerCase().includes('permission denied')),
+            );
+        }
+    }
+
+    return false;
+}
+
+export function toExampleAuthError(error: VaultClientError, envPath: string | undefined): Error {
+    if (!envPath || !isInvalidTokenError(error)) {
+        return error;
+    }
+
+    const exampleError = new Error([
+        `Vault rejected the token loaded for this example from ${envPath}.`,
+        'The shared examples env file likely belongs to another Vault instance or an older Docker volume.',
+        'Update NANVC_VAULT_AUTH_TOKEN, delete the shared env file and reset local Vault, or export a valid token before running the example.',
+    ].join(' '));
+    exampleError.stack = error.stack;
+    return exampleError;
+}
+
+export function printSuccessBanner(title: string): void {
+    console.log([
+        '',
+        '============================================================',
+        `  ${title}`,
+        '  All assertions passed',
+        '============================================================',
+        '',
+    ].join('\n'));
+}
+
+export function getExamplesEnvPath(exampleMetaUrl: string): string {
+    return resolve(dirname(fileURLToPath(exampleMetaUrl)), '..', '.env');
 }
 
 function isAlreadyExistsMessage(message: string | undefined): boolean {

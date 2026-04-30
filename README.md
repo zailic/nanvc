@@ -232,6 +232,7 @@ The `tls` block supports:
 
 - [AppRole example with `VaultClientV2`](https://github.com/zailic/nanvc/blob/master/examples/app-role/README.md)
 - [AppRole example with the original `VaultClient`](https://github.com/zailic/nanvc/blob/master/examples/app-role-v1/README.md)
+- [Versioned KV v2 — write, patch, version history, CAS, auto-deletion](https://github.com/zailic/nanvc/blob/master/examples/versioned-kv/README.md)
 
 ## API
 

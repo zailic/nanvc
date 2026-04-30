@@ -2,7 +2,7 @@ import {normalize} from 'path';
 
 import type { RawVaultClient } from '../core/raw-client.js';
 import { err, ok, toResult, type Result, type ResultTuple } from '../core/result.js';
-import { VaultClientError } from '../transport/errors.js';
+import { VaultClientError } from '../core/errors.js';
 
 export class VaultSecretKvV1Client {
     constructor(private readonly raw: RawVaultClient) { }
@@ -179,14 +179,14 @@ function resolveKvV1PathParams(
         const kv_v1_mount_path = normalize(pathOrMount);
         const path = normalize(maybePath);
 
-        if (!kv_v1_mount_path) {
+        if (!kv_v1_mount_path || kv_v1_mount_path === '.') {
             return err(new VaultClientError({
                 code: 'VALIDATION_ERROR',
                 message: `Expected a KV v1 mount path, got "${pathOrMount}"`,
             }));
         }
 
-        if (!allowEmptyPath && !path) {
+        if (!allowEmptyPath && (!path || path === '.')) {
             return err(new VaultClientError({
                 code: 'VALIDATION_ERROR',
                 message: `Expected a KV v1 secret path, got "${maybePath}"`,
@@ -206,7 +206,7 @@ function resolveKvV1PathParams(
     if (
         !kv_v1_mount_path || 
         kv_v1_mount_path === '.' || 
-        (!allowEmptyPath && path.length === 0)
+        (!allowEmptyPath && (!path || path === '.'))
     ) {
         return err(new VaultClientError({
             code: 'VALIDATION_ERROR',

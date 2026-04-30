@@ -1,4 +1,4 @@
-import type { VaultClientError } from '../transport/errors.js';
+import type { VaultClientError } from './errors.js';
 
 export type Ok<T> = readonly [data: T, error: null];
 export type Err<E> = readonly [data: null, error: E];
