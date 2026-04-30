@@ -24,6 +24,14 @@ This example demonstrates an AppRole flow with the v2 client:
 npx tsx examples/app-role/main.ts
 ```
 
+### [Database secrets engine with VaultClientV2](./database-secrets/)
+
+This example demonstrates Vault's database secrets engine against a local PostgreSQL instance. It shows how to enable the engine, configure a database connection, define a role with scoped SQL statements, and generate short-lived dynamic credentials — all through the nanvc v2 client.
+
+```bash
+npx tsx examples/database-secrets/main.ts
+```
+
 ### [Request wrapping example with VaultClientV2](./request-wrapping/)
 
 This example demonstrates an AppRole flow where the admin wraps the generated role_id and secret_id, then the app unwraps them before logging in:
