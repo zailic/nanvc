@@ -315,6 +315,76 @@ const enabled = await vault.auth.isAuthMethodEnabled('approle').unwrap();
 
 </details>
 
+##### Secrets / Cubbyhole
+
+<details id="secretcubbyholedelete" markdown="1">
+<summary><code>secret.cubbyhole.delete</code></summary>
+
+Delete a secret from the caller token's cubbyhole.
+
+Signatures:
+
+- `secret.cubbyhole.delete(path)`
+
+Example:
+
+```ts
+await vault.secret.cubbyhole.delete('my/secret').unwrap();
+```
+
+</details>
+
+<details id="secretcubbyholelist" markdown="1">
+<summary><code>secret.cubbyhole.list</code></summary>
+
+List secret keys stored in the caller token's cubbyhole at the given path prefix.
+
+Signatures:
+
+- `secret.cubbyhole.list(path?)`
+
+Example:
+
+```ts
+const keys = await vault.secret.cubbyhole.list('my').unwrap();
+```
+
+</details>
+
+<details id="secretcubbyholeread" markdown="1">
+<summary><code>secret.cubbyhole.read</code></summary>
+
+Read a secret from the caller token's cubbyhole.
+
+Signatures:
+
+- `secret.cubbyhole.read<T>(path)`
+
+Example:
+
+```ts
+const secret = await vault.secret.cubbyhole.read<{ token: string }>('my/secret').unwrap();
+```
+
+</details>
+
+<details id="secretcubbyholewrite" markdown="1">
+<summary><code>secret.cubbyhole.write</code></summary>
+
+Write a secret into the caller token's cubbyhole.
+
+Signatures:
+
+- `secret.cubbyhole.write(path, payload)`
+
+Example:
+
+```ts
+await vault.secret.cubbyhole.write('my/secret', { token: 'abc123' }).unwrap();
+```
+
+</details>
+
 ##### Secrets / KV v1
 
 <details id="secretkvv1delete" markdown="1">
