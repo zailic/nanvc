@@ -8,6 +8,7 @@ export {
     RawVaultClient,
     VaultClientError,
     VaultClientV2,
+    VaultSecretCubbyholeClient,
     err,
     ok,
 } from './v2/index.js';
@@ -19,6 +20,8 @@ export type {
     VaultAclPolicyWriteRequest,
     VaultClientErrorCode,
     VaultClientErrorInput,
+    VaultCubbyholeListResponse,
+    VaultCubbyholeReadResponse,
     VaultEgpPolicyReadResponse,
     VaultEgpPolicyWriteRequest,
     VaultInitRequest,
