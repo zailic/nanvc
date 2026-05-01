@@ -52,6 +52,11 @@ export type {
     VaultKvV2WriteOptions,
 } from './client/secret-kv-v2.js';
 export type {
+    VaultCubbyholeListResponse,
+    VaultCubbyholeReadResponse,
+} from './client/secret-cubbyhole.js';
+export { VaultSecretCubbyholeClient } from './client/secret-cubbyhole.js';
+export type {
     VaultAppRoleLoginRequest,
     VaultAppRoleLoginResponse,
     VaultAppRoleRequest,

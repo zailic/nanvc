@@ -86,6 +86,14 @@ export interface components {
             type?: string;
             uuid?: string;
         };
+        CubbyholeListResponse: {
+            data?: {
+                keys?: string[];
+            };
+        };
+        CubbyholeReadResponse: {
+            data?: Record<string, unknown>;
+        };
         HealthStatusResponse: {
             clock_skew_ms?: number;
             echo_duration_ms?: number;
@@ -506,6 +514,75 @@ export interface paths {
                     description: "OK";
                     content: {
                         'application/json': components['schemas']['AppRoleLoginResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/cubbyhole/{path}': {
+        parameters: {
+            path: {
+                path: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "empty body";
+                };
+            };
+        };
+        get: {
+            parameters: {
+                query: {
+                    read_snapshot_id?: string;
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['CubbyholeReadResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            parameters: {
+                query: {
+                    recover_snapshot_id?: string;
+                };
+            };
+            requestBody: {
+                content: {
+                    'application/json': Record<string, unknown>;
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/cubbyhole/{path}/': {
+        parameters: {
+            path: {
+                path: string;
+            };
+        };
+        get: {
+            parameters: {
+                query: {
+                    list: "true";
+                    read_snapshot_id?: string;
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['CubbyholeListResponse'];
                     };
                 };
             };
