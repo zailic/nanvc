@@ -144,4 +144,103 @@ describe('VaultSecretCubbyholeClient unit test cases.', function () {
         const callConfig = stub.firstCall.args[1] as { params?: { path?: { path?: string } } };
         assert.equal(callConfig?.params?.path?.path, '');
     });
+
+    it('read should propagate errors from raw.get', async function () {
+        const raw = new RawVaultClient();
+        const client = new VaultSecretCubbyholeClient(raw);
+        const vaultError = new VaultClientError({ code: 'HTTP_ERROR', message: 'not found', status: 404 });
+
+        sandbox.stub(raw, 'get').returns({
+            then: (resolve: (value: [null, VaultClientError]) => void) => {
+                resolve([null, vaultError]);
+                return { then: () => {}, catch: () => {} };
+            },
+        } as unknown as ReturnType<typeof raw.get>);
+
+        const [data, error] = await client.read('my/secret');
+
+        assert.equal(data, null);
+        assert.equal(error, vaultError);
+    });
+
+    it('write should propagate errors from raw.post', async function () {
+        const raw = new RawVaultClient();
+        const client = new VaultSecretCubbyholeClient(raw);
+        const vaultError = new VaultClientError({ code: 'HTTP_ERROR', message: 'server error', status: 500 });
+
+        sandbox.stub(raw, 'post').returns({
+            then: (resolve: (value: [null, VaultClientError]) => void) => {
+                resolve([null, vaultError]);
+                return { then: () => {}, catch: () => {} };
+            },
+        } as unknown as ReturnType<typeof raw.post>);
+
+        const [data, error] = await client.write('my/secret', { key: 'val' });
+
+        assert.equal(data, null);
+        assert.equal(error, vaultError);
+    });
+
+    it('write should return a VALIDATION_ERROR for a non-object payload', async function () {
+        const client = new VaultSecretCubbyholeClient(new RawVaultClient());
+
+        const [data, error] = await client.write('my/secret', [] as unknown as Record<string, unknown>);
+
+        assert.equal(data, null);
+        assert.equal(error instanceof VaultClientError, true);
+        assert.equal(error?.code, 'VALIDATION_ERROR');
+    });
+
+    it('delete should propagate errors from raw.delete', async function () {
+        const raw = new RawVaultClient();
+        const client = new VaultSecretCubbyholeClient(raw);
+        const vaultError = new VaultClientError({ code: 'HTTP_ERROR', message: 'server error', status: 500 });
+
+        sandbox.stub(raw, 'delete').returns({
+            then: (resolve: (value: [null, VaultClientError]) => void) => {
+                resolve([null, vaultError]);
+                return { then: () => {}, catch: () => {} };
+            },
+        } as unknown as ReturnType<typeof raw.delete>);
+
+        const [data, error] = await client.delete('my/secret');
+
+        assert.equal(data, null);
+        assert.equal(error, vaultError);
+    });
+
+    it('list should propagate errors from raw.list', async function () {
+        const raw = new RawVaultClient();
+        const client = new VaultSecretCubbyholeClient(raw);
+        const vaultError = new VaultClientError({ code: 'HTTP_ERROR', message: 'forbidden', status: 403 });
+
+        sandbox.stub(raw, 'list').returns({
+            then: (resolve: (value: [null, VaultClientError]) => void) => {
+                resolve([null, vaultError]);
+                return { then: () => {}, catch: () => {} };
+            },
+        } as unknown as ReturnType<typeof raw.list>);
+
+        const [keys, error] = await client.list('my');
+
+        assert.equal(keys, null);
+        assert.equal(error, vaultError);
+    });
+
+    it('list should return empty array when keys is missing in response', async function () {
+        const raw = new RawVaultClient();
+        const client = new VaultSecretCubbyholeClient(raw);
+
+        sandbox.stub(raw, 'list').returns({
+            then: (resolve: (value: [{ data: Record<string, never> }, null]) => void) => {
+                resolve([{ data: {} }, null]);
+                return { then: () => {}, catch: () => {} };
+            },
+        } as unknown as ReturnType<typeof raw.list>);
+
+        const [keys, error] = await client.list();
+
+        assert.equal(error, null);
+        assert.deepEqual(keys, []);
+    });
 });
