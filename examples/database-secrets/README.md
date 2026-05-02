@@ -83,32 +83,30 @@ matches the `vault` service port mapping.
 
 ## Environment
 
-The example reads and writes a shared `examples/.env` file to persist Vault
-init and unseal material across example runs. If the local Vault server is
-fresh, the example initializes it, unseals it, and writes:
-
-- `NANVC_VAULT_UNSEAL_KEY`
-- `NANVC_VAULT_AUTH_TOKEN`
+The example reads `NANVC_VAULT_CLUSTER_ADDRESS` for the Vault address (defaults
+to `http://127.0.0.1:8200`) and delegates initialization and unseal to the
+shared `createTestVaultClient` helper from `test/helpers/vault.ts`.
 
 For an existing Vault server, set:
 
 ```bash
 export NANVC_VAULT_CLUSTER_ADDRESS=http://127.0.0.1:8200
-export NANVC_VAULT_AUTH_TOKEN=<operator-or-admin-token>
+export TEST_NANVC_VAULT_AUTH_TOKEN=<root-or-admin-token>
+export TEST_NANVC_VAULT_UNSEAL_KEY=<unseal-key>
 ```
 
-Shell-exported variables take precedence over values in `examples/.env`.
+If the local Vault is not yet initialized, the shared helper initializes and
+unseals it automatically and writes a shared cache file under your OS temp
+directory with:
 
-To reuse the shared env file in a new shell:
+- `TEST_NANVC_VAULT_AUTH_TOKEN`
+- `TEST_NANVC_VAULT_UNSEAL_KEY`
 
-```bash
-set -a
-. examples/.env
-set +a
-```
-
-The shared `examples/.env` file is local runtime material and should not be
-committed.
+Those cached values let tests and examples reuse the same initialized local
+Vault instance. Shell-exported `TEST_NANVC_*` variables take precedence over the
+cached values. If Vault reports `invalid token`, the cached credentials probably
+belong to another Vault instance or an older Docker volume. Export valid
+`TEST_NANVC_*` values, or reset local Vault with the fresh-state commands above.
 
 ## Cleanup and reset
 

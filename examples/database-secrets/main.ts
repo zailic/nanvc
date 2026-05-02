@@ -1,10 +1,10 @@
 import assert from 'node:assert';
 
 import { AdminPersona } from '../common/personas/admin.js';
-import { getExamplesEnvPath, isMountAlreadyExistsError, printSuccessBanner, toExampleAuthError } from '../common/personas/helpers.js';
-import { OperatorPersona } from '../common/personas/operator.js';
+import { isMountAlreadyExistsError, printSuccessBanner, toExampleAuthError } from '../common/personas/helpers.js';
+import { createTestVaultClient } from '../../test/helpers/vault.js';
 
-const ENV_PATH = getExamplesEnvPath(import.meta.url);
+const VAULT_CLUSTER_ADDRESS = process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
 
 // Database secrets engine mount and resource names.
 const DB_MOUNT = 'database';
@@ -13,14 +13,13 @@ const DB_ROLE = 'readonly';
 
 async function main(): Promise<void> {
 
-    // ── Step 1: Operator — prepare Vault ──────────────────────────────────────
-    // Initialize and unseal Vault if needed.
-    const operator = OperatorPersona.v2({ envPath: ENV_PATH });
-    await operator.withWorkflow(async () => {
-        await operator.ensureVaultIsReady();
-    });
+    // ── Step 1: Prepare Vault ─────────────────────────────────────────────────
+    // createTestVaultClient initializes and unseals Vault if needed, and returns
+    // a VaultClientV2 with the root token already set. Credentials are persisted
+    // to a temp env file so subsequent runs skip re-initialization.
+    const rootVault = await createTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
 
-    const admin = AdminPersona.v2();
+    const admin = AdminPersona.v2({ client: rootVault });
     await admin.withWorkflow(async ({ vault }) => {
 
         // ── Step 2: Admin — enable the database secrets engine ────────────────
@@ -29,7 +28,7 @@ async function main(): Promise<void> {
         // The typed sys.mount.enable method covers this step.
         const [, mountError] = await vault.sys.mount.enable(DB_MOUNT, { type: 'database' });
         if (mountError && !isMountAlreadyExistsError(mountError)) {
-            throw toExampleAuthError(mountError, ENV_PATH);
+            throw toExampleAuthError(mountError);
         }
 
         // ── Step 3: Admin — configure the database connection ─────────────────
