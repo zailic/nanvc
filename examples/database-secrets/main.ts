@@ -11,19 +11,6 @@ const DB_MOUNT = 'database';
 const DB_CONNECTION = 'postgres-webapp';
 const DB_ROLE = 'readonly';
 
-// Response shape for GET /database/creds/<role>.
-// The database secrets engine has no typed v2 shortcut methods yet, so all
-// database API calls go through vault.raw (the escape-hatch RawVaultClient).
-type DbCredsResponse = {
-    lease_id: string;
-    renewable: boolean;
-    lease_duration: number;
-    data: {
-        username: string;
-        password: string;
-    };
-};
-
 async function main(): Promise<void> {
 
     // ── Step 1: Operator — prepare Vault ──────────────────────────────────────
@@ -46,25 +33,20 @@ async function main(): Promise<void> {
         }
 
         // ── Step 3: Admin — configure the database connection ─────────────────
-        // vault.raw is the RawVaultClient escape hatch. It accepts any Vault
-        // HTTP path and is the right tool here because the database secrets
-        // engine has no typed v2 shortcut methods in nanvc yet.
-        //
-        // This call configures a named PostgreSQL connection. Vault stores the
-        // management credentials (nanvc / integration) encrypted and uses them
-        // to create and revoke dynamic roles. The {{username}} and {{password}}
-        // placeholders are filled in by Vault at request time.
+        // vault.secret.db.configureConnection sets up a named PostgreSQL
+        // connection. Vault stores the management credentials (nanvc /
+        // integration) encrypted and uses them to create and revoke dynamic
+        // roles. The {{username}} and {{password}} placeholders are filled in
+        // by Vault at request time.
         //
         // The PostgreSQL service is reachable at db:5432 within the Docker
         // Compose network. The host machine does not need direct DB access.
-        await vault.raw.post<void>(`/${DB_MOUNT}/config/${DB_CONNECTION}`, {
-            body: {
-                plugin_name: 'postgresql-database-plugin',
-                connection_url: 'postgresql://{{username}}:{{password}}@db:5432/nanvc?sslmode=disable',
-                allowed_roles: [DB_ROLE],
-                username: 'nanvc',
-                password: 'integration',
-            },
+        await vault.secret.db.configureConnection(DB_MOUNT, DB_CONNECTION, {
+            plugin_name: 'postgresql-database-plugin',
+            connection_url: 'postgresql://{{username}}:{{password}}@db:5432/nanvc?sslmode=disable',
+            allowed_roles: [DB_ROLE],
+            username: 'nanvc',
+            password: 'integration',
         }).unwrap();
 
         // ── Step 4: Admin — create a dynamic-credentials role ─────────────────
@@ -72,20 +54,18 @@ async function main(): Promise<void> {
         // runs when generating credentials. Each credential set gets a unique
         // username derived from the role name plus a timestamp, and a random
         // password. Credentials are automatically revoked when the lease expires.
-        await vault.raw.post<void>(`/${DB_MOUNT}/roles/${DB_ROLE}`, {
-            body: {
-                db_name: DB_CONNECTION,
-                creation_statements: [
-                    "CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}' NOINHERIT;",
-                    "GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"{{name}}\";",
-                ],
-                revocation_statements: [
-                    "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM \"{{name}}\";",
-                    "DROP ROLE IF EXISTS \"{{name}}\";",
-                ],
-                default_ttl: '1h',
-                max_ttl: '24h',
-            },
+        await vault.secret.db.writeRole(DB_MOUNT, DB_ROLE, {
+            db_name: DB_CONNECTION,
+            creation_statements: [
+                "CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}' NOINHERIT;",
+                "GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"{{name}}\";",
+            ],
+            revocation_statements: [
+                "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM \"{{name}}\";",
+                "DROP ROLE IF EXISTS \"{{name}}\";",
+            ],
+            default_ttl: '1h',
+            max_ttl: '24h',
         }).unwrap();
 
         // ── Step 5: Admin — write a least-privilege policy ────────────────────
@@ -101,18 +81,18 @@ async function main(): Promise<void> {
         await admin.createPolicy('db-readonly', dbPolicy);
 
         // ── Step 6: Generate dynamic database credentials ─────────────────────
-        // Reading from database/creds/<role> causes Vault to connect to the
+        // vault.secret.db.generateCredentials causes Vault to connect to the
         // database, execute the creation_statements with a generated name and
-        // password, and return the result. Each read produces a unique,
+        // password, and return the result. Each call produces a unique,
         // time-limited credential pair backed by a Vault lease.
-        const creds = await vault.raw.get<DbCredsResponse>(`/${DB_MOUNT}/creds/${DB_ROLE}`).unwrap();
+        const creds = await vault.secret.db.generateCredentials(DB_MOUNT, DB_ROLE).unwrap();
 
         assert.ok(
-            typeof creds.data.username === 'string' && creds.data.username.length > 0,
+            typeof creds.data?.username === 'string' && creds.data.username.length > 0,
             'Generated username must be a non-empty string',
         );
         assert.ok(
-            typeof creds.data.password === 'string' && creds.data.password.length > 0,
+            typeof creds.data?.password === 'string' && creds.data.password.length > 0,
             'Generated password must be a non-empty string',
         );
         assert.ok(
@@ -120,11 +100,11 @@ async function main(): Promise<void> {
             'Vault must return a lease_id for generated credentials',
         );
         assert.ok(
-            creds.lease_duration > 0,
+            (creds.lease_duration ?? 0) > 0,
             'Vault must return a positive lease_duration',
         );
 
-        console.log(`  Dynamic username : ${creds.data.username}`);
+        console.log(`  Dynamic username : ${creds.data?.username}`);
         console.log(`  Lease ID         : ${creds.lease_id}`);
         console.log(`  Lease duration   : ${creds.lease_duration}s`);
     });

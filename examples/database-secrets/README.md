@@ -21,24 +21,23 @@ Compose services in this repository.
   each request.
 - Write a least-privilege Vault policy that allows reading credentials only
   for the `readonly` role.
-- Generate dynamic credentials via `GET /database/creds/readonly` and assert
-  that the returned username, password, lease ID, and lease duration are
+- Generate dynamic credentials via `vault.secret.db.generateCredentials` and
+  assert that the returned username, password, lease ID, and lease duration are
   present.
 
-### Typed API vs. escape hatch
+### Typed API
 
-The `database` secrets engine endpoints are not yet covered by the typed v2
-shortcut methods in `nanvc`. This example uses `vault.raw` — the
-`RawVaultClient` escape hatch — for all database-specific calls. `vault.raw`
-accepts any Vault HTTP path and is the recommended approach for endpoints
-outside the typed surface, as demonstrated in this example.
+All database secrets engine calls use the typed `vault.secret.db` client
+introduced in `nanvc` v2:
 
-The `sys.mount.enable` call that enables the engine _is_ a typed v2 method and
-is used directly through the `VaultClientV2` typed API.
+- `vault.secret.db.configureConnection` — set up the named PostgreSQL plugin
+  connection.
+- `vault.secret.db.writeRole` — define the `readonly` dynamic-credentials role.
+- `vault.secret.db.generateCredentials` — request a short-lived username/password
+  pair backed by a Vault lease.
 
-If typed database methods are added in the future (by running the
-`port-v2-openapi-endpoints` agent), the `vault.raw` calls in this example
-could be replaced with typed equivalents.
+The `sys.mount.enable` call that enables the engine uses the typed
+`vault.sys.mount.enable` helper.
 
 ## Local services required
 
