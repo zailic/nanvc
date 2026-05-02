@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { createSandbox } from 'sinon';
 
-import { VaultSystemWrappingClient } from '../../../src/v2/client/sys-wrapping.js';
-import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
-import { VaultClientError } from '../../../src/v2/core/errors.js';
-import { err, ok, toResult } from '../../../src/v2/core/result.js';
+import { VaultSystemWrappingClient } from '../../../../src/v2/client/sys-wrapping.js';
+import { RawVaultClient } from '../../../../src/v2/core/raw-client.js';
+import { VaultClientError } from '../../../../src/v2/core/errors.js';
+import { err, ok, toResult } from '../../../../src/v2/core/result.js';
 
 import type { SinonSandbox } from 'sinon';
 
@@ -138,7 +138,7 @@ describe('VaultSystemWrappingClient unit test cases.', function () {
         assert.deepEqual(data?.data, { role_id: 'r1', secret_id: 's1' });
         assert.equal(postStub.calledOnce, true);
         assert.equal(postStub.firstCall.args[0], '/sys/wrapping/unwrap');
-        assert.deepEqual(postStub.firstCall.args[1], { body: { token: 's.wrapping_token' } });
+        assert.deepEqual(postStub.firstCall.args[1], { headers: { 'X-Vault-Token': 's.wrapping_token' } });
     });
 
     it('should surface unwrap errors from Vault', async function () {

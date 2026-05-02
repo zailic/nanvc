@@ -1,7 +1,3 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import type { VaultResponse } from '../../../src/lib/commands/index.js';
 import { VaultClientError } from '../../../src/main.js';
 import type { VaultInitResponse } from './types.js';
@@ -12,38 +8,6 @@ export const post200Spec = {
     successCodes: [200],
 } as const;
 
-export function loadEnvFile(envPath: string): void {
-    let content: string;
-    try {
-        content = readFileSync(envPath, 'utf-8');
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            return;
-        }
-
-        throw error;
-    }
-
-    for (const line of content.split('\n')) {
-        const trimmedLine = line.trim();
-        if (!trimmedLine || trimmedLine.startsWith('#')) {
-            continue;
-        }
-
-        const separatorIndex = trimmedLine.indexOf('=');
-        if (separatorIndex === -1) {
-            continue;
-        }
-
-        const key = trimmedLine.slice(0, separatorIndex);
-        if (process.env[key] !== undefined) {
-            continue;
-        }
-
-        const value = trimmedLine.slice(separatorIndex + 1);
-        process.env[key] = value;
-    }
-}
 
 export async function expectSuccess<T extends { errorMessage?: string; succeeded: boolean }>(
     responsePromise: Promise<T>,
@@ -73,34 +37,6 @@ export async function expectSuccessOrAlreadyExists(
     }
 
     throw new Error(response.errorMessage ?? fallbackMessage);
-}
-
-export function updateEnvFile(envPath: string, initData: VaultInitResponse): void {
-    const newVars = [
-        `NANVC_VAULT_UNSEAL_KEY=${initData.keys[0]}`,
-        `NANVC_VAULT_AUTH_TOKEN=${initData.root_token}`,
-    ];
-
-    let content: string;
-    try {
-        content = readFileSync(envPath, 'utf-8');
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-            throw error;
-        }
-        content = '';
-    }
-
-    const updatedContent = content
-        .split('\n')
-        .filter((line) => !line.startsWith('NANVC_VAULT_UNSEAL_KEY=') && !line.startsWith('NANVC_VAULT_AUTH_TOKEN='))
-        .filter((line) => line.trim() !== '')
-        .concat(newVars)
-        .join('\n');
-
-    writeFileSync(envPath, `${updatedContent}\n`, 'utf-8');
-    process.env.NANVC_VAULT_UNSEAL_KEY = initData.keys[0];
-    process.env.NANVC_VAULT_AUTH_TOKEN = initData.root_token;
 }
 
 export function validateInitData(initData: VaultInitResponse | undefined): asserts initData is VaultInitResponse {
@@ -152,15 +88,16 @@ export function isInvalidTokenError(error: VaultClientError): boolean {
     return false;
 }
 
-export function toExampleAuthError(error: VaultClientError, envPath: string | undefined): Error {
-    if (!envPath || !isInvalidTokenError(error)) {
+export function toExampleAuthError(error: VaultClientError): Error {
+    if (!isInvalidTokenError(error)) {
         return error;
     }
 
     const exampleError = new Error([
-        `Vault rejected the token loaded for this example from ${envPath}.`,
+        'Vault rejected the token loaded for this example.',
         'The shared examples env file likely belongs to another Vault instance or an older Docker volume.',
-        'Update NANVC_VAULT_AUTH_TOKEN, delete the shared env file and reset local Vault, or export a valid token before running the example.',
+        'Update TEST_NANVC_VAULT_AUTH_TOKEN, delete the shared env file and reset local Vault,',
+        'or export a valid token before running the example.',
     ].join(' '));
     exampleError.stack = error.stack;
     return exampleError;
@@ -175,10 +112,6 @@ export function printSuccessBanner(title: string): void {
         '============================================================',
         '',
     ].join('\n'));
-}
-
-export function getExamplesEnvPath(exampleMetaUrl: string): string {
-    return resolve(dirname(fileURLToPath(exampleMetaUrl)), '..', '.env');
 }
 
 function isAlreadyExistsMessage(message: string | undefined): boolean {

@@ -2,25 +2,22 @@ import assert from 'node:assert';
 
 import { VaultClientError } from '../../src/main.js';
 import { AdminPersona } from '../common/personas/admin.js';
-import { getExamplesEnvPath, printSuccessBanner, toExampleAuthError } from '../common/personas/helpers.js';
-import { OperatorPersona } from '../common/personas/operator.js';
+import { printSuccessBanner, toExampleAuthError } from '../common/personas/helpers.js';
+import { createTestVaultClient } from '../../test/helpers/vault.js';
 
 const MOUNT = 'secret-versioned';
 const SECRET_PATH = 'customer/acme';
-const ENV_PATH = getExamplesEnvPath(import.meta.url);
+const VAULT_CLUSTER_ADDRESS = process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
 
 async function main(): Promise<void> {
-    const operator = OperatorPersona.v2({ envPath: ENV_PATH });
-    await operator.withWorkflow(async () => {
-        await operator.ensureVaultIsReady();
-    });
+    const rootVault = await createTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
 
-    const admin = AdminPersona.v2();
+    const admin = AdminPersona.v2({ client: rootVault });
     await admin.withWorkflow(async ({ vault }) => {
         // Start with a clean mount so the example is repeatable.
         const disableError = await vault.sys.mount.disable(MOUNT).intoErr();
         if (disableError && disableError.status !== 404) {
-            throw toExampleAuthError(disableError, ENV_PATH);
+            throw toExampleAuthError(disableError);
         }
         await vault.sys.mount.enable(MOUNT, {
             type: 'kv',

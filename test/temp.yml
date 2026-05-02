@@ -1,9 +1,0 @@
-  test:
-    build: .
-    command: npm run coverage
-    environment:
-      - VAULT_ADDR=http://vault:8200
-    volumes:
-      - ./coverage:/app/coverage
-    depends_on:
-      - vault

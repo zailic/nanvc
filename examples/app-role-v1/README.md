@@ -13,19 +13,29 @@ client's native `write` and `read` ergonomics:
 - log in as an app with `role_id` and `secret_id`
 - read the secret with the app token
 
-The example is organized around three reusable personas from
+The example reuses the local Vault setup helper from `test/helpers/vault.ts`.
+That helper initializes and unseals the local Vault instance when needed, caches
+the root credentials, and returns a ready root client. This v1 example asks the
+helper for the original `VaultClient`, so the operator and admin personas share
+the same initialized Vault instance.
+
+The workflow is still organized around three reusable personas from
 `examples/common/personas`:
 
-- `OperatorPersona.v1()` handles Vault readiness, initialization/unseal, shared
-  `examples/.env` material, and KV mount setup.
+- `OperatorPersona.v1()` performs operator-level setup for this example, namely
+  ensuring the KV mount exists.
 - `AdminPersona.v1()` configures AppRole, writes the policy, registers the role,
   and returns `role_id` / `secret_id`.
 - `AppPersona.v1()` starts with an unauthenticated client, logs in with AppRole,
   and reads the application secret.
 
 Each persona exposes `withWorkflow(async ({ vault }) => { ... })`, so the
-example-specific logic stays in this file while repeated setup lives in the
-common helpers.
+example-specific logic stays in this file while repeated setup lives in common
+helpers.
+
+`OperatorPersona` is intentionally thin here because Vault initialization now
+lives in the shared test helper. It remains useful as an example extension point
+for workflows that need extra operator-only setup before admin/app actions run.
 
 Inside the v1 personas, some AppRole calls use `apiRequest()` with a custom
 `POST 200` command spec because the original client does not expose dedicated
@@ -72,30 +82,18 @@ For an existing Vault server, set:
 
 ```bash
 export NANVC_VAULT_CLUSTER_ADDRESS=http://127.0.0.1:8200
-export NANVC_VAULT_AUTH_TOKEN=<operator-or-admin-token>
+export TEST_NANVC_VAULT_AUTH_TOKEN=<root-or-admin-token>
+export TEST_NANVC_VAULT_UNSEAL_KEY=<unseal-key>
 ```
 
-If the local Vault server is initialized by any example, it writes the shared
-`examples/.env` file with:
+If the local Vault server is initialized by any example or integration helper,
+the helper writes a shared cache file under your OS temp directory with:
 
-- `NANVC_VAULT_UNSEAL_KEY`
-- `NANVC_VAULT_AUTH_TOKEN`
+- `TEST_NANVC_VAULT_AUTH_TOKEN`
+- `TEST_NANVC_VAULT_UNSEAL_KEY`
 
-The operator persona reads this file on later runs before creating its client,
-so the same initialized local Vault can be reused across all examples. To reuse
-those values manually in a new shell:
-
-```bash
-set -a
-. examples/.env
-set +a
-```
-
-The shared `examples/.env` file is local runtime material and should not be
-committed.
-
-Shell-exported environment variables take precedence over values in
-`examples/.env`. If Vault reports `invalid token`, the shared env file probably
-belongs to another Vault instance or an older Docker volume. Export a valid
-`NANVC_VAULT_AUTH_TOKEN`, or delete `examples/.env` and reset local Vault with
-the fresh-state commands above.
+Those cached values let tests and examples reuse the same initialized local
+Vault instance. Shell-exported `TEST_NANVC_*` variables take precedence over the
+cached values. If Vault reports `invalid token`, the cached credentials probably
+belong to another Vault instance or an older Docker volume. Export valid
+`TEST_NANVC_*` values, or reset local Vault with the fresh-state commands above.

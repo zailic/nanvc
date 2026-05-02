@@ -78,7 +78,16 @@ export class VaultSystemWrappingClient {
      * @end-nanvc-doc
      */
     public unwrap(token: string): Result<VaultWrappingUnwrapResponse> {
-        return this.raw.post('/sys/wrapping/unwrap', { body: { token } });
+        // todo: allow passing wrapping token in the body instead of using the
+        // X-Vault-Token header. This header may be reserved for a different token
+        // which authenticates to access this endpoint.
+        return this.raw.post(
+            '/sys/wrapping/unwrap', {
+                headers: {
+                    'X-Vault-Token': token,
+                },
+            }
+        );
     }
 
     /**

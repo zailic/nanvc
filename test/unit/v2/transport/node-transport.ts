@@ -3,8 +3,8 @@ import { createServer } from 'node:http';
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
-import { VaultClientError } from '../../../src/v2/core/errors.js';
-import { NodeVaultTransport } from '../../../src/v2/transport/node-transport.js';
+import { VaultClientError } from '../../../../src/v2/core/errors.js';
+import { NodeVaultTransport } from '../../../../src/v2/transport/node-transport.js';
 
 describe('NodeVaultTransport unit test cases.', function () {
     it('should build URLs from explicit options with LIST and query parameters', function () {
@@ -240,7 +240,7 @@ describe('NodeVaultTransport unit test cases.', function () {
     });
 
     it('should reject with a TIMEOUT error when the request exceeds timeoutMs', async function () {
-        const { server, port } = await startLocalServer((_req, _res) => {
+        const { server, port } = await startLocalServer(() => {
             // intentionally never respond — let the client time out
         });
 
