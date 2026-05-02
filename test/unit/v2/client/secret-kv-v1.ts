@@ -1,9 +1,9 @@
 import type { SinonSandbox } from 'sinon';
 import assert from 'node:assert/strict';
 import { createSandbox } from 'sinon';
-import { VaultSecretKvV1Client } from '../../../src/v2/client/secret-kv-v1.js';
-import { VaultClientError } from '../../../src/main.js';
-import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
+import { VaultSecretKvV1Client } from '../../../../src/v2/client/secret-kv-v1.js';
+import { VaultClientError } from '../../../../src/main.js';
+import { RawVaultClient } from '../../../../src/v2/core/raw-client.js';
 
 
 describe('VaultSecretKvV1Client unit test cases.', function () {

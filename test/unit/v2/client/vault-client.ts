@@ -1,20 +1,19 @@
 import assert from 'node:assert/strict';
 import { createSandbox } from 'sinon';
 
-import { VaultClient } from '../../../src/v2/client/vault-client.js';
-import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
-import { VaultClientError } from '../../../src/v2/core/errors.js';
-import { err, ok, toResult } from '../../../src/v2/core/result.js';
+import {resultOf} from '../../../helpers/types.js';
 
-import type { components } from '../../../src/v2/generated/vault-openapi.js';
+import { VaultClient } from '../../../../src/v2/client/vault-client.js';
+import { RawVaultClient } from '../../../../src/v2/core/raw-client.js';
+import { VaultClientError } from '../../../../src/v2/core/errors.js';
+import { err, ok } from '../../../../src/v2/core/result.js';
+
+import type { components } from '../../../../src/v2/generated/vault-openapi.js';
 
 import type { SinonSandbox } from 'sinon';
 
 describe('VaultClientV2 unit test cases.', function () {
     let sandbox: SinonSandbox;
-
-    const resultOf = <T>(tuple: ReturnType<typeof ok<T>> | ReturnType<typeof err<VaultClientError>>) =>
-        toResult(Promise.resolve(tuple));
 
     beforeEach(function () {
         sandbox = createSandbox();

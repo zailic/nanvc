@@ -132,7 +132,7 @@ export class RawVaultClient {
             method,
             path: resolvePathTemplate(path, config.params?.path),
             query: config.params?.query,
-            token: this.resolveRequestToken(method, path, config.authenticated),
+            token: this.resolveRequestToken(method, path, config),
         }));
     }
 
@@ -226,12 +226,14 @@ export class RawVaultClient {
         }
     }
 
-    private resolveRequestToken(method: VaultRequestMethod, path: string, authenticated?: boolean): string | null {
-        if (authenticated === false) {
+    private resolveRequestToken(method: VaultRequestMethod, path: string, config: RawRequestConfig = {}): string | null {
+        if (config.authenticated === false) {
             return null;
         }
-
-        if (authenticated === true) {
+        if (config.headers?.['X-Vault-Token']) {
+            return config.headers['X-Vault-Token'];
+        }
+        if (config.authenticated === true) {
             return this.token;
         }
 

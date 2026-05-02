@@ -86,6 +86,117 @@ export interface components {
             type?: string;
             uuid?: string;
         };
+        DatabaseConfigureConnectionRequest: {
+            allowed_roles?: string[];
+            disable_automated_rotation?: boolean;
+            override_pinned_version?: boolean;
+            password_policy?: string;
+            plugin_name?: string;
+            plugin_version?: string;
+            root_rotation_statements?: string[];
+            rotation_period?: string;
+            rotation_policy?: string;
+            rotation_schedule?: string;
+            rotation_window?: string;
+            skip_static_role_import_rotation?: boolean;
+            verify_connection?: boolean;
+            [key: string]: unknown;
+        };
+        DatabaseConnectionData: {
+            allowed_roles?: string[];
+            connection_details?: components['schemas']['DatabaseConnectionDetails'];
+            name?: string;
+            password_policy?: string;
+            plugin_name?: string;
+            plugin_version?: string;
+            root_rotation_statements?: string[];
+            verify_connection?: boolean;
+        };
+        DatabaseConnectionDetails: Record<string, unknown>;
+        DatabaseCredentialsData: {
+            password?: string;
+            username?: string;
+        };
+        DatabaseGenerateCredentialsResponse: {
+            request_id?: string;
+            lease_id?: string;
+            renewable?: boolean;
+            lease_duration?: number;
+            data?: components['schemas']['DatabaseCredentialsData'];
+        };
+        DatabaseReadConnectionResponse: {
+            request_id?: string;
+            lease_id?: string;
+            renewable?: boolean;
+            lease_duration?: number;
+            data?: components['schemas']['DatabaseConnectionData'];
+        };
+        DatabaseReadRoleResponse: {
+            request_id?: string;
+            lease_id?: string;
+            renewable?: boolean;
+            lease_duration?: number;
+            data?: components['schemas']['DatabaseRoleData'];
+        };
+        DatabaseReadStaticCredsResponse: {
+            request_id?: string;
+            lease_id?: string;
+            renewable?: boolean;
+            lease_duration?: number;
+            data?: components['schemas']['DatabaseStaticCredentialsData'];
+        };
+        DatabaseReadStaticRoleResponse: {
+            request_id?: string;
+            lease_id?: string;
+            renewable?: boolean;
+            lease_duration?: number;
+            data?: components['schemas']['DatabaseStaticRoleData'];
+        };
+        DatabaseRoleData: {
+            creation_statements?: string[];
+            credential_type?: string;
+            db_name?: string;
+            default_ttl?: number;
+            max_ttl?: number;
+            renew_statements?: string[];
+            revocation_statements?: string[];
+            rollback_statements?: string[];
+            rotation_statements?: string[];
+        };
+        DatabaseStaticCredentialsData: {
+            last_vault_rotation?: string;
+            password?: string;
+            rotation_period?: number;
+            ttl?: number;
+            username?: string;
+        };
+        DatabaseStaticRoleData: {
+            credential_type?: string;
+            db_name?: string;
+            rotation_period?: number;
+            rotation_statements?: string[];
+            username?: string;
+        };
+        DatabaseWriteRoleRequest: {
+            creation_statements?: string[];
+            credential_type?: string;
+            db_name?: string;
+            default_ttl?: number;
+            max_ttl?: number;
+            renew_statements?: string[];
+            revocation_statements?: string[];
+            rollback_statements?: string[];
+            rotation_statements?: string[];
+            [key: string]: unknown;
+        };
+        DatabaseWriteStaticRoleRequest: {
+            credential_type?: string;
+            db_name?: string;
+            rotation_period?: number;
+            rotation_statements?: string[];
+            username?: string;
+            [key: string]: unknown;
+        };
         HealthStatusResponse: {
             clock_skew_ms?: number;
             echo_duration_ms?: number;
@@ -507,6 +618,295 @@ export interface paths {
                     content: {
                         'application/json': components['schemas']['AppRoleLoginResponse'];
                     };
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/config/': {
+        parameters: {
+            path: {
+                database_mount_path: string;
+            };
+        };
+        get: {
+            parameters: {
+                query: {
+                    list: "true";
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['StandardListResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/config/{name}': {
+        parameters: {
+            path: {
+                name: string;
+                database_mount_path: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "empty body";
+                };
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['DatabaseReadConnectionResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['DatabaseConfigureConnectionRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/creds/{name}': {
+        parameters: {
+            path: {
+                name: string;
+                database_mount_path: string;
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['DatabaseGenerateCredentialsResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/reload/{plugin_name}': {
+        parameters: {
+            path: {
+                plugin_name: string;
+                database_mount_path: string;
+            };
+        };
+        post: {
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/reset/{name}': {
+        parameters: {
+            path: {
+                name: string;
+                database_mount_path: string;
+            };
+        };
+        post: {
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/roles/': {
+        parameters: {
+            path: {
+                database_mount_path: string;
+            };
+        };
+        get: {
+            parameters: {
+                query: {
+                    list: "true";
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['StandardListResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/roles/{name}': {
+        parameters: {
+            path: {
+                name: string;
+                database_mount_path: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "empty body";
+                };
+            };
+        };
+        get: {
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['DatabaseReadRoleResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['DatabaseWriteRoleRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/rotate-role/{name}': {
+        parameters: {
+            path: {
+                name: string;
+                database_mount_path: string;
+            };
+        };
+        post: {
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/rotate-root/{name}': {
+        parameters: {
+            path: {
+                name: string;
+                database_mount_path: string;
+            };
+        };
+        post: {
+            responses: {
+                200: {
+                    description: "OK";
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/static-creds/{name}': {
+        parameters: {
+            path: {
+                name: string;
+                database_mount_path: string;
+            };
+        };
+        get: {
+            parameters: {
+                query: {
+                    read_snapshot_id?: string;
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['DatabaseReadStaticCredsResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/static-roles/': {
+        parameters: {
+            path: {
+                database_mount_path: string;
+            };
+        };
+        get: {
+            parameters: {
+                query: {
+                    list: "true";
+                    read_snapshot_id?: string;
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['StandardListResponse'];
+                    };
+                };
+            };
+        };
+    };
+    '/{database_mount_path}/static-roles/{name}': {
+        parameters: {
+            path: {
+                name: string;
+                database_mount_path: string;
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "empty body";
+                };
+            };
+        };
+        get: {
+            parameters: {
+                query: {
+                    read_snapshot_id?: string;
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
+                    content: {
+                        'application/json': components['schemas']['DatabaseReadStaticRoleResponse'];
+                    };
+                };
+            };
+        };
+        post: {
+            parameters: {
+                query: {
+                    recover_snapshot_id?: string;
+                };
+            };
+            requestBody: {
+                content: {
+                    'application/json': components['schemas']['DatabaseWriteStaticRoleRequest'];
+                };
+            };
+            responses: {
+                200: {
+                    description: "OK";
                 };
             };
         };

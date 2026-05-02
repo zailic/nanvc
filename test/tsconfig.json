@@ -1,5 +1,7 @@
 {
   "extends": "../tsconfig.json",
+  "experimentalDecorators": false,
+  "emitDecoratorMetadata": false,
   "compilerOptions": {
     "rootDir": "..",
     "types": [
@@ -10,8 +12,7 @@
   "include": [
     "./**/*.ts",
     "../src/**/*.ts",
-    "../examples/app-role/main.ts",
-    "../examples/app-role-v1/main.ts"
+    "../examples/**/*.ts",
   ],
   "exclude": [
     "node_modules"

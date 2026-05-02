@@ -24,9 +24,19 @@ This example walks through the core features of the [KV v2 secrets engine](https
 
 ## Vault steps
 
-The example uses `OperatorPersona.v2()` to prepare Vault, then uses
-`AdminPersona.v2()` to perform the following steps against the
-`secret-versioned` KV v2 mount:
+The example reuses the local Vault setup helper from `test/helpers/vault.ts`.
+That helper initializes and unseals the local Vault instance when needed, caches
+the root credentials, and returns a ready root `VaultClientV2`. The operator and
+admin personas receive that shared root client so they work against the same
+Vault instance.
+
+`OperatorPersona.v2()` is intentionally thin here because Vault initialization
+now lives in the shared test helper. It remains useful as an example extension
+point for workflows that need extra operator-only setup before admin/app actions
+run.
+
+`AdminPersona.v2()` performs the following steps against the `secret-versioned`
+KV v2 mount:
 
 1. Disable the mount if it already exists (so the example is repeatable), then enable KV v2 at `secret-versioned`.
 2. `readConfig` — confirm the engine is readable.
@@ -88,33 +98,22 @@ For an existing Vault server, set:
 
 ```bash
 export NANVC_VAULT_CLUSTER_ADDRESS=http://127.0.0.1:8200
-export NANVC_VAULT_AUTH_TOKEN=<operator-or-admin-token>
+export TEST_NANVC_VAULT_AUTH_TOKEN=<root-or-admin-token>
+export TEST_NANVC_VAULT_UNSEAL_KEY=<unseal-key>
 ```
 
-If the local Vault is not yet initialized, the example initializes and unseals
-it automatically and writes the shared `examples/.env` file with:
+If the local Vault is not yet initialized, the shared helper initializes and
+unseals it automatically and writes a shared cache file under your OS temp
+directory with:
 
-- `NANVC_VAULT_UNSEAL_KEY`
-- `NANVC_VAULT_AUTH_TOKEN`
+- `TEST_NANVC_VAULT_AUTH_TOKEN`
+- `TEST_NANVC_VAULT_UNSEAL_KEY`
 
-On subsequent runs the operator persona reads this file before creating its
-client, so the same initialized local Vault can be reused across all examples.
-To use those values manually:
-
-```bash
-set -a
-. examples/.env
-set +a
-```
-
-The shared `examples/.env` file is local runtime material and should not be
-committed.
-
-Shell-exported environment variables take precedence over values in
-`examples/.env`. If Vault reports `invalid token`, the shared env file probably
-belongs to another Vault instance or an older Docker volume. Export a valid
-`NANVC_VAULT_AUTH_TOKEN`, or delete `examples/.env` and reset local Vault with
-the fresh-state commands above.
+Those cached values let tests and examples reuse the same initialized local
+Vault instance. Shell-exported `TEST_NANVC_*` variables take precedence over the
+cached values. If Vault reports `invalid token`, the cached credentials probably
+belong to another Vault instance or an older Docker volume. Export valid
+`TEST_NANVC_*` values, or reset local Vault with the fresh-state commands above.
 {% endcapture %}
 
 {% capture example_source %}
@@ -123,25 +122,22 @@ import assert from 'node:assert';
 
 import { VaultClientError } from '../../src/main.js';
 import { AdminPersona } from '../common/personas/admin.js';
-import { getExamplesEnvPath, printSuccessBanner, toExampleAuthError } from '../common/personas/helpers.js';
-import { OperatorPersona } from '../common/personas/operator.js';
+import { printSuccessBanner, toExampleAuthError } from '../common/personas/helpers.js';
+import { createTestVaultClient } from '../../test/helpers/vault.js';
 
 const MOUNT = 'secret-versioned';
 const SECRET_PATH = 'customer/acme';
-const ENV_PATH = getExamplesEnvPath(import.meta.url);
+const VAULT_CLUSTER_ADDRESS = process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
 
 async function main(): Promise<void> {
-    const operator = OperatorPersona.v2({ envPath: ENV_PATH });
-    await operator.withWorkflow(async () => {
-        await operator.ensureVaultIsReady();
-    });
+    const rootVault = await createTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
 
-    const admin = AdminPersona.v2();
+    const admin = AdminPersona.v2({ client: rootVault });
     await admin.withWorkflow(async ({ vault }) => {
         // Start with a clean mount so the example is repeatable.
         const disableError = await vault.sys.mount.disable(MOUNT).intoErr();
         if (disableError && disableError.status !== 404) {
-            throw toExampleAuthError(disableError, ENV_PATH);
+            throw toExampleAuthError(disableError);
         }
         await vault.sys.mount.enable(MOUNT, {
             type: 'kv',

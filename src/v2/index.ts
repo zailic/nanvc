@@ -52,6 +52,21 @@ export type {
     VaultKvV2WriteOptions,
 } from './client/secret-kv-v2.js';
 export type {
+    VaultDbConfigureConnectionRequest,
+    VaultDbConnectionData,
+    VaultDbCredentialsData,
+    VaultDbGenerateCredentialsResponse,
+    VaultDbReadConnectionResponse,
+    VaultDbReadRoleResponse,
+    VaultDbReadStaticCredsResponse,
+    VaultDbReadStaticRoleResponse,
+    VaultDbRoleData,
+    VaultDbStaticCredentialsData,
+    VaultDbStaticRoleData,
+    VaultDbWriteRoleRequest,
+    VaultDbWriteStaticRoleRequest,
+} from './client/secret-db.js';
+export type {
     VaultAppRoleLoginRequest,
     VaultAppRoleLoginResponse,
     VaultAppRoleRequest,
