@@ -37,8 +37,10 @@ async function ensureMountRemoved(client: VaultClientV2, path: string): Promise<
     await client.raw.put(`/sys/leases/revoke-force/${path}`);
     const [, retryError] = await client.sys.mount.disable(path);
     if (retryError && !isMountNotFoundError(retryError)) {
-        console.warn(`Could not fully clean up mount "${path}" (${retryError.message}). `,
-            `The stale mount will be retried on the next run.`);
+        console.warn('Could not fully clean up mount "%s" (%s). %s',
+            path,
+            retryError.message,
+            'The stale mount will be retried on the next run.');
     }
 }
 
