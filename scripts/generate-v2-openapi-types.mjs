@@ -254,7 +254,9 @@ function schemaToType(schema, indentLevel) {
       },
     );
 
-    if (schema.additionalProperties && schema.additionalProperties !== true) {
+    if (schema.additionalProperties === true) {
+      properties.push(`${indent(indentLevel + 1)}[key: string]: unknown;`);
+    } else if (schema.additionalProperties && schema.additionalProperties !== true) {
       properties.push(
         `${indent(indentLevel + 1)}[key: string]: ${schemaToType(schema.additionalProperties, indentLevel + 1)};`,
       );

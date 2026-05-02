@@ -2,28 +2,30 @@ import assert from 'node:assert';
 
 import { AdminPersona } from '../common/personas/admin.js';
 import { AppPersona } from '../common/personas/app.js';
-import { expectSuccess, getExamplesEnvPath, printSuccessBanner } from '../common/personas/helpers.js';
+import { expectSuccess, printSuccessBanner } from '../common/personas/helpers.js';
 import { OperatorPersona } from '../common/personas/operator.js';
 import type { VaultResponseData } from '../common/personas/types.js';
+import { createLegacyTestVaultClient } from '../../test/helpers/vault.js';
 
-const ENV_PATH = getExamplesEnvPath(import.meta.url);
+const VAULT_CLUSTER_ADDRESS = process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
 const secretData = {
     db_name: 'users',
     username: 'admin',
     password: 'passw0rd',
 };
 async function main(): Promise<void> {
+    const rootVault = await createLegacyTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
+
     // ── Step 1: Operator — prepare Vault ──────────────────────────────────────
     // Initialize and unseal Vault if needed, then mount KV v1 at 'credentials'.
     // This example uses the original VaultClient (v1 API) throughout.
-    const operator = OperatorPersona.v1({ envPath: ENV_PATH });
+    const operator = OperatorPersona.v1({ client: rootVault });
 
     await operator.withWorkflow(async () => {
-        await operator.ensureVaultIsReady();
         await operator.ensureKvMountAvailable('credentials');
     });
 
-    const admin = AdminPersona.v1();
+    const admin = AdminPersona.v1({ client: rootVault });
     const credentials = await admin.withWorkflow(async ({ vault }) => {
         // ── Step 2: Admin — write the application secret ───────────────────────
         // Store a database credential set that the app will read later.

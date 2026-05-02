@@ -13,18 +13,25 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 - Added a versioned KV v2 example that demonstrates write, patch, metadata, history, soft-delete, undelete, destroy, automatic deletion, and CAS workflows.
 - Added generated documentation pages for runnable examples, including guide/source tabs for each example.
 - Added shared example personas for operator, admin, and app workflows across the AppRole examples.
+- Added v2 database secrets engine support under `vault.secret.db` for connections, dynamic roles, generated credentials, static roles, and credential rotation workflows.
+- Added OpenAPI target and local schema patches for Vault database secrets endpoints, including pass-through plugin option typing.
+- Added v2 API documentation for database secrets helpers.
 - Added v2 integration coverage for ACL policy and response wrapping workflows.
 - Added focused v2 unit coverage for system policy and system wrapping clients.
+- Added focused unit and integration coverage for the v2 database secrets client.
+- Added lightweight Mocha decorators and reorganized v2 tests under client, core, and transport-focused folders.
 
 ### Changed
 
 - Refactored the AppRole examples to use the shared persona helpers and verify the expected secret access behavior.
 - Updated examples to share `examples/.env` runtime material across workflows and print consistent success banners.
 - Updated OpenAPI response generation so local response patches take precedence over upstream schemas.
+- Updated generated OpenAPI typing to preserve `additionalProperties: true` as string-keyed `unknown` records.
+- Updated CI and `test:all` to run example workflows alongside tests and coverage.
 - Reduced the Docker-backed integration wait delay from a hardcoded 30 seconds to a wait loop that polls Vault's health endpoint until it's ready.
 
 ### Fixed
-
+- Updated the response wrapping unwrap helper to send the wrapping token as the request token header.
 - Fixed broken links in docs.
 - Fixed logs with incorrect levels.
 

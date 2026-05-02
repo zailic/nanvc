@@ -1,35 +1,26 @@
+import type {VaultClientV2} from '../../../../src/v2/index.js';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-import { VaultClientError, VaultClientV2 } from '../../../src/v2/index.js';
+import { 
+    isMountAlreadyExistsError,
+    isMountNotFoundError, 
+    isAuthMethodNotFoundError,
+    createTestVaultClient,
+    getTestUnsealKey,
+    getTestRootToken,
+} from '../../../helpers/vault.js';
+import { VaultClientError } from '../../../../src/v2/index.js';
 
 type SecretData = {
     foo: string;
 };
 
-type VaultInitMaterial = {
-    keys: string[];
-    root_token: string;
-};
-
-let rootToken: string;
-let unsealKey: string;
-
-const ENV_PATH = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
 const asString = (value: unknown): string => value as string;
 
 describe('VaultClientV2 integration test cases.', function () {
     let client: VaultClientV2;
 
-    beforeEach(async function () {
-        client = new VaultClientV2({
-            clusterAddress: 'http://vault.local:8200',
-            authToken: rootToken ?? null,
-        });
-
-        await ensureInitializedAndUnsealed(client);
+    before(async function () {
+        client = await createTestVaultClient();
     });
 
     it('vault initialisation process should fail if it is already initialized', async function () {
@@ -84,6 +75,7 @@ describe('VaultClientV2 integration test cases.', function () {
             assert.equal(error, null);
             assert.equal(ready, false);
         } finally {
+            const unsealKey = getTestUnsealKey();
             const [, unsealError] = await client.sys.unseal({ key: unsealKey });
 
             assert.equal(unsealError, null);
@@ -91,6 +83,7 @@ describe('VaultClientV2 integration test cases.', function () {
     });
 
     it('should unseal vault', async function () {
+        const unsealKey = getTestUnsealKey();
         const [status, error] = await client.sys.unseal({ key: unsealKey });
 
         assert.equal(error, null);
@@ -244,7 +237,9 @@ describe('VaultClientV2 integration test cases.', function () {
                 role_id: roleId?.role_id,
                 secret_id: secretId?.secret_id,
             });
-            client.setToken(rootToken);
+
+            client.setToken(getTestRootToken());
+            
             const [roleConfig, roleConfigError] = await client.raw.get<{ data?: { token_policies?: string[]; token_ttl?: number } }>(
                 `/auth/${authPath}/role/integration-role`,
             );
@@ -559,52 +554,6 @@ describe('VaultClientV2 integration test cases.', function () {
     });
 });
 
-async function ensureInitializedAndUnsealed(client: VaultClientV2): Promise<void> {
-    loadEnvFile();
-
-    rootToken ||= process.env.NANVC_VAULT_AUTH_TOKEN ?? '';
-    unsealKey ||= process.env.NANVC_VAULT_UNSEAL_KEY ?? '';
-
-    const [isInitialized, initCheckError] = await client.sys.isInitialized();
-    if (initCheckError) {
-        throw initCheckError;
-    }
-
-    if (!isInitialized) {
-        const [initData, initError] = await client.sys.init({
-            secret_shares: 1,
-            secret_threshold: 1,
-        });
-        if (initError) {
-            throw initError;
-        }
-
-        validateInitData(initData);
-        rootToken = initData.root_token;
-        unsealKey = initData.keys[0];
-        client.setToken(rootToken);
-        updateEnvFile(initData);
-    }
-
-    if (!rootToken || !unsealKey) {
-        throw new Error('Vault initialization did not provide root credentials');
-    }
-
-    client.setToken(rootToken);
-
-    const [status, statusError] = await client.sys.sealStatus();
-    if (statusError) {
-        throw statusError;
-    }
-
-    if (status.sealed) {
-        const [, unsealError] = await client.sys.unseal({ key: unsealKey });
-        if (unsealError) {
-            throw unsealError;
-        }
-    }
-}
-
 async function ensureSecretMountAvailable(client: VaultClientV2): Promise<void> {
     const [, error] = await client.sys.mount.enable('secret', { type: 'kv' });
     if (error && !isMountAlreadyExistsError(error)) {
@@ -636,83 +585,4 @@ async function ensureAuthMethodRemoved(client: VaultClientV2, path: string): Pro
     if (error && !isAuthMethodNotFoundError(error)) {
         throw error;
     }
-}
-
-function validateInitData(initData: VaultInitMaterial): void {
-    assert.equal(Array.isArray(initData.keys), true);
-    assert.equal(initData.keys.length > 0, true);
-    assert.equal(Boolean(initData.root_token), true);
-}
-
-function loadEnvFile(): void {
-    let content: string;
-    try {
-        content = readFileSync(ENV_PATH, 'utf8');
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            return;
-        }
-
-        throw error;
-    }
-
-    for (const line of content.split('\n')) {
-        const trimmedLine = line.trim();
-        if (!trimmedLine || trimmedLine.startsWith('#')) {
-            continue;
-        }
-
-        const separatorIndex = trimmedLine.indexOf('=');
-        if (separatorIndex === -1) {
-            continue;
-        }
-
-        process.env[trimmedLine.slice(0, separatorIndex)] = trimmedLine.slice(separatorIndex + 1);
-    }
-}
-
-function updateEnvFile(initData: VaultInitMaterial): void {
-    const newVars = [
-        `NANVC_VAULT_AUTH_TOKEN=${initData.root_token}`,
-        `NANVC_VAULT_UNSEAL_KEY=${initData.keys[0]}`,
-    ];
-
-    let content: string;
-    try {
-        content = readFileSync(ENV_PATH, 'utf8');
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-            throw error;
-        }
-        content = '';
-    }
-
-    const updatedContent = content
-        .split('\n')
-        .filter((line) => !line.startsWith('NANVC_VAULT_AUTH_TOKEN=') && !line.startsWith('NANVC_VAULT_UNSEAL_KEY='))
-        .filter((line) => line.trim() !== '')
-        .concat(newVars)
-        .join('\n');
-
-    writeFileSync(ENV_PATH, `${updatedContent}\n`, 'utf8');
-    process.env.NANVC_VAULT_AUTH_TOKEN = initData.root_token;
-    process.env.NANVC_VAULT_UNSEAL_KEY = initData.keys[0];
-}
-
-function isMountAlreadyExistsError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && error.status === 400
-        && error.message.toLowerCase().includes('path is already in use');
-}
-
-function isMountNotFoundError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && error.status === 404
-        && error.message.toLowerCase().includes('no matching mount');
-}
-
-function isAuthMethodNotFoundError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && error.status === 404
-        && error.message.toLowerCase().includes('no auth engine at');
 }

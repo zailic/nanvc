@@ -7,10 +7,10 @@ import {
     VaultSystemPoliciesPasswordClient,
     VaultSystemPoliciesRgpClient,
     VaultSystemPoliciesRotationClient,
-} from '../../../src/v2/client/sys-policies.js';
-import { RawVaultClient } from '../../../src/v2/core/raw-client.js';
-import { err, ok, toResult } from '../../../src/v2/core/result.js';
-import { VaultClientError } from '../../../src/v2/core/errors.js';
+} from '../../../../src/v2/client/sys-policies.js';
+import { RawVaultClient } from '../../../../src/v2/core/raw-client.js';
+import { err, ok, toResult } from '../../../../src/v2/core/result.js';
+import { VaultClientError } from '../../../../src/v2/core/errors.js';
 
 import type { SinonSandbox } from 'sinon';
 

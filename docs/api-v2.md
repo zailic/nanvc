@@ -385,6 +385,310 @@ await vault.secret.cubbyhole.write('my/secret', { token: 'abc123' }).unwrap();
 
 </details>
 
+##### Secrets / Database
+
+<details id="secretdbconfigureconnection" markdown="1">
+<summary><code>secret.db.configureConnection</code></summary>
+
+Configure a database connection under the given mount.
+
+Signatures:
+
+- `secret.db.configureConnection(mount, name, options)`
+
+Example:
+
+```ts
+await vault.secret.db.configureConnection('database', 'my-db', {
+    plugin_name: 'postgresql-database-plugin',
+    connection_url: 'postgresql://{{username}}:{{password}}@localhost/postgres',
+    allowed_roles: ['*'],
+}).unwrap();
+```
+
+</details>
+
+<details id="secretdbdeleteconnection" markdown="1">
+<summary><code>secret.db.deleteConnection</code></summary>
+
+Delete a named database connection configuration.
+
+Signatures:
+
+- `secret.db.deleteConnection(mount, name)`
+
+Example:
+
+```ts
+await vault.secret.db.deleteConnection('database', 'my-db').unwrap();
+```
+
+</details>
+
+<details id="secretdbdeleterole" markdown="1">
+<summary><code>secret.db.deleteRole</code></summary>
+
+Delete a dynamic database role.
+
+Signatures:
+
+- `secret.db.deleteRole(mount, name)`
+
+Example:
+
+```ts
+await vault.secret.db.deleteRole('database', 'my-role').unwrap();
+```
+
+</details>
+
+<details id="secretdbdeletestaticrole" markdown="1">
+<summary><code>secret.db.deleteStaticRole</code></summary>
+
+Delete a static database role.
+
+Signatures:
+
+- `secret.db.deleteStaticRole(mount, name)`
+
+Example:
+
+```ts
+await vault.secret.db.deleteStaticRole('database', 'my-static-role').unwrap();
+```
+
+</details>
+
+<details id="secretdbgeneratecredentials" markdown="1">
+<summary><code>secret.db.generateCredentials</code></summary>
+
+Generate dynamic database credentials for a role.
+
+Signatures:
+
+- `secret.db.generateCredentials(mount, role)`
+
+Example:
+
+```ts
+const creds = await vault.secret.db.generateCredentials('database', 'my-role').unwrap();
+```
+
+</details>
+
+<details id="secretdblistconnections" markdown="1">
+<summary><code>secret.db.listConnections</code></summary>
+
+List configured database connection names under the given mount.
+
+Signatures:
+
+- `secret.db.listConnections(mount)`
+
+Example:
+
+```ts
+const names = await vault.secret.db.listConnections('database').unwrap();
+```
+
+</details>
+
+<details id="secretdblistroles" markdown="1">
+<summary><code>secret.db.listRoles</code></summary>
+
+List dynamic database role names under the given mount.
+
+Signatures:
+
+- `secret.db.listRoles(mount)`
+
+Example:
+
+```ts
+const roles = await vault.secret.db.listRoles('database').unwrap();
+```
+
+</details>
+
+<details id="secretdbliststaticroles" markdown="1">
+<summary><code>secret.db.listStaticRoles</code></summary>
+
+List static database role names under the given mount.
+
+Signatures:
+
+- `secret.db.listStaticRoles(mount)`
+
+Example:
+
+```ts
+const roles = await vault.secret.db.listStaticRoles('database').unwrap();
+```
+
+</details>
+
+<details id="secretdbreadconnection" markdown="1">
+<summary><code>secret.db.readConnection</code></summary>
+
+Read the configuration for a named database connection.
+
+Signatures:
+
+- `secret.db.readConnection(mount, name)`
+
+Example:
+
+```ts
+const conn = await vault.secret.db.readConnection('database', 'my-db').unwrap();
+```
+
+</details>
+
+<details id="secretdbreadrole" markdown="1">
+<summary><code>secret.db.readRole</code></summary>
+
+Read the configuration of a dynamic database role.
+
+Signatures:
+
+- `secret.db.readRole(mount, name)`
+
+Example:
+
+```ts
+const role = await vault.secret.db.readRole('database', 'my-role').unwrap();
+```
+
+</details>
+
+<details id="secretdbreadstaticcredentials" markdown="1">
+<summary><code>secret.db.readStaticCredentials</code></summary>
+
+Read the current credentials for a static database role.
+
+Signatures:
+
+- `secret.db.readStaticCredentials(mount, role)`
+
+Example:
+
+```ts
+const creds = await vault.secret.db.readStaticCredentials('database', 'my-static-role').unwrap();
+```
+
+</details>
+
+<details id="secretdbreadstaticrole" markdown="1">
+<summary><code>secret.db.readStaticRole</code></summary>
+
+Read the configuration of a static database role.
+
+Signatures:
+
+- `secret.db.readStaticRole(mount, name)`
+
+Example:
+
+```ts
+const role = await vault.secret.db.readStaticRole('database', 'my-static-role').unwrap();
+```
+
+</details>
+
+<details id="secretdbresetconnection" markdown="1">
+<summary><code>secret.db.resetConnection</code></summary>
+
+Close and re-open a database connection, discarding existing connections.
+
+Signatures:
+
+- `secret.db.resetConnection(mount, name)`
+
+Example:
+
+```ts
+await vault.secret.db.resetConnection('database', 'my-db').unwrap();
+```
+
+</details>
+
+<details id="secretdbrotaterootcredentials" markdown="1">
+<summary><code>secret.db.rotateRootCredentials</code></summary>
+
+Rotate the root credentials for a named database connection.
+
+Signatures:
+
+- `secret.db.rotateRootCredentials(mount, name)`
+
+Example:
+
+```ts
+await vault.secret.db.rotateRootCredentials('database', 'my-db').unwrap();
+```
+
+</details>
+
+<details id="secretdbrotatestaticcredentials" markdown="1">
+<summary><code>secret.db.rotateStaticCredentials</code></summary>
+
+Trigger an immediate rotation of the credentials for a static database role.
+
+Signatures:
+
+- `secret.db.rotateStaticCredentials(mount, role)`
+
+Example:
+
+```ts
+await vault.secret.db.rotateStaticCredentials('database', 'my-static-role').unwrap();
+```
+
+</details>
+
+<details id="secretdbwriterole" markdown="1">
+<summary><code>secret.db.writeRole</code></summary>
+
+Create or update a dynamic database role.
+
+Signatures:
+
+- `secret.db.writeRole(mount, name, options)`
+
+Example:
+
+```ts
+await vault.secret.db.writeRole('database', 'my-role', {
+    db_name: 'my-db',
+    creation_statements: ['CREATE ROLE "{{name}}" WITH LOGIN PASSWORD \'{{password}}\' VALID UNTIL \'{{expiration}}\''],
+    default_ttl: 3600,
+    max_ttl: 86400,
+}).unwrap();
+```
+
+</details>
+
+<details id="secretdbwritestaticrole" markdown="1">
+<summary><code>secret.db.writeStaticRole</code></summary>
+
+Create or update a static database role.
+
+Signatures:
+
+- `secret.db.writeStaticRole(mount, name, options)`
+
+Example:
+
+```ts
+await vault.secret.db.writeStaticRole('database', 'my-static-role', {
+    db_name: 'my-db',
+    username: 'existing_db_user',
+    rotation_period: 86400,
+}).unwrap();
+```
+
+</details>
+
 ##### Secrets / KV v1
 
 <details id="secretkvv1delete" markdown="1">

@@ -57,6 +57,21 @@ export type {
 } from './client/secret-cubbyhole.js';
 export { VaultSecretCubbyholeClient } from './client/secret-cubbyhole.js';
 export type {
+    VaultDbConfigureConnectionRequest,
+    VaultDbConnectionData,
+    VaultDbCredentialsData,
+    VaultDbGenerateCredentialsResponse,
+    VaultDbReadConnectionResponse,
+    VaultDbReadRoleResponse,
+    VaultDbReadStaticCredsResponse,
+    VaultDbReadStaticRoleResponse,
+    VaultDbRoleData,
+    VaultDbStaticCredentialsData,
+    VaultDbStaticRoleData,
+    VaultDbWriteRoleRequest,
+    VaultDbWriteStaticRoleRequest,
+} from './client/secret-db.js';
+export type {
     VaultAppRoleLoginRequest,
     VaultAppRoleLoginResponse,
     VaultAppRoleRequest,
