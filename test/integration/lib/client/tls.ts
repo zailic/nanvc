@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { VaultClient } from './../../../src/lib/client.js';
-import { VaultResponse } from '../../../src/lib/commands/spec.js';
+import { VaultClient } from './../../../../src/lib/client.js';
+import { VaultResponse } from '../../../../src/lib/commands/spec.js';
 
 const certFile = (name: string): string =>
     readFileSync(path.resolve(process.cwd(), 'test/util/vault/certs', name), 'utf8');

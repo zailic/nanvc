@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { err, ok, toResult } from '../../../src/v2/core/result.js';
+import { err, ok, toResult } from '../../../../src/v2/core/result.js';
 
 describe('Result helper unit test cases.', function () {
     it('should return tuple helpers for ok and err values', function () {

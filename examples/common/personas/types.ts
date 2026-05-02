@@ -9,7 +9,6 @@ export type VaultClientFor<V extends VaultClientVersion> = V extends 'v1'
 
 export type PersonaOptions<V extends VaultClientVersion> = {
     client?: VaultClientFor<V>;
-    envPath?: string;
 };
 
 export type VaultInitResponse = {

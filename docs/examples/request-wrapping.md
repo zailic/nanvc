@@ -17,11 +17,17 @@ This example demonstrates an AppRole flow where the admin wraps the generated
 - unwrap the credentials as the app
 - log in as an app and read the secret with the app token
 
-The example is organized around three reusable personas from
+The example reuses the local Vault setup helper from `test/helpers/vault.ts`.
+That helper initializes and unseals the local Vault instance when needed, caches
+the root credentials, and returns a ready root `VaultClientV2`. The operator and
+admin personas receive that shared root client so they work against the same
+Vault instance.
+
+The workflow is still organized around three reusable personas from
 `examples/common/personas`:
 
-- `OperatorPersona.v2()` handles Vault readiness, initialization/unseal, shared
-  `examples/.env` material, and KV mount setup.
+- `OperatorPersona.v2()` performs operator-level setup for this example, namely
+  ensuring the KV mount exists.
 - `AdminPersona.v2()` configures AppRole, writes the policy, registers the role,
   creates the AppRole credentials, and wraps them.
 - `AppPersona.v2()` starts with an unauthenticated client, unwraps the
@@ -29,7 +35,11 @@ The example is organized around three reusable personas from
 
 Each persona exposes `withWorkflow(async ({ vault }) => { ... })`, so the
 example-specific request wrapping flow stays in this file while repeated setup
-lives in the common helpers.
+lives in common helpers.
+
+`OperatorPersona` is intentionally thin here because Vault initialization now
+lives in the shared test helper. It remains useful as an example extension point
+for workflows that need extra operator-only setup before admin/app actions run.
 
 ## Local Vault
 
@@ -72,33 +82,21 @@ For an existing Vault server, set:
 
 ```bash
 export NANVC_VAULT_CLUSTER_ADDRESS=http://127.0.0.1:8200
-export NANVC_VAULT_AUTH_TOKEN=<operator-or-admin-token>
+export TEST_NANVC_VAULT_AUTH_TOKEN=<root-or-admin-token>
+export TEST_NANVC_VAULT_UNSEAL_KEY=<unseal-key>
 ```
 
-If the local Vault server is initialized by any example, it writes the shared
-`examples/.env` file with:
+If the local Vault server is initialized by any example or integration helper,
+the helper writes a shared cache file under your OS temp directory with:
 
-- `NANVC_VAULT_UNSEAL_KEY`
-- `NANVC_VAULT_AUTH_TOKEN`
+- `TEST_NANVC_VAULT_AUTH_TOKEN`
+- `TEST_NANVC_VAULT_UNSEAL_KEY`
 
-The operator persona reads this file on later runs before creating its client,
-so the same initialized local Vault can be reused across all examples. To reuse
-those values manually in a new shell:
-
-```bash
-set -a
-. examples/.env
-set +a
-```
-
-The shared `examples/.env` file is local runtime material and should not be
-committed.
-
-Shell-exported environment variables take precedence over values in
-`examples/.env`. If Vault reports `invalid token`, the shared env file probably
-belongs to another Vault instance or an older Docker volume. Export a valid
-`NANVC_VAULT_AUTH_TOKEN`, or delete `examples/.env` and reset local Vault with
-the fresh-state commands above.
+Those cached values let tests and examples reuse the same initialized local
+Vault instance. Shell-exported `TEST_NANVC_*` variables take precedence over the
+cached values. If Vault reports `invalid token`, the cached credentials probably
+belong to another Vault instance or an older Docker volume. Export valid
+`TEST_NANVC_*` values, or reset local Vault with the fresh-state commands above.
 {% endcapture %}
 
 {% capture example_source %}
@@ -107,11 +105,11 @@ import assert from 'node:assert';
 
 import { AdminPersona } from '../common/personas/admin.js';
 import { AppPersona } from '../common/personas/app.js';
-import { getExamplesEnvPath, printSuccessBanner } from '../common/personas/helpers.js';
+import { printSuccessBanner } from '../common/personas/helpers.js';
 import { OperatorPersona } from '../common/personas/operator.js';
+import { createTestVaultClient } from '../../test/helpers/vault.js';
 
-
-const ENV_PATH = getExamplesEnvPath(import.meta.url);
+const VAULT_CLUSTER_ADDRESS = process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
 const secretData = {
     db_name: 'users',
     username: 'admin',
@@ -119,16 +117,17 @@ const secretData = {
 };
 
 async function main(): Promise<void> {
+    const rootVault = await createTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
+
     // ── Step 1: Operator — prepare Vault ──────────────────────────────────────
     // Initialize and unseal Vault if needed, then mount KV v2 at 'secret'.
-    const operator = OperatorPersona.v2({ envPath: ENV_PATH });
+    const operator = OperatorPersona.v2({ client: rootVault });
 
     await operator.withWorkflow(async () => {
-        await operator.ensureVaultIsReady();
         await operator.ensureKvMountAvailable('secret');
     });
 
-    const admin = AdminPersona.v2();
+    const admin = AdminPersona.v2({ client: rootVault });
     const wrappingToken = await admin.withWorkflow(async ({ vault }) => {
         // ── Step 2: Admin — write the application secret ───────────────────────
         // Store a database credential set that the app will read later using

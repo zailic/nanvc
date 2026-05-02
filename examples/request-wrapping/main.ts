@@ -2,11 +2,11 @@ import assert from 'node:assert';
 
 import { AdminPersona } from '../common/personas/admin.js';
 import { AppPersona } from '../common/personas/app.js';
-import { getExamplesEnvPath, printSuccessBanner } from '../common/personas/helpers.js';
+import { printSuccessBanner } from '../common/personas/helpers.js';
 import { OperatorPersona } from '../common/personas/operator.js';
+import { createTestVaultClient } from '../../test/helpers/vault.js';
 
-
-const ENV_PATH = getExamplesEnvPath(import.meta.url);
+const VAULT_CLUSTER_ADDRESS = process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
 const secretData = {
     db_name: 'users',
     username: 'admin',
@@ -14,16 +14,17 @@ const secretData = {
 };
 
 async function main(): Promise<void> {
+    const rootVault = await createTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
+
     // ── Step 1: Operator — prepare Vault ──────────────────────────────────────
     // Initialize and unseal Vault if needed, then mount KV v2 at 'secret'.
-    const operator = OperatorPersona.v2({ envPath: ENV_PATH });
+    const operator = OperatorPersona.v2({ client: rootVault });
 
     await operator.withWorkflow(async () => {
-        await operator.ensureVaultIsReady();
         await operator.ensureKvMountAvailable('secret');
     });
 
-    const admin = AdminPersona.v2();
+    const admin = AdminPersona.v2({ client: rootVault });
     const wrappingToken = await admin.withWorkflow(async ({ vault }) => {
         // ── Step 2: Admin — write the application secret ───────────────────────
         // Store a database credential set that the app will read later using

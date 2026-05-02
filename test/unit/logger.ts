@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-
+import { suite, test } from '../mocha/decorators.js';
 import { createLogger, createLoggerFromEnv } from '../../src/logger.js';
 
 const fixedDate = new Date(2026, 3, 22, 19, 9, 7, 42);
@@ -7,8 +7,10 @@ const fixedLoggerOptions = {
     now: () => fixedDate,
 };
 
-describe('Logger unit test cases.', function () {
-    it('should stay silent when no log level is configured', function () {
+@suite('Logger unit test cases.')
+export class LoggerTests {
+    @test('should stay silent when no log level is configured')
+    staySilentTest() {
         const calls: string[] = [];
         const logger = createLogger(undefined, {
             error: () => calls.push('error'),
@@ -17,15 +19,16 @@ describe('Logger unit test cases.', function () {
         logger.error('vault request failed');
 
         assert.deepEqual(calls, []);
-    });
+    }
 
-    it('should write messages at or above the configured level', function () {
+    @test('should write messages at or above the configured level')
+    writeMessagesTest() {
         const calls: Array<{ context?: Record<string, unknown>; level: string; message: string }> = [];
         const logger = createLogger('info', {
-            debug: (message, context) => calls.push({ context, level: 'debug', message }),
-            error: (message, context) => calls.push({ context, level: 'error', message }),
-            info: (message, context) => calls.push({ context, level: 'info', message }),
-            warn: (message, context) => calls.push({ context, level: 'warn', message }),
+            debug: (message) => calls.push({ context: undefined, level: 'debug', message }),
+            error: (message) => calls.push({ context: undefined, level: 'error', message }),
+            info: (message) => calls.push({ context: undefined, level: 'info', message }),
+            warn: (message) => calls.push({ context: undefined, level: 'warn', message }),
         }, fixedLoggerOptions);
 
         logger.debug('debug message');
@@ -54,9 +57,10 @@ describe('Logger unit test cases.', function () {
                 message: '19:09:07.042 nanvc ERROR error message',
             },
         ]);
-    });
+    }
 
-    it('should initialize from NANVC_LOG_LEVEL', function () {
+    @test('should initialize from NANVC_LOG_LEVEL')
+    initializeFromEnvTest() {
         const calls: string[] = [];
         const logger = createLoggerFromEnv({ NANVC_LOG_LEVEL: 'debug' }, {
             debug: (message) => calls.push(message),
@@ -65,9 +69,10 @@ describe('Logger unit test cases.', function () {
         logger.debug('vault request started');
 
         assert.deepEqual(calls, ['19:09:07.042 nanvc DEBUG vault request started']);
-    });
+    }
 
-    it('should colorize log level prefixes when colors are enabled', function () {
+    @test('should colorize log level prefixes when colors are enabled')
+    colorizeLogLevelPrefixesTest() {
         const calls: string[] = [];
         const logger = createLogger('debug', {
             debug: (message) => calls.push(message),
@@ -87,9 +92,10 @@ describe('Logger unit test cases.', function () {
             '\u001b[2m19:09:07.042\u001b[0m \u001b[1mnanvc\u001b[0m \u001b[33mWRN\u001b[0m warn message',
             '\u001b[2m19:09:07.042\u001b[0m \u001b[1mnanvc\u001b[0m \u001b[31mERR\u001b[0m error message',
         ]);
-    });
+    }
 
-    it('should not throw when formatting unserializable context values', function () {
+    @test('should not throw when formatting unserializable context values')
+    notThrowOnUnserializableContextTest() {
         const calls: string[] = [];
         const circularValue: Record<string, unknown> = {};
         circularValue.self = circularValue;
@@ -107,5 +113,5 @@ describe('Logger unit test cases.', function () {
         assert.deepEqual(calls, [
             '19:09:07.042 nanvc INFO info message circularValue=[unserializable] symbolValue=Symbol(nanvc)',
         ]);
-    });
-});
+    }
+}
