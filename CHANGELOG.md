@@ -4,8 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is inspired by Keep a Changelog, with the current work tracked under `Unreleased` until you decide the next version number.
 
 ## Unreleased
-### Added
 
+### Added
+- Added v2 cubbyhole secrets engine support under `vault.secret.cubbyhole` for CRUD workflows.
 - Added v2 system policy clients under `vault.sys.policies` for ACL, EGP, password, RGP, and rotation policies, including exported response and request types.
 - Added v2 response wrapping helpers under `vault.sys.wrapping` for lookup, wrap, unwrap, and rewrap workflows.
 - Added v2 API documentation for system policies and response wrapping.
