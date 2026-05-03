@@ -1,4 +1,4 @@
-import type {VaultClientV2} from '../../../../src/v2/index.js';
+
 import assert from 'node:assert/strict';
 import { 
     isMountAlreadyExistsError,
@@ -8,7 +8,7 @@ import {
     getTestUnsealKey,
     getTestRootToken,
 } from '../../../helpers/vault.js';
-import { VaultClientError } from '../../../../src/v2/index.js';
+import { VaultClientV2, VaultClientError } from '../../../../src/v2/index.js';
 
 type SecretData = {
     foo: string;
