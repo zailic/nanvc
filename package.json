@@ -1,7 +1,7 @@
 {
   "name": "nanvc",
   "description": "Lightweight TypeScript client for HashiCorp Vault with typed KV v2, AppRole, response wrapping, and database secrets support.",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "author": {
     "name": "Ionut Zailic",
     "email": "ionut@zailic.com"
