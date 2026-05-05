@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { createSandbox } from 'sinon';
+import { suite, test, beforeEachTest, afterEachTest } from '../../../mocha/decorators.js';
 
-import {resultOf} from '../../../helpers/types.js';
+import { resultOf } from '../../../helpers/types.js';
 
 import { VaultClient } from '../../../../src/v2/client/vault-client.js';
 import { RawVaultClient } from '../../../../src/v2/core/raw-client.js';
@@ -12,82 +13,89 @@ import type { components } from '../../../../src/v2/generated/vault-openapi.js';
 
 import type { SinonSandbox } from 'sinon';
 
-describe('VaultClientV2 unit test cases.', function () {
-    let sandbox: SinonSandbox;
+@suite('VaultClientV2 unit test cases.')
+export class VaultClientV2UnitTests {
+    private sandbox!: SinonSandbox;
 
-    beforeEach(function () {
-        sandbox = createSandbox();
-    });
+    @beforeEachTest()
+    public beforeEach() {
+        this.sandbox = createSandbox();
+    }
 
-    afterEach(function () {
-        sandbox.restore();
-    });
+    @afterEachTest()
+    public afterEach() {
+        this.sandbox.restore();
+    }
 
-    it('should unwrap successful high-level results', async function () {
-        sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                initialized: true,
-            })),
+    @test('should unwrap successful high-level results')
+    public async shouldUnwrapSuccessfulHighLevelResultsTest() {
+        this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    initialized: true,
+                }),
+            ),
         );
         const client = new VaultClient();
 
         const isInitialized = await client.sys.isInitialized().unwrap();
 
         assert.equal(isInitialized, true);
-    });
+    }
 
-    it('should reject unwrap with the underlying client error', async function () {
+    @test('should reject unwrap with the underlying client error')
+    public async shouldRejectUnwrapWithTheUnderlyingClientErrorTest() {
         const clientError = new VaultClientError({
             code: 'HTTP_ERROR',
             message: 'Vault said no',
             status: 403,
         });
-        sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(err(clientError)));
         const client = new VaultClient();
 
-        await assert.rejects(
-            client.sys.isInitialized().unwrap(),
-            (error: unknown) => {
-                assert.equal(error, clientError);
-                return true;
-            },
-        );
-    });
+        await assert.rejects(client.sys.isInitialized().unwrap(), (error: unknown) => {
+            assert.equal(error, clientError);
+            return true;
+        });
+    }
 
-    it('should set the raw client token after a successful init', async function () {
-        sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok({
-                keys: ['unseal-key'],
-                root_token: 'root-token',
-            })),
+    @test('should set the raw client token after a successful init')
+    public async shouldSetTheRawClientTokenAfterASuccessfulInitTest() {
+        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(
+                ok({
+                    keys: ['unseal-key'],
+                    root_token: 'root-token',
+                }),
+            ),
         );
-        const setTokenSpy = sandbox.spy(RawVaultClient.prototype, 'setToken');
+        const setTokenSpy = this.sandbox.spy(RawVaultClient.prototype, 'setToken');
         const client = new VaultClient();
 
-        const initData = await client.sys.init({
-            secret_shares: 1,
-            secret_threshold: 1,
-        }).unwrap();
+        const initData = await client.sys
+            .init({
+                secret_shares: 1,
+                secret_threshold: 1,
+            })
+            .unwrap();
 
         assert.equal(initData.root_token, 'root-token');
         assert.equal(setTokenSpy.calledOnceWithExactly('root-token'), true);
-    });
+    }
 
-    it('should report ready when GET /sys/health succeeds', async function () {
-        const requestStub = sandbox.stub(RawVaultClient.prototype, 'request').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should report ready when GET /sys/health succeeds')
+    public async shouldReportReadyWhenGetSysHealthSucceedsTest() {
+        const requestStub = this.sandbox.stub(RawVaultClient.prototype, 'request').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const ready = await client.sys.isReady().unwrap();
 
         assert.equal(ready, true);
         assert.deepEqual(requestStub.firstCall.args, ['GET', '/sys/health', {}]);
-    });
+    }
 
-    it('should get the status of the vault', async function () {
+    @test('should get the status of the vault')
+    public async shouldGetTheStatusOfTheVaultTest() {
         const healthStatus = {
             initialized: true,
             sealed: false,
@@ -100,84 +108,83 @@ describe('VaultClientV2 unit test cases.', function () {
             cluster_name: 'vault-cluster',
             cluster_id: '1234-5678',
         } as components['schemas']['HealthStatusResponse'];
-        const reqStub = sandbox.stub(RawVaultClient.prototype, 'request').returns(
-            resultOf(ok(healthStatus)),
-        );
+        const reqStub = this.sandbox.stub(RawVaultClient.prototype, 'request').returns(resultOf(ok(healthStatus)));
         const client = new VaultClient();
 
         const status = await client.sys.status().unwrap();
 
         assert.deepEqual(status, healthStatus);
         assert.deepEqual(reqStub.firstCall.args, ['GET', '/sys/health', {}]);
-    });
+    }
 
-    it('should fail fetching the status of the vault if the request fails', async function () {
+    @test('should fail fetching the status of the vault if the request fails')
+    public async shouldFailFetchingTheStatusOfTheVaultIfTheRequestFailsTest() {
         const clientError = new VaultClientError({
             code: 'HTTP_ERROR',
             message: 'Network error',
         });
-        const reqStub = sandbox.stub(RawVaultClient.prototype, 'request').returns(
-            resultOf(err(clientError)),
-        );
+        const reqStub = this.sandbox.stub(RawVaultClient.prototype, 'request').returns(resultOf(err(clientError)));
         const client = new VaultClient();
 
-        await assert.rejects(
-            client.sys.status().unwrap(),
-            (error: unknown) => {
-                assert.equal(error, clientError);
-                return true;
-            },
-        );
+        await assert.rejects(client.sys.status().unwrap(), (error: unknown) => {
+            assert.equal(error, clientError);
+            return true;
+        });
         assert.deepEqual(reqStub.firstCall.args, ['GET', '/sys/health', {}]);
-    });
+    }
 
-    it('should report not ready when HEAD /sys/health returns 503', async function () {
-        sandbox.stub(RawVaultClient.prototype, 'request').returns(
-            resultOf(err(new VaultClientError({
-                code: 'HTTP_ERROR',
-                message: 'sealed',
-                status: 503,
-            }))),
+    @test('should report not ready when HEAD /sys/health returns 503')
+    public async shouldReportNotReadyWhenHeadSysHealthReturns503Test() {
+        this.sandbox.stub(RawVaultClient.prototype, 'request').returns(
+            resultOf(
+                err(
+                    new VaultClientError({
+                        code: 'HTTP_ERROR',
+                        message: 'sealed',
+                        status: 503,
+                    }),
+                ),
+            ),
         );
         const client = new VaultClient();
 
         const ready = await client.sys.isReady().unwrap();
 
         assert.equal(ready, false);
-    });
+    }
 
-    it('should surface non-HTTP readiness errors', async function () {
+    @test('should surface non-HTTP readiness errors')
+    public async shouldSurfaceNonHttpReadinessErrorsTest() {
         const clientError = new VaultClientError({
             code: 'NETWORK_ERROR',
             message: 'connection refused',
         });
-        sandbox.stub(RawVaultClient.prototype, 'request').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'request').returns(resultOf(err(clientError)));
         const client = new VaultClient();
 
-        await assert.rejects(
-            client.sys.isReady().unwrap(),
-            (error: unknown) => {
-                assert.equal(error, clientError);
-                return true;
-            },
-        );
-    });
+        await assert.rejects(client.sys.isReady().unwrap(), (error: unknown) => {
+            assert.equal(error, clientError);
+            return true;
+        });
+    }
 
-    it('should route system mount enable and disable calls', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').onFirstCall().returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route system mount enable and disable calls')
+    public async shouldRouteSystemMountEnableAndDisableCallsTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
+        const deleteStub = this.sandbox
+            .stub(RawVaultClient.prototype, 'delete')
+            .onFirstCall()
+            .returns(resultOf(ok(undefined)));
         deleteStub.onSecondCall().returns(
-            resultOf(err(new VaultClientError({
-                code: 'HTTP_ERROR',
-                message: 'missing permission',
-                status: 403,
-            }))),
+            resultOf(
+                err(
+                    new VaultClientError({
+                        code: 'HTTP_ERROR',
+                        message: 'missing permission',
+                        status: 403,
+                    }),
+                ),
+            ),
         );
         const client = new VaultClient();
 
@@ -215,66 +222,74 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         ]);
-    });
+    }
 
-    it('should surface system mount errors', async function () {
+    @test('should surface system mount errors')
+    public async shouldSurfaceSystemMountErrorsTest() {
         const clientError = new VaultClientError({
             code: 'HTTP_ERROR',
             message: 'missing permission',
             status: 403,
         });
-        sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
         const client = new VaultClient();
 
-        await assert.rejects(
-            client.sys.mount.enable('secret', { type: 'kv' }).unwrap(),
-            (error: unknown) => {
-                assert.equal(error, clientError);
-                return true;
-            },
-        );
-    });
+        await assert.rejects(client.sys.mount.enable('secret', { type: 'kv' }).unwrap(), (error: unknown) => {
+            assert.equal(error, clientError);
+            return true;
+        });
+    }
 
-    it('should not set a token when init returns no root token', async function () {
-        sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok({
-                keys: ['unseal-key'],
-            })),
+    @test('should not set a token when init returns no root token')
+    public async shouldNotSetATokenWhenInitReturnsNoRootTokenTest() {
+        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(
+                ok({
+                    keys: ['unseal-key'],
+                }),
+            ),
         );
-        const setTokenSpy = sandbox.spy(RawVaultClient.prototype, 'setToken');
+        const setTokenSpy = this.sandbox.spy(RawVaultClient.prototype, 'setToken');
         const client = new VaultClient();
 
-        const initData = await client.sys.init({
-            secret_shares: 1,
-            secret_threshold: 1,
-        }).unwrap();
+        const initData = await client.sys
+            .init({
+                secret_shares: 1,
+                secret_threshold: 1,
+            })
+            .unwrap();
 
         assert.deepEqual(initData, {
             keys: ['unseal-key'],
         });
         assert.equal(setTokenSpy.called, false);
-    });
+    }
 
-    it('should route seal status and unseal calls', async function () {
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                initialized: true,
-                sealed: true,
-            })),
+    @test('should route seal status and unseal calls')
+    public async shouldRouteSealStatusAndUnsealCallsTest() {
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    initialized: true,
+                    sealed: true,
+                }),
+            ),
         );
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok({
-                sealed: false,
-            })),
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
+            resultOf(
+                ok({
+                    sealed: false,
+                }),
+            ),
         );
         const client = new VaultClient();
 
         const sealStatus = await client.sys.sealStatus().unwrap();
-        const unsealStatus = await client.sys.unseal({
-            key: 'unseal-key',
-        }).unwrap();
+        const unsealStatus = await client.sys
+            .unseal({
+                key: 'unseal-key',
+            })
+            .unwrap();
 
         assert.deepEqual(sealStatus, {
             initialized: true,
@@ -292,12 +307,11 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         ]);
-    });
+    }
 
-    it('should route kv2 writes through the mount data path with wrapped payload', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 writes through the mount data path with wrapped payload')
+    public async shouldRouteKv2WritesThroughTheMountDataPathWithWrappedPayloadTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.write('secret-v2', '/apps/demo', { foo: 'bar' }, { cas: 2 });
@@ -318,23 +332,28 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         });
-    });
+    }
 
-    it('should unwrap kv2 reads into data and metadata', async function () {
-        sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                data: {
-                    data: { foo: 'bar' },
-                    metadata: {
-                        destroyed: false,
-                        version: 3,
+    @test('should unwrap kv2 reads into data and metadata')
+    public async shouldUnwrapKv2ReadsIntoDataAndMetadataTest() {
+        this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    data: {
+                        data: { foo: 'bar' },
+                        metadata: {
+                            destroyed: false,
+                            version: 3,
+                        },
                     },
-                },
-            })),
+                }),
+            ),
         );
         const client = new VaultClient();
 
-        const secret = await client.secret.kv.v2.read<{ foo: string }>('secret-v2', 'apps/demo', { version: 3 }).unwrap();
+        const secret = await client.secret.kv.v2
+            .read<{ foo: string }>('secret-v2', 'apps/demo', { version: 3 })
+            .unwrap();
 
         assert.deepEqual(secret, {
             data: { foo: 'bar' },
@@ -343,25 +362,30 @@ describe('VaultClientV2 unit test cases.', function () {
                 version: 3,
             },
         });
-    });
+    }
 
-    it('should surface metadata for soft-deleted kv2 secrets returned as 404 responses', async function () {
-        sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(new VaultClientError({
-                code: 'HTTP_ERROR',
-                message: 'Not Found',
-                status: 404,
-                responseBody: {
-                    data: {
-                        data: null,
-                        metadata: {
-                            deletion_time: '2026-04-17T15:13:44.847667814Z',
-                            destroyed: false,
-                            version: 1,
+    @test('should surface metadata for soft-deleted kv2 secrets returned as 404 responses')
+    public async shouldSurfaceMetadataForSoftDeletedKv2SecretsReturnedAs404ResponsesTest() {
+        this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                err(
+                    new VaultClientError({
+                        code: 'HTTP_ERROR',
+                        message: 'Not Found',
+                        status: 404,
+                        responseBody: {
+                            data: {
+                                data: null,
+                                metadata: {
+                                    deletion_time: '2026-04-17T15:13:44.847667814Z',
+                                    destroyed: false,
+                                    version: 1,
+                                },
+                            },
                         },
-                    },
-                },
-            }))),
+                    }),
+                ),
+            ),
         );
         const client = new VaultClient();
 
@@ -375,9 +399,10 @@ describe('VaultClientV2 unit test cases.', function () {
                 version: 1,
             },
         });
-    });
+    }
 
-    it('should not unwrap kv2 read errors that are not soft-deleted secret responses', async function () {
+    @test('should not unwrap kv2 read errors that are not soft-deleted secret responses')
+    public async shouldNotUnwrapKv2ReadErrorsThatAreNotSoftDeletedSecretResponsesTest() {
         const forbiddenError = new VaultClientError({
             code: 'HTTP_ERROR',
             message: 'Forbidden',
@@ -399,7 +424,7 @@ describe('VaultClientV2 unit test cases.', function () {
             status: 404,
         });
         const unknownError = new Error('socket closed') as VaultClientError;
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get');
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get');
         getStub.onFirstCall().returns(resultOf(err(forbiddenError)));
         getStub.onSecondCall().returns(resultOf(err(missingEnvelopeError)));
         getStub.onThirdCall().returns(resultOf(err(unknownError)));
@@ -413,15 +438,18 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(missingEnvelopeResult, missingEnvelopeError);
         assert.equal(unknownResult, unknownError);
         assert.equal(getStub.callCount, 3);
-    });
+    }
 
-    it('should list kv2 keys through the metadata path', async function () {
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').returns(
-            resultOf(ok({
-                data: {
-                    keys: ['child', 'nested/'],
-                },
-            })),
+    @test('should list kv2 keys through the metadata path')
+    public async shouldListKv2KeysThroughTheMetadataPathTest() {
+        const listStub = this.sandbox.stub(RawVaultClient.prototype, 'list').returns(
+            resultOf(
+                ok({
+                    data: {
+                        keys: ['child', 'nested/'],
+                    },
+                }),
+            ),
         );
         const client = new VaultClient();
 
@@ -442,15 +470,18 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         ]);
-    });
+    }
 
-    it('should route kv1 reads through split mount and path arguments', async function () {
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                data: {
-                    foo: 'bar',
-                },
-            })),
+    @test('should route kv1 reads through split mount and path arguments')
+    public async shouldRouteKv1ReadsThroughSplitMountAndPathArgumentsTest() {
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    data: {
+                        foo: 'bar',
+                    },
+                }),
+            ),
         );
         const client = new VaultClient();
 
@@ -467,16 +498,17 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         });
-    });
+    }
 
-    it('should route kv1 writes and lists through split mount and path arguments', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').returns(
-            resultOf(ok({
-                keys: ['demo'],
-            })),
+    @test('should route kv1 writes and lists through split mount and path arguments')
+    public async shouldRouteKv1WritesAndListsThroughSplitMountAndPathArgumentsTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
+        const listStub = this.sandbox.stub(RawVaultClient.prototype, 'list').returns(
+            resultOf(
+                ok({
+                    keys: ['demo'],
+                }),
+            ),
         );
         const client = new VaultClient();
 
@@ -513,12 +545,11 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         ]);
-    });
+    }
 
-    it('should return validation errors for invalid kv1 paths', async function () {
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({ data: {} })),
-        );
+    @test('should return validation errors for invalid kv1 paths')
+    public async shouldReturnValidationErrorsForInvalidKv1PathsTest() {
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(ok({ data: {} })));
         const client = new VaultClient();
 
         const [readData, readError] = await client.secret.kv.v1.read('secret');
@@ -528,28 +559,34 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(readError?.code, 'VALIDATION_ERROR');
         assert.equal(readError?.message, 'Expected a KV v1 secret path like "secret/my-app/my-secret", got "secret"');
         assert.equal(getStub.called, false);
-    });
+    }
 
-    it('should return validation errors for missing kv1 write payloads', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should return validation errors for missing kv1 write payloads')
+    public async shouldReturnValidationErrorsForMissingKv1WritePayloadsTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
-        const [data, error] = await client.secret.kv.v1.write('secret', 'apps/demo', undefined as unknown as Record<string, unknown>);
+        const [data, error] = await client.secret.kv.v1.write(
+            'secret',
+            'apps/demo',
+            undefined as unknown as Record<string, unknown>,
+        );
 
         assert.equal(data, null);
         assert.equal(error instanceof VaultClientError, true);
         assert.equal(error?.code, 'VALIDATION_ERROR');
         assert.equal(error?.message, 'VaultSecretKvV1Client.write requires a payload object');
         assert.equal(postStub.called, false);
-    });
+    }
 
-    it('should allow empty kv1 paths only for list operations', async function () {
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').returns(
-            resultOf(ok({
-                keys: ['apps/'],
-            })),
+    @test('should allow empty kv1 paths only for list operations')
+    public async shouldAllowEmptyKv1PathsOnlyForListOperationsTest() {
+        const listStub = this.sandbox.stub(RawVaultClient.prototype, 'list').returns(
+            resultOf(
+                ok({
+                    keys: ['apps/'],
+                }),
+            ),
         );
         const client = new VaultClient();
 
@@ -570,13 +607,12 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         ]);
-    });
+    }
 
-    it('should surface validation errors for invalid kv1 paths', async function () {
+    @test('should surface validation errors for invalid kv1 paths')
+    public async shouldSurfaceValidationErrorsForInvalidKv1PathsTest() {
         const client = new VaultClient();
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(ok(undefined)),
-        );
+        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(ok(undefined)));
 
         const [deleteData, deleteError] = await client.secret.kv.v1.delete('secret');
 
@@ -586,10 +622,12 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(deleteError?.message, 'Expected a KV v1 secret path like "secret/my-app/my-secret", got "secret"');
         assert.equal(deleteStub.called, false);
 
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').returns(
-            resultOf(ok({
-                keys: ['apps/'],
-            })),
+        const listStub = this.sandbox.stub(RawVaultClient.prototype, 'list').returns(
+            resultOf(
+                ok({
+                    keys: ['apps/'],
+                }),
+            ),
         );
 
         const [keys, listError] = await client.secret.kv.v1.list('');
@@ -600,9 +638,7 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(listError?.message, 'Expected a KV v1 secret path like "secret/my-app/my-secret", got ""');
         assert.equal(listStub.called, false);
 
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({ data: {} })),
-        );
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(ok({ data: {} })));
 
         const [readData, readError] = await client.secret.kv.v1.read('secret');
 
@@ -612,9 +648,7 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(readError?.message, 'Expected a KV v1 secret path like "secret/my-app/my-secret", got "secret"');
         assert.equal(getStub.called, false);
 
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
 
         const [writeData, writeError] = await client.secret.kv.v1.write('secret', {});
 
@@ -623,17 +657,16 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(writeError?.code, 'VALIDATION_ERROR');
         assert.equal(writeError?.message, 'Expected a KV v1 secret path like "secret/my-app/my-secret", got "secret"');
         assert.equal(postStub.called, false);
-    });
+    }
 
-    it('should surface raw client errors from kv1 shortcut methods', async function () {
+    @test('should surface raw client errors from kv1 shortcut methods')
+    public async shouldSurfaceRawClientErrorsFromKv1ShortcutMethodsTest() {
         const clientError = new VaultClientError({
             code: 'HTTP_ERROR',
             message: 'Vault said no',
             status: 403,
         });
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(clientError)),
-        );
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(err(clientError)));
         const client = new VaultClient();
 
         const [readData, readError] = await client.secret.kv.v1.read('secret/apps/demo');
@@ -642,9 +675,7 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(readError, clientError);
         assert.equal(getStub.calledOnce, true);
 
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(err(clientError)),
-        );
+        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(err(clientError)));
 
         const [deleteData, deleteError] = await client.secret.kv.v1.delete('secret/apps/demo');
 
@@ -652,9 +683,7 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(deleteError, clientError);
         assert.equal(deleteStub.calledOnce, true);
 
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
 
         const [writeData, writeError] = await client.secret.kv.v1.write('secret/apps/demo', { foo: 'bar' });
 
@@ -662,29 +691,26 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(writeError, clientError);
         assert.equal(postStub.calledOnce, true);
 
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').returns(
-            resultOf(err(clientError)),
-        );
+        const listStub = this.sandbox.stub(RawVaultClient.prototype, 'list').returns(resultOf(err(clientError)));
 
         const [keys, listError] = await client.secret.kv.v1.list('secret/apps');
 
         assert.equal(keys, null);
         assert.equal(listError, clientError);
         assert.equal(listStub.calledOnce, true);
+    }
 
-    });
-
-    it('should return validation errors from invalid high-level kv shortcuts', async function () {
+    @test('should return validation errors from invalid high-level kv shortcuts')
+    public async shouldReturnValidationErrorsFromInvalidHighLevelKvShortcutsTest() {
         const client = new VaultClient();
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({ data: {} })),
-        );
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(ok({ data: {} })));
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
 
         const [readData, readError] = await client.read('secret');
-        const [writeData, writeError] = await client.write('secret/apps/demo', undefined as unknown as Record<string, unknown>);
+        const [writeData, writeError] = await client.write(
+            'secret/apps/demo',
+            undefined as unknown as Record<string, unknown>,
+        );
 
         assert.equal(readData, null);
         assert.equal(readError instanceof VaultClientError, true);
@@ -696,26 +722,27 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(writeError?.message, 'VaultClient.write requires a payload object');
         assert.equal(getStub.called, false);
         assert.equal(postStub.called, false);
-    });
+    }
 
-    it('should expose kv1 shortcut methods on the high-level client', async function () {
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(ok(undefined)),
+    @test('should expose kv1 shortcut methods on the high-level client')
+    public async shouldExposeKv1ShortcutMethodsOnTheHighLevelClientTest() {
+        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(ok(undefined)));
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    data: {
+                        foo: 'bar',
+                    },
+                }),
+            ),
         );
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                data: {
-                    foo: 'bar',
-                },
-            })),
-        );
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').returns(
-            resultOf(ok({
-                keys: ['demo'],
-            })),
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
+        const listStub = this.sandbox.stub(RawVaultClient.prototype, 'list').returns(
+            resultOf(
+                ok({
+                    keys: ['demo'],
+                }),
+            ),
         );
         const client = new VaultClient();
 
@@ -766,48 +793,61 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         });
-    });
+    }
 
-    it('should expose kv2 shortcut methods when engineVersion is 2', async function () {
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(ok(undefined)),
-        );
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                data: {
-                    data: { foo: 'bar' },
-                    metadata: {
-                        version: 3,
+    @test('should expose kv2 shortcut methods when engineVersion is 2')
+    public async shouldExposeKv2ShortcutMethodsWhenEngineversionIs2Test() {
+        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(ok(undefined)));
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    data: {
+                        data: { foo: 'bar' },
+                        metadata: {
+                            version: 3,
+                        },
                     },
-                },
-            })),
+                }),
+            ),
         );
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').onFirstCall().returns(
-            resultOf(ok({
-                data: {
-                    keys: ['demo'],
-                },
-            })),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
+        const listStub = this.sandbox
+            .stub(RawVaultClient.prototype, 'list')
+            .onFirstCall()
+            .returns(
+                resultOf(
+                    ok({
+                        data: {
+                            keys: ['demo'],
+                        },
+                    }),
+                ),
+            );
         // here we simulate scenario where list data is not enveloped in a "data" property
         listStub.onSecondCall().returns(
-            resultOf(ok({
-                keys: ['demo'],
-            })),
+            resultOf(
+                ok({
+                    keys: ['demo'],
+                }),
+            ),
         );
         const client = new VaultClient();
 
-        const [writeData, writeError] = await client.write('secret-v2', 'apps/demo', { foo: 'bar' }, {
-            cas: 2,
-            engineVersion: 2,
-        });
-        const secret = await client.read<{ foo: string }>('secret-v2', 'apps/demo', {
-            engineVersion: 2,
-            version: 3,
-        }).unwrap();
+        const [writeData, writeError] = await client.write(
+            'secret-v2',
+            'apps/demo',
+            { foo: 'bar' },
+            {
+                cas: 2,
+                engineVersion: 2,
+            },
+        );
+        const secret = await client
+            .read<{ foo: string }>('secret-v2', 'apps/demo', {
+                engineVersion: 2,
+                version: 3,
+            })
+            .unwrap();
         const keys = await client.list('secret-v2', 'apps', { engineVersion: 2 }).unwrap();
         const keys2 = await client.list('secret-v2', 'apps', { engineVersion: 2 }).unwrap();
         const [deleteData, deleteError] = await client.delete('secret-v2', 'apps/demo', { engineVersion: 2 });
@@ -866,17 +906,16 @@ describe('VaultClientV2 unit test cases.', function () {
                 },
             },
         });
-    });
+    }
 
-    it('should surface raw client errors from kv2 shortcut methods', async function () {
+    @test('should surface raw client errors from kv2 shortcut methods')
+    public async shouldSurfaceRawClientErrorsFromKv2ShortcutMethodsTest() {
         const clientError = new VaultClientError({
             code: 'HTTP_ERROR',
             message: 'Vault said no',
             status: 403,
         });
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(clientError)),
-        );
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(err(clientError)));
         const client = new VaultClient();
 
         const [readData, readError] = await client.secret.kv.v2.read('secret-v2', 'apps/demo');
@@ -885,9 +924,7 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(readError, clientError);
         assert.equal(getStub.calledOnce, true);
 
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(err(clientError)),
-        );
+        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(err(clientError)));
 
         const [deleteData, deleteError] = await client.secret.kv.v2.delete('secret-v2', 'apps/demo');
 
@@ -895,9 +932,7 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(deleteError, clientError);
         assert.equal(deleteStub.calledOnce, true);
 
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
 
         const [writeData, writeError] = await client.secret.kv.v2.write('secret-v2', 'apps/demo', { foo: 'bar' });
 
@@ -905,21 +940,18 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(writeError, clientError);
         assert.equal(postStub.calledOnce, true);
 
-        const listStub = sandbox.stub(RawVaultClient.prototype, 'list').returns(
-            resultOf(err(clientError)),
-        );
+        const listStub = this.sandbox.stub(RawVaultClient.prototype, 'list').returns(resultOf(err(clientError)));
 
         const [keys, listError] = await client.secret.kv.v2.list('secret-v2', 'apps');
 
         assert.equal(keys, null);
         assert.equal(listError, clientError);
         assert.equal(listStub.calledOnce, true);
-    });
+    }
 
-    it('should route kv2 patch through the data path with merge-patch content type', async function () {
-        const patchStub = sandbox.stub(RawVaultClient.prototype, 'patch').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 patch through the data path with merge-patch content type')
+    public async shouldRouteKv2PatchThroughTheDataPathWithMergePatchContentTypeTest() {
+        const patchStub = this.sandbox.stub(RawVaultClient.prototype, 'patch').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.patch('secret-v2', 'apps/demo', { foo: 'updated' });
@@ -938,12 +970,11 @@ describe('VaultClientV2 unit test cases.', function () {
             kv_v2_mount_path: 'secret-v2',
             path: 'apps/demo',
         });
-    });
+    }
 
-    it('should route kv2 patch with cas option', async function () {
-        const patchStub = sandbox.stub(RawVaultClient.prototype, 'patch').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 patch with cas option')
+    public async shouldRouteKv2PatchWithCasOptionTest() {
+        const patchStub = this.sandbox.stub(RawVaultClient.prototype, 'patch').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.patch('secret-v2', 'apps/demo', { foo: 'updated' }, { cas: 3 });
@@ -954,12 +985,11 @@ describe('VaultClientV2 unit test cases.', function () {
             data: { foo: 'updated' },
             options: { cas: 3 },
         });
-    });
+    }
 
-    it('should route kv2 deleteVersions through the delete path', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 deleteVersions through the delete path')
+    public async shouldRouteKv2DeleteversionsThroughTheDeletePathTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.deleteVersions('secret-v2', 'apps/demo', [1, 2]);
@@ -973,12 +1003,11 @@ describe('VaultClientV2 unit test cases.', function () {
             kv_v2_mount_path: 'secret-v2',
             path: 'apps/demo',
         });
-    });
+    }
 
-    it('should route kv2 undeleteVersions through the undelete path', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 undeleteVersions through the undelete path')
+    public async shouldRouteKv2UndeleteversionsThroughTheUndeletePathTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.undeleteVersions('secret-v2', 'apps/demo', [1]);
@@ -988,12 +1017,11 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(postStub.calledOnce, true);
         assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/undelete/{path}');
         assert.deepEqual(postStub.firstCall.args[1]?.body, { versions: [1] });
-    });
+    }
 
-    it('should route kv2 destroyVersions through the destroy path', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 destroyVersions through the destroy path')
+    public async shouldRouteKv2DestroyversionsThroughTheDestroyPathTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.destroyVersions('secret-v2', 'apps/demo', [1, 2]);
@@ -1003,17 +1031,20 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(postStub.calledOnce, true);
         assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/destroy/{path}');
         assert.deepEqual(postStub.firstCall.args[1]?.body, { versions: [1, 2] });
-    });
+    }
 
-    it('should unwrap kv2 readMetadata into the data envelope', async function () {
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                data: {
-                    current_version: 2,
-                    max_versions: 10,
-                    versions: { '1': { destroyed: false }, '2': { destroyed: false } },
-                },
-            })),
+    @test('should unwrap kv2 readMetadata into the data envelope')
+    public async shouldUnwrapKv2ReadmetadataIntoTheDataEnvelopeTest() {
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    data: {
+                        current_version: 2,
+                        max_versions: 10,
+                        versions: { '1': { destroyed: false }, '2': { destroyed: false } },
+                    },
+                }),
+            ),
         );
         const client = new VaultClient();
 
@@ -1027,12 +1058,11 @@ describe('VaultClientV2 unit test cases.', function () {
             kv_v2_mount_path: 'secret-v2',
             path: 'apps/demo',
         });
-    });
+    }
 
-    it('should route kv2 writeMetadata through the metadata path', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 writeMetadata through the metadata path')
+    public async shouldRouteKv2WritemetadataThroughTheMetadataPathTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.writeMetadata('secret-v2', 'apps/demo', { max_versions: 5 });
@@ -1042,12 +1072,11 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(postStub.calledOnce, true);
         assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/metadata/{path}');
         assert.deepEqual(postStub.firstCall.args[1]?.body, { max_versions: 5 });
-    });
+    }
 
-    it('should route kv2 patchMetadata through the metadata patch path', async function () {
-        const patchStub = sandbox.stub(RawVaultClient.prototype, 'patch').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 patchMetadata through the metadata patch path')
+    public async shouldRouteKv2PatchmetadataThroughTheMetadataPatchPathTest() {
+        const patchStub = this.sandbox.stub(RawVaultClient.prototype, 'patch').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.patchMetadata('secret-v2', 'apps/demo', { cas_required: true });
@@ -1057,12 +1086,11 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(patchStub.calledOnce, true);
         assert.equal(patchStub.firstCall.args[0], '/{kv_v2_mount_path}/metadata/{path}');
         assert.deepEqual(patchStub.firstCall.args[1]?.body, { cas_required: true });
-    });
+    }
 
-    it('should route kv2 deleteMetadata through the metadata delete path', async function () {
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 deleteMetadata through the metadata delete path')
+    public async shouldRouteKv2DeletemetadataThroughTheMetadataDeletePathTest() {
+        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.deleteMetadata('secret-v2', 'apps/demo');
@@ -1075,17 +1103,20 @@ describe('VaultClientV2 unit test cases.', function () {
             kv_v2_mount_path: 'secret-v2',
             path: 'apps/demo',
         });
-    });
+    }
 
-    it('should unwrap kv2 readConfig into the data envelope', async function () {
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                data: {
-                    max_versions: 10,
-                    cas_required: false,
-                    delete_version_after: '0s',
-                },
-            })),
+    @test('should unwrap kv2 readConfig into the data envelope')
+    public async shouldUnwrapKv2ReadconfigIntoTheDataEnvelopeTest() {
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    data: {
+                        max_versions: 10,
+                        cas_required: false,
+                        delete_version_after: '0s',
+                    },
+                }),
+            ),
         );
         const client = new VaultClient();
 
@@ -1098,12 +1129,11 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.deepEqual(getStub.firstCall.args[1]?.params?.path, {
             kv_v2_mount_path: 'secret-v2',
         });
-    });
+    }
 
-    it('should route kv2 writeConfig through the config path', async function () {
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+    @test('should route kv2 writeConfig through the config path')
+    public async shouldRouteKv2WriteconfigThroughTheConfigPathTest() {
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultClient();
 
         const [data, error] = await client.secret.kv.v2.writeConfig('secret-v2', { max_versions: 20 });
@@ -1113,16 +1143,19 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(postStub.calledOnce, true);
         assert.equal(postStub.firstCall.args[0], '/{kv_v2_mount_path}/config');
         assert.deepEqual(postStub.firstCall.args[1]?.body, { max_versions: 20 });
-    });
+    }
 
-    it('should unwrap kv2 readSubkeys into the data envelope', async function () {
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                data: {
-                    subkeys: { foo: null, bar: { nested: null } },
-                    metadata: { version: 2 },
-                },
-            })),
+    @test('should unwrap kv2 readSubkeys into the data envelope')
+    public async shouldUnwrapKv2ReadsubkeysIntoTheDataEnvelopeTest() {
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
+            resultOf(
+                ok({
+                    data: {
+                        subkeys: { foo: null, bar: { nested: null } },
+                        metadata: { version: 2 },
+                    },
+                }),
+            ),
         );
         const client = new VaultClient();
 
@@ -1135,20 +1168,22 @@ describe('VaultClientV2 unit test cases.', function () {
             kv_v2_mount_path: 'secret-v2',
             path: 'apps/demo',
         });
-    });
+    }
 
-    it('should pass depth and version options to kv2 readSubkeys', async function () {
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({ data: { subkeys: {} } })),
-        );
+    @test('should pass depth and version options to kv2 readSubkeys')
+    public async shouldPassDepthAndVersionOptionsToKv2ReadsubkeysTest() {
+        const getStub = this.sandbox
+            .stub(RawVaultClient.prototype, 'get')
+            .returns(resultOf(ok({ data: { subkeys: {} } })));
         const client = new VaultClient();
 
         await client.secret.kv.v2.readSubkeys('secret-v2', 'apps/demo', { depth: 2, version: 1 }).unwrap();
 
         assert.deepEqual(getStub.firstCall.args[1]?.params?.query, { depth: 2, version: 1 });
-    });
+    }
 
-    it('should surface raw client errors from new kv2 methods', async function () {
+    @test('should surface raw client errors from new kv2 methods')
+    public async shouldSurfaceRawClientErrorsFromNewKv2MethodsTest() {
         const clientError = new VaultClientError({
             code: 'HTTP_ERROR',
             message: 'Vault said no',
@@ -1157,51 +1192,63 @@ describe('VaultClientV2 unit test cases.', function () {
         const client = new VaultClient();
 
         // patch and patchMetadata both delegate to raw.patch
-        const patchStub = sandbox.stub(RawVaultClient.prototype, 'patch').returns(
-            resultOf(err(clientError)),
-        );
+        const patchStub = this.sandbox.stub(RawVaultClient.prototype, 'patch').returns(resultOf(err(clientError)));
 
         const [patchData, patchError] = await client.secret.kv.v2.patch('secret-v2', 'apps/demo', { foo: 'bar' });
         assert.equal(patchData, null);
         assert.equal(patchError, clientError);
 
-        const [patchMetaData, patchMetaError] = await client.secret.kv.v2.patchMetadata('secret-v2', 'apps/demo', { max_versions: 5 });
+        const [patchMetaData, patchMetaError] = await client.secret.kv.v2.patchMetadata('secret-v2', 'apps/demo', {
+            max_versions: 5,
+        });
         assert.equal(patchMetaData, null);
         assert.equal(patchMetaError, clientError);
 
         assert.equal(patchStub.callCount, 2);
 
         // deleteVersions, undeleteVersions, destroyVersions, writeMetadata, writeConfig all delegate to raw.post
-        const postStub = sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
 
-        const [deleteVersionsData, deleteVersionsError] = await client.secret.kv.v2.deleteVersions('secret-v2', 'apps/demo', [1]);
+        const [deleteVersionsData, deleteVersionsError] = await client.secret.kv.v2.deleteVersions(
+            'secret-v2',
+            'apps/demo',
+            [1],
+        );
         assert.equal(deleteVersionsData, null);
         assert.equal(deleteVersionsError, clientError);
 
-        const [undeleteVersionsData, undeleteVersionsError] = await client.secret.kv.v2.undeleteVersions('secret-v2', 'apps/demo', [1]);
+        const [undeleteVersionsData, undeleteVersionsError] = await client.secret.kv.v2.undeleteVersions(
+            'secret-v2',
+            'apps/demo',
+            [1],
+        );
         assert.equal(undeleteVersionsData, null);
         assert.equal(undeleteVersionsError, clientError);
 
-        const [destroyVersionsData, destroyVersionsError] = await client.secret.kv.v2.destroyVersions('secret-v2', 'apps/demo', [1]);
+        const [destroyVersionsData, destroyVersionsError] = await client.secret.kv.v2.destroyVersions(
+            'secret-v2',
+            'apps/demo',
+            [1],
+        );
         assert.equal(destroyVersionsData, null);
         assert.equal(destroyVersionsError, clientError);
 
-        const [writeMetaData, writeMetaError] = await client.secret.kv.v2.writeMetadata('secret-v2', 'apps/demo', { max_versions: 5 });
+        const [writeMetaData, writeMetaError] = await client.secret.kv.v2.writeMetadata('secret-v2', 'apps/demo', {
+            max_versions: 5,
+        });
         assert.equal(writeMetaData, null);
         assert.equal(writeMetaError, clientError);
 
-        const [writeConfigData, writeConfigError] = await client.secret.kv.v2.writeConfig('secret-v2', { max_versions: 5 });
+        const [writeConfigData, writeConfigError] = await client.secret.kv.v2.writeConfig('secret-v2', {
+            max_versions: 5,
+        });
         assert.equal(writeConfigData, null);
         assert.equal(writeConfigError, clientError);
 
         assert.equal(postStub.callCount, 5);
 
         // readMetadata, readConfig, readSubkeys all delegate to raw.get
-        const getStub = sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(clientError)),
-        );
+        const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(err(clientError)));
 
         const [readMetaData, readMetaError] = await client.secret.kv.v2.readMetadata('secret-v2', 'apps/demo');
         assert.equal(readMetaData, null);
@@ -1218,18 +1265,17 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(getStub.callCount, 3);
 
         // deleteMetadata delegates to raw.delete
-        const deleteStub = sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(err(clientError)),
-        );
+        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(err(clientError)));
 
         const [deleteMetaData, deleteMetaError] = await client.secret.kv.v2.deleteMetadata('secret-v2', 'apps/demo');
         assert.equal(deleteMetaData, null);
         assert.equal(deleteMetaError, clientError);
 
         assert.equal(deleteStub.callCount, 1);
-    });
+    }
 
-    it('should surface resolveKvShortcutRef validation errors', async function () {
+    @test('should surface resolveKvShortcutRef validation errors')
+    public async shouldSurfaceResolvekvshortcutrefValidationErrorsTest() {
         const client = new VaultClient();
 
         const [deleteData, deleteError] = await client.delete('invalid-path');
@@ -1239,7 +1285,10 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(deleteData, null);
         assert.equal(deleteError instanceof VaultClientError, true);
         assert.equal(deleteError?.code, 'VALIDATION_ERROR');
-        assert.equal(deleteError?.message, 'Expected a KV secret path like "secret/my-app/my-secret", got "invalid-path"');
+        assert.equal(
+            deleteError?.message,
+            'Expected a KV secret path like "secret/my-app/my-secret", got "invalid-path"',
+        );
 
         assert.equal(listData, null);
         assert.equal(listError instanceof VaultClientError, true);
@@ -1249,9 +1298,9 @@ describe('VaultClientV2 unit test cases.', function () {
         assert.equal(writeData, null);
         assert.equal(writeError instanceof VaultClientError, true);
         assert.equal(writeError?.code, 'VALIDATION_ERROR');
-        assert.equal(writeError?.message, 'Expected a KV secret path like "secret/my-app/my-secret", got "invalid-path"');
-
-    });
-
-});
-
+        assert.equal(
+            writeError?.message,
+            'Expected a KV secret path like "secret/my-app/my-secret", got "invalid-path"',
+        );
+    }
+}

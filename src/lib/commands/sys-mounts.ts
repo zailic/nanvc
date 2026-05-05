@@ -17,7 +17,7 @@ export interface VaultMountTypeConfig {
     plugin_name?: string;
 }
 
-export const mountsSchema: VaultCommandSchema =  {
+export const mountsSchema: VaultCommandSchema = {
     req: {
         properties: {
             description: {

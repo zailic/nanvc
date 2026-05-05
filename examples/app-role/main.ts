@@ -13,10 +13,8 @@ const secretData = {
     username: 'admin',
     password: 'passw0rd',
 };
-const assertInstanceOf = <T extends abstract new (...args: never[]) => unknown>(
-    value: unknown,
-    ctor: T,
-): void => assert.ok(value instanceof ctor);
+const assertInstanceOf = <T extends abstract new (...args: never[]) => unknown>(value: unknown, ctor: T): void =>
+    assert.ok(value instanceof ctor);
 
 async function main(): Promise<void> {
     const rootVault = await createTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
@@ -46,9 +44,9 @@ async function main(): Promise<void> {
         // The app token will only be able to call 'read' on that path.
         const jenkinsPolicy = [
             "# Read-only permission on secrets stored at 'secret/data/mysql/webapp'",
-            "path \"secret/data/mysql/webapp\" {",
-            "  capabilities = [\"read\"]",
-            "}",
+            'path "secret/data/mysql/webapp" {',
+            '  capabilities = ["read"]',
+            '}',
         ].join('\n');
         await admin.createPolicy('jenkins', jenkinsPolicy);
 
@@ -93,7 +91,7 @@ async function main(): Promise<void> {
         assert.deepStrictEqual(
             secretResponse.data,
             secretData,
-            "Retrieved secret data does not match the expected value",
+            'Retrieved secret data does not match the expected value',
         );
     });
 

@@ -4,8 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is inspired by Keep a Changelog, with the current work tracked under `Unreleased` until you decide the next version number.
 
 ## Unreleased
+
 ### Added
 
+### Changed
+
+### Fixed
+
+## 2.1.0 - 2026-05-03
+
+### Added
+
+- Added v2 cubbyhole secrets engine support under `vault.secret.cubbyhole` for CRUD workflows.
 - Added v2 system policy clients under `vault.sys.policies` for ACL, EGP, password, RGP, and rotation policies, including exported response and request types.
 - Added v2 response wrapping helpers under `vault.sys.wrapping` for lookup, wrap, unwrap, and rewrap workflows.
 - Added v2 API documentation for system policies and response wrapping.
@@ -32,6 +42,7 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 - Reduced the Docker-backed integration wait delay from a hardcoded 30 seconds to a wait loop that polls Vault's health endpoint until it's ready.
 
 ### Fixed
+
 - Updated the response wrapping unwrap helper to send the wrapping token as the request token header.
 - Fixed broken links in docs.
 - Fixed logs with incorrect levels.
@@ -60,17 +71,17 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 - Added the v2 client surface built around `VaultClientV2`, `RawVaultClient`, structured `VaultClientError`, and Rust-inspired promise-like `Result<T>` helpers.
 - Added typed v2 support for common Vault workflows, including:
-  - system health, readiness, mount, init, and unseal helpers
-  - auth method and AppRole helpers
-  - KV v1 helpers
-  - common KV v2 helpers for read, write, list, and soft-delete
+    - system health, readiness, mount, init, and unseal helpers
+    - auth method and AppRole helpers
+    - KV v1 helpers
+    - common KV v2 helpers for read, write, list, and soft-delete
 - Added Vault CLI-style KV shortcuts on `VaultClientV2`: `read`, `write`, `delete`, and `list`, defaulting to KV v1 with explicit `{ engineVersion: 2 }` support for KV v2.
 - Added `RawVaultClient` typed overloads generated from selected Vault OpenAPI paths, plus the OpenAPI target and generation scripts.
 - Added dedicated v2 unit and integration test coverage.
 - Added GitHub Pages documentation under `docs/`, including Getting Started, API v1/v2 references, error handling, and contributing guidance.
 - Added AppRole examples for both client generations:
-  - `examples/app-role` for `VaultClientV2`
-  - `examples/app-role-v1` for the original `VaultClient`
+    - `examples/app-role` for `VaultClientV2`
+    - `examples/app-role-v1` for the original `VaultClient`
 - Added README files for each AppRole example with local Docker Compose setup and run instructions.
 - Added a GitHub Pages workflow for publishing the documentation site.
 
@@ -97,10 +108,10 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 - Added a dedicated command barrel in [src/lib/commands/index.ts](src/lib/commands/index.ts) so `VaultClient` can consume a single export surface.
 - Added modern project configs for build and test workflows:
-  - [tsconfig.build.json](tsconfig.build.json)
-  - [test/tsconfig.json](test/tsconfig.json)
-  - [.mocharc.json](.mocharc.json)
-  - [eslint.config.mjs](eslint.config.mjs)
+    - [tsconfig.build.json](tsconfig.build.json)
+    - [test/tsconfig.json](test/tsconfig.json)
+    - [.mocharc.json](.mocharc.json)
+    - [eslint.config.mjs](eslint.config.mjs)
 - Added package `exports` and `files` metadata in [package.json](package.json).
 - Added optional HTTPS TLS client configuration to [src/lib/client.ts](src/lib/client.ts), including support for custom CA-only setups and full mTLS with `ca`, `cert`, `key`, `passphrase`, and `rejectUnauthorized`.
 - Added exported `VaultClientOptions` and `VaultClientTlsOptions` types from [src/main.ts](src/main.ts).
@@ -110,28 +121,28 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 - Refactored the internal command definition layer from `metadata` to `commands`.
 - Renamed command definition types:
-  - `VaultCommandMetadata` -> `VaultCommandSpec`
-  - `VaultCommandValidationSchema` -> `VaultCommandSchema`
+    - `VaultCommandMetadata` -> `VaultCommandSpec`
+    - `VaultCommandValidationSchema` -> `VaultCommandSchema`
 - Renamed command definition values to `*Spec` naming, for example:
-  - `VaultReadSecretCommandMetadata` -> `readSecretSpec`
-  - `VaultUnsealCommandMetadata` -> `unsealSpec`
+    - `VaultReadSecretCommandMetadata` -> `readSecretSpec`
+    - `VaultUnsealCommandMetadata` -> `unsealSpec`
 - Modernized [src/lib/client.ts](src/lib/client.ts):
-  - replaced constructor-time prototype mutation with explicit typed instance methods
-  - tightened request and error handling types
-  - normalized URL joining and placeholder resolution
-  - restored explicit `addPolicy` and `removePolicy` client methods
-  - added an object-based constructor path for optional TLS transport configuration while keeping the legacy positional constructor working
-  - switched request transport handling to Node HTTP/HTTPS so custom TLS settings can be applied only when needed
+    - replaced constructor-time prototype mutation with explicit typed instance methods
+    - tightened request and error handling types
+    - normalized URL joining and placeholder resolution
+    - restored explicit `addPolicy` and `removePolicy` client methods
+    - added an object-based constructor path for optional TLS transport configuration while keeping the legacy positional constructor working
+    - switched request transport handling to Node HTTP/HTTPS so custom TLS settings can be applied only when needed
 - Modernized shared response and command typing in [src/lib/commands/spec.ts](src/lib/commands/spec.ts).
 - Updated TypeScript configuration to modern Node settings:
-  - `module` and `moduleResolution` now use `Node16`
-  - stricter compiler settings are enabled for library code
-  - test code uses a more permissive config where needed
+    - `module` and `moduleResolution` now use `Node16`
+    - stricter compiler settings are enabled for library code
+    - test code uses a more permissive config where needed
 - Updated the toolchain in [package.json](package.json):
-  - Node engine raised to `>=20`
-  - TypeScript upgraded to `^6.0.0`
-  - ESLint moved to flat config
-  - Mocha/test scripts updated for the compiled test flow
+    - Node engine raised to `>=20`
+    - TypeScript upgraded to `^6.0.0`
+    - ESLint moved to flat config
+    - Mocha/test scripts updated for the compiled test flow
 - Refreshed [README.md](README.md) to match the current API, tooling, and project structure.
 - Extended [README.md](README.md) with HTTPS custom CA and optional mTLS examples for `VaultClient`.
 - Extended [README.md](README.md) with the TLS integration test setup and fixture endpoints.

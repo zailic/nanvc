@@ -8,7 +8,6 @@ export const post200Spec = {
     successCodes: [200],
 } as const;
 
-
 export async function expectSuccess<T extends { errorMessage?: string; succeeded: boolean }>(
     responsePromise: Promise<T>,
     fallbackMessage: string,
@@ -56,9 +55,7 @@ export function validateV2InitData(initData: VaultInitResponse): void {
 }
 
 export function isMountAlreadyExistsError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && typeof error.message === 'string'
-        && isAlreadyExistsMessage(error.message);
+    return error.code === 'HTTP_ERROR' && typeof error.message === 'string' && isAlreadyExistsMessage(error.message);
 }
 
 export function isInvalidTokenError(error: VaultClientError): boolean {
@@ -79,8 +76,9 @@ export function isInvalidTokenError(error: VaultClientError): boolean {
         const errors = (body as { errors?: unknown }).errors;
         if (Array.isArray(errors)) {
             return errors.some(
-                (e) => typeof e === 'string'
-                    && (e.toLowerCase().includes('invalid token') || e.toLowerCase().includes('permission denied')),
+                (e) =>
+                    typeof e === 'string' &&
+                    (e.toLowerCase().includes('invalid token') || e.toLowerCase().includes('permission denied')),
             );
         }
     }
@@ -93,31 +91,35 @@ export function toExampleAuthError(error: VaultClientError): Error {
         return error;
     }
 
-    const exampleError = new Error([
-        'Vault rejected the token loaded for this example.',
-        'The shared examples env file likely belongs to another Vault instance or an older Docker volume.',
-        'Update TEST_NANVC_VAULT_AUTH_TOKEN, delete the shared env file and reset local Vault,',
-        'or export a valid token before running the example.',
-    ].join(' '));
+    const exampleError = new Error(
+        [
+            'Vault rejected the token loaded for this example.',
+            'The shared examples env file likely belongs to another Vault instance or an older Docker volume.',
+            'Update TEST_NANVC_VAULT_AUTH_TOKEN, delete the shared env file and reset local Vault,',
+            'or export a valid token before running the example.',
+        ].join(' '),
+    );
     exampleError.stack = error.stack;
     return exampleError;
 }
 
 export function printSuccessBanner(title: string): void {
-    console.log([
-        '',
-        '============================================================',
-        `  ${title}`,
-        '  All assertions passed',
-        '============================================================',
-        '',
-    ].join('\n'));
+    console.log(
+        [
+            '',
+            '============================================================',
+            `  ${title}`,
+            '  All assertions passed',
+            '============================================================',
+            '',
+        ].join('\n'),
+    );
 }
 
 function isAlreadyExistsMessage(message: string | undefined): boolean {
-    return typeof message === 'string'
-        && (
-            message.toLowerCase().includes('path is already in use')
-            || message.toLowerCase().includes('path is already mounted')
-        );
+    return (
+        typeof message === 'string' &&
+        (message.toLowerCase().includes('path is already in use') ||
+            message.toLowerCase().includes('path is already mounted'))
+    );
 }

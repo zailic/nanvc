@@ -5,7 +5,7 @@ export interface VaultRemountPayloadRequest {
     to: string;
 }
 
-export const remountSchema: VaultCommandSchema =  {
+export const remountSchema: VaultCommandSchema = {
     req: {
         properties: {
             from: {
@@ -22,5 +22,5 @@ export const remountSchema: VaultCommandSchema =  {
 export const remountSpec: VaultCommandSpec = {
     method: 'POST',
     path: '/sys/remount',
-    successCodes: [200,204],
+    successCodes: [200, 204],
 };

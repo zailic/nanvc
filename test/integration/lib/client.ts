@@ -4,23 +4,19 @@ import { VaultResponse } from '../../../src/lib/commands/spec.js';
 import type { VaultRemountPayloadRequest } from '../../../src/lib/commands/sys-remount.js';
 import type { VaultAuthPayloadRequest } from '../../../src/lib/commands/sys-auth.js';
 
-
 const asObject = (value: unknown): Record<string, unknown> => value as Record<string, unknown>;
 const asStringArray = (value: unknown): string[] => value as string[];
 const asString = (value: unknown): string => value as string;
 const hasOwn = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
 const assertNotEmpty = (value: string | unknown[]): void => assert.notEqual(value.length, 0);
-const assertInstanceOf = <T extends abstract new (...args: never[]) => unknown>(
-    value: unknown,
-    ctor: T,
-): void => assert.ok(value instanceof ctor);
+const assertInstanceOf = <T extends abstract new (...args: never[]) => unknown>(value: unknown, ctor: T): void =>
+    assert.ok(value instanceof ctor);
 const assertOneOf = <T>(value: T, expected: readonly T[]): void => assert.ok(expected.includes(value));
 
 let rootToken: string;
 let unsealKey: string;
 
 describe('VaultClient integration test cases.', function () {
-
     let client: VaultClient;
 
     beforeEach(async function () {
@@ -329,7 +325,6 @@ describe('VaultClient integration test cases.', function () {
         assert.equal(hasOwn(mountsData, 'sys/'), true);
         assert.equal(unmountResult.httpStatusCode, 204);
         assert.equal(hasOwn(mountsAfterUnmountData, 'database/'), false);
-
     });
 
     it('should validate remount command', async function () {
@@ -382,6 +377,5 @@ describe('VaultClient integration test cases.', function () {
         assert.equal(disableAuthResult.httpStatusCode, 204);
         assert.equal(authResultAfterDisablingUserpass.httpStatusCode, 200);
         assert.equal(hasOwn(authDataAfterDisable, 'userpass/'), false);
-
     });
 });

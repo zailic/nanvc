@@ -19,12 +19,14 @@ async function main(): Promise<void> {
         if (disableError && disableError.status !== 404) {
             throw toExampleAuthError(disableError);
         }
-        await vault.sys.mount.enable(MOUNT, {
-            type: 'kv',
-            options: {
-                version: '2',
-            },
-        }).unwrap();
+        await vault.sys.mount
+            .enable(MOUNT, {
+                type: 'kv',
+                options: {
+                    version: '2',
+                },
+            })
+            .unwrap();
 
         // ── Step 1: Check the engine version ──────────────────────────────────
         // readConfig confirms that the KV v2 engine configuration is readable.
@@ -33,33 +35,39 @@ async function main(): Promise<void> {
 
         // ── Step 2: Write secrets ─────────────────────────────────────────────
         // First write creates version 1.
-        await vault.secret.kv.v2.write(MOUNT, SECRET_PATH, {
-            customer_name: 'ACME Inc.',
-            contact_email: 'john.smith@acme.com',
-        }).unwrap();
+        await vault.secret.kv.v2
+            .write(MOUNT, SECRET_PATH, {
+                customer_name: 'ACME Inc.',
+                contact_email: 'john.smith@acme.com',
+            })
+            .unwrap();
 
         // Writing to the same path again performs a full replace and creates version 2.
-        await vault.secret.kv.v2.write(MOUNT, SECRET_PATH, {
-            customer_name: 'ACME Inc.',
-            contact_email: 'jsmith@acme.com',
-        }).unwrap();
+        await vault.secret.kv.v2
+            .write(MOUNT, SECRET_PATH, {
+                customer_name: 'ACME Inc.',
+                contact_email: 'jsmith@acme.com',
+            })
+            .unwrap();
 
-        const v2 = await vault.secret.kv.v2.read<{ customer_name: string; contact_email: string }>(
-            MOUNT, SECRET_PATH,
-        ).unwrap();
+        const v2 = await vault.secret.kv.v2
+            .read<{ customer_name: string; contact_email: string }>(MOUNT, SECRET_PATH)
+            .unwrap();
         assert.strictEqual(v2.metadata.version, 2, 'Expected version 2 after second write');
         assert.strictEqual(v2.data.contact_email, 'jsmith@acme.com');
 
         // ── Step 3: Patch (partial update) ────────────────────────────────────
         // patch merges only the supplied fields; untouched fields are preserved.
         // This is equivalent to `vault kv patch` and creates version 3.
-        await vault.secret.kv.v2.patch(MOUNT, SECRET_PATH, {
-            contact_email: 'admin@acme.com',
-        }).unwrap();
+        await vault.secret.kv.v2
+            .patch(MOUNT, SECRET_PATH, {
+                contact_email: 'admin@acme.com',
+            })
+            .unwrap();
 
-        const v3 = await vault.secret.kv.v2.read<{ customer_name: string; contact_email: string }>(
-            MOUNT, SECRET_PATH,
-        ).unwrap();
+        const v3 = await vault.secret.kv.v2
+            .read<{ customer_name: string; contact_email: string }>(MOUNT, SECRET_PATH)
+            .unwrap();
         assert.strictEqual(v3.metadata.version, 3, 'Expected version 3 after patch');
         assert.strictEqual(v3.data.contact_email, 'admin@acme.com');
         assert.strictEqual(v3.data.customer_name, 'ACME Inc.', 'Patch must preserve untouched fields');
@@ -67,25 +75,25 @@ async function main(): Promise<void> {
         // ── Step 4: Add custom metadata ───────────────────────────────────────
         // patchMetadata stores arbitrary string-to-string labels alongside the
         // secret path without touching the versioned secret data.
-        await vault.secret.kv.v2.patchMetadata(MOUNT, SECRET_PATH, {
-            custom_metadata: {
-                Membership: 'Platinum',
-                Region: 'US West',
-            },
-        }).unwrap();
+        await vault.secret.kv.v2
+            .patchMetadata(MOUNT, SECRET_PATH, {
+                custom_metadata: {
+                    Membership: 'Platinum',
+                    Region: 'US West',
+                },
+            })
+            .unwrap();
 
-        const withMeta = await vault.secret.kv.v2.read<{ customer_name: string }>(
-            MOUNT, SECRET_PATH,
-        ).unwrap();
+        const withMeta = await vault.secret.kv.v2.read<{ customer_name: string }>(MOUNT, SECRET_PATH).unwrap();
         const customMeta = withMeta.metadata.custom_metadata as Record<string, string> | null | undefined;
         assert.strictEqual(customMeta?.['Membership'], 'Platinum');
         assert.strictEqual(customMeta?.['Region'], 'US West');
 
         // ── Step 5: Read a specific version ───────────────────────────────────
         // Older versions remain accessible even after newer writes.
-        const v1 = await vault.secret.kv.v2.read<{ customer_name: string; contact_email: string }>(
-            MOUNT, SECRET_PATH, { version: 1 },
-        ).unwrap();
+        const v1 = await vault.secret.kv.v2
+            .read<{ customer_name: string; contact_email: string }>(MOUNT, SECRET_PATH, { version: 1 })
+            .unwrap();
         assert.strictEqual(v1.metadata.version, 1);
         assert.strictEqual(v1.data.contact_email, 'john.smith@acme.com', 'v1 must have the original email');
 
@@ -111,10 +119,12 @@ async function main(): Promise<void> {
         // (versions 1–3 existed before the limit was set, but Vault enforces the limit
         // from the next write onward, pruning the oldest once the cap is exceeded).
         for (let i = 4; i <= 7; i++) {
-            await vault.secret.kv.v2.write(MOUNT, SECRET_PATH, {
-                customer_name: 'ACME Inc.',
-                contact_email: `v${i}@acme.com`,
-            }).unwrap();
+            await vault.secret.kv.v2
+                .write(MOUNT, SECRET_PATH, {
+                    customer_name: 'ACME Inc.',
+                    contact_email: `v${i}@acme.com`,
+                })
+                .unwrap();
         }
 
         const metaAfterRollover = await vault.secret.kv.v2.readMetadata(MOUNT, SECRET_PATH).unwrap();
@@ -152,9 +162,11 @@ async function main(): Promise<void> {
         // Writing metadata with delete_version_after makes Vault automatically
         // set a deletion_time on every new version at this path.
         const timedPath = 'customer/timed';
-        await vault.secret.kv.v2.writeMetadata(MOUNT, timedPath, {
-            delete_version_after: '24h',
-        }).unwrap();
+        await vault.secret.kv.v2
+            .writeMetadata(MOUNT, timedPath, {
+                delete_version_after: '24h',
+            })
+            .unwrap();
 
         await vault.secret.kv.v2.write(MOUNT, timedPath, { message: 'ephemeral secret' }).unwrap();
 
@@ -169,21 +181,42 @@ async function main(): Promise<void> {
         await vault.secret.kv.v2.writeMetadata(MOUNT, casPath, { cas_required: true }).unwrap();
 
         // First write: cas=0 means "only succeed if the key does not yet exist".
-        await vault.secret.kv.v2.write(MOUNT, casPath, {
-            name: 'Example Co.',
-            partner_id: '123456789',
-        }, { cas: 0 }).unwrap();
+        await vault.secret.kv.v2
+            .write(
+                MOUNT,
+                casPath,
+                {
+                    name: 'Example Co.',
+                    partner_id: '123456789',
+                },
+                { cas: 0 },
+            )
+            .unwrap();
 
         // Second write: cas=1 matches the current version so the write succeeds.
-        await vault.secret.kv.v2.write(MOUNT, casPath, {
-            name: 'Example Co.',
-            partner_id: 'ABCDEFGHIJKLMN',
-        }, { cas: 1 }).unwrap();
+        await vault.secret.kv.v2
+            .write(
+                MOUNT,
+                casPath,
+                {
+                    name: 'Example Co.',
+                    partner_id: 'ABCDEFGHIJKLMN',
+                },
+                { cas: 1 },
+            )
+            .unwrap();
 
         // Stale CAS: current version is 2 but we pass cas=1 — Vault rejects with 400.
-        const casError = await vault.secret.kv.v2.write(MOUNT, casPath, {
-            name: 'Example Co.',
-        }, { cas: 1 }).unwrapErr();
+        const casError = await vault.secret.kv.v2
+            .write(
+                MOUNT,
+                casPath,
+                {
+                    name: 'Example Co.',
+                },
+                { cas: 1 },
+            )
+            .unwrapErr();
         assert.ok(casError instanceof VaultClientError, 'Stale CAS must produce a VaultClientError');
         assert.strictEqual(casError.status, 400, 'Stale CAS must return HTTP 400');
 

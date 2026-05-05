@@ -12,9 +12,13 @@ export class LoggerTests {
     @test('should stay silent when no log level is configured')
     staySilentTest() {
         const calls: string[] = [];
-        const logger = createLogger(undefined, {
-            error: () => calls.push('error'),
-        }, fixedLoggerOptions);
+        const logger = createLogger(
+            undefined,
+            {
+                error: () => calls.push('error'),
+            },
+            fixedLoggerOptions,
+        );
 
         logger.error('vault request failed');
 
@@ -24,12 +28,16 @@ export class LoggerTests {
     @test('should write messages at or above the configured level')
     writeMessagesTest() {
         const calls: Array<{ context?: Record<string, unknown>; level: string; message: string }> = [];
-        const logger = createLogger('info', {
-            debug: (message) => calls.push({ context: undefined, level: 'debug', message }),
-            error: (message) => calls.push({ context: undefined, level: 'error', message }),
-            info: (message) => calls.push({ context: undefined, level: 'info', message }),
-            warn: (message) => calls.push({ context: undefined, level: 'warn', message }),
-        }, fixedLoggerOptions);
+        const logger = createLogger(
+            'info',
+            {
+                debug: (message) => calls.push({ context: undefined, level: 'debug', message }),
+                error: (message) => calls.push({ context: undefined, level: 'error', message }),
+                info: (message) => calls.push({ context: undefined, level: 'info', message }),
+                warn: (message) => calls.push({ context: undefined, level: 'warn', message }),
+            },
+            fixedLoggerOptions,
+        );
 
         logger.debug('debug message');
         logger.info('info message', {
@@ -62,9 +70,13 @@ export class LoggerTests {
     @test('should initialize from NANVC_LOG_LEVEL')
     initializeFromEnvTest() {
         const calls: string[] = [];
-        const logger = createLoggerFromEnv({ NANVC_LOG_LEVEL: 'debug' }, {
-            debug: (message) => calls.push(message),
-        }, fixedLoggerOptions);
+        const logger = createLoggerFromEnv(
+            { NANVC_LOG_LEVEL: 'debug' },
+            {
+                debug: (message) => calls.push(message),
+            },
+            fixedLoggerOptions,
+        );
 
         logger.debug('vault request started');
 
@@ -74,12 +86,16 @@ export class LoggerTests {
     @test('should colorize log level prefixes when colors are enabled')
     colorizeLogLevelPrefixesTest() {
         const calls: string[] = [];
-        const logger = createLogger('debug', {
-            debug: (message) => calls.push(message),
-            error: (message) => calls.push(message),
-            info: (message) => calls.push(message),
-            warn: (message) => calls.push(message),
-        }, { colors: true, ...fixedLoggerOptions });
+        const logger = createLogger(
+            'debug',
+            {
+                debug: (message) => calls.push(message),
+                error: (message) => calls.push(message),
+                info: (message) => calls.push(message),
+                warn: (message) => calls.push(message),
+            },
+            { colors: true, ...fixedLoggerOptions },
+        );
 
         logger.debug('debug message');
         logger.info('info message');
@@ -99,9 +115,13 @@ export class LoggerTests {
         const calls: string[] = [];
         const circularValue: Record<string, unknown> = {};
         circularValue.self = circularValue;
-        const logger = createLogger('debug', {
-            info: (message) => calls.push(message),
-        }, fixedLoggerOptions);
+        const logger = createLogger(
+            'debug',
+            {
+                info: (message) => calls.push(message),
+            },
+            fixedLoggerOptions,
+        );
 
         assert.doesNotThrow(() => {
             logger.info('info message', {

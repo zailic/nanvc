@@ -1,11 +1,11 @@
-import {normalize} from 'path';
+import { normalize } from 'path';
 
 import type { RawVaultClient } from '../core/raw-client.js';
 import { err, ok, toResult, type Result, type ResultTuple } from '../core/result.js';
 import { VaultClientError } from '../core/errors.js';
 
 export class VaultSecretKvV1Client {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -22,24 +22,26 @@ export class VaultSecretKvV1Client {
     public delete(path: string): Result<void>;
     public delete(mount: string, path: string): Result<void>;
     public delete(pathOrMount: string, maybePath?: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [secretRef, resolveError] = resolveKvV1PathParams(pathOrMount, maybePath);
-            if (resolveError) {
-                return err(resolveError);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [secretRef, resolveError] = resolveKvV1PathParams(pathOrMount, maybePath);
+                if (resolveError) {
+                    return err(resolveError);
+                }
 
-            const [data, error] = await this.raw.delete('/{kv_v1_mount_path}/{path}', {
-                params: {
-                    path: secretRef,
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                const [data, error] = await this.raw.delete('/{kv_v1_mount_path}/{path}', {
+                    params: {
+                        path: secretRef,
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -57,26 +59,28 @@ export class VaultSecretKvV1Client {
     public list(path: string): Result<string[]>;
     public list(mount: string, path?: string): Result<string[]>;
     public list(pathOrMount: string, maybePath?: string): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [secretRef, resolveError] = resolveKvV1PathParams(pathOrMount, maybePath, true);
-            if (resolveError) {
-                return err(resolveError);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [secretRef, resolveError] = resolveKvV1PathParams(pathOrMount, maybePath, true);
+                if (resolveError) {
+                    return err(resolveError);
+                }
 
-            const [data, error] = await this.raw.list('/{kv_v1_mount_path}/{path}/', {
-                params: {
-                    path: secretRef,
-                    query: {
-                        list: 'true',
+                const [data, error] = await this.raw.list('/{kv_v1_mount_path}/{path}/', {
+                    params: {
+                        path: secretRef,
+                        query: {
+                            list: 'true',
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.keys ?? []);
-        })());
+                return ok(data.keys ?? []);
+            })(),
+        );
     }
 
     /**
@@ -94,23 +98,25 @@ export class VaultSecretKvV1Client {
     public read<T = Record<string, unknown>>(path: string): Result<T>;
     public read<T = Record<string, unknown>>(mount: string, path: string): Result<T>;
     public read<T = Record<string, unknown>>(pathOrMount: string, maybePath?: string): Result<T> {
-        return toResult((async (): Promise<ResultTuple<T>> => {
-            const [secretRef, resolveError] = resolveKvV1PathParams(pathOrMount, maybePath);
-            if (resolveError) {
-                return err(resolveError);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<T>> => {
+                const [secretRef, resolveError] = resolveKvV1PathParams(pathOrMount, maybePath);
+                if (resolveError) {
+                    return err(resolveError);
+                }
 
-            const [data, error] = await this.raw.get('/{kv_v1_mount_path}/{path}', {
-                params: {
-                    path: secretRef,
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                const [data, error] = await this.raw.get('/{kv_v1_mount_path}/{path}', {
+                    params: {
+                        path: secretRef,
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data as T);
-        })());
+                return ok(data.data as T);
+            })(),
+        );
     }
 
     /**
@@ -134,36 +140,41 @@ export class VaultSecretKvV1Client {
         pathOrPayload: string | Record<string, unknown>,
         maybePayload?: Record<string, unknown>,
     ): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const payload = typeof pathOrPayload === 'string' ? maybePayload : pathOrPayload;
-            if (!payload) {
-                return err(new VaultClientError({
-                    code: 'VALIDATION_ERROR',
-                    message: 'VaultSecretKvV1Client.write requires a payload object',
-                }));
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const payload = typeof pathOrPayload === 'string' ? maybePayload : pathOrPayload;
+                if (!payload) {
+                    return err(
+                        new VaultClientError({
+                            code: 'VALIDATION_ERROR',
+                            message: 'VaultSecretKvV1Client.write requires a payload object',
+                        }),
+                    );
+                }
 
-            const secretRef = typeof pathOrPayload === 'string'
-                ? resolveKvV1PathParams(pathOrMount, pathOrPayload)
-                : resolveKvV1PathParams(pathOrMount);
-            const [pathParams, resolveError] = secretRef;
-            if (resolveError) {
-                return err(resolveError);
-            }
+                const secretRef =
+                    typeof pathOrPayload === 'string'
+                        ? resolveKvV1PathParams(pathOrMount, pathOrPayload)
+                        : resolveKvV1PathParams(pathOrMount);
+                const [pathParams, resolveError] = secretRef;
+                if (resolveError) {
+                    return err(resolveError);
+                }
 
-            const [data, error] = await this.raw.post('/{kv_v1_mount_path}/{path}', {
-                body: payload,
-                params: {
-                    path: pathParams,
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                const [data, error] = await this.raw.post('/{kv_v1_mount_path}/{path}', {
+                    body: payload,
+                    params: {
+                        path: pathParams,
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 }
 
@@ -180,17 +191,21 @@ function resolveKvV1PathParams(
         const path = normalize(maybePath);
 
         if (!kv_v1_mount_path || kv_v1_mount_path === '.') {
-            return err(new VaultClientError({
-                code: 'VALIDATION_ERROR',
-                message: `Expected a KV v1 mount path, got "${pathOrMount}"`,
-            }));
+            return err(
+                new VaultClientError({
+                    code: 'VALIDATION_ERROR',
+                    message: `Expected a KV v1 mount path, got "${pathOrMount}"`,
+                }),
+            );
         }
 
         if (!allowEmptyPath && (!path || path === '.')) {
-            return err(new VaultClientError({
-                code: 'VALIDATION_ERROR',
-                message: `Expected a KV v1 secret path, got "${maybePath}"`,
-            }));
+            return err(
+                new VaultClientError({
+                    code: 'VALIDATION_ERROR',
+                    message: `Expected a KV v1 secret path, got "${maybePath}"`,
+                }),
+            );
         }
 
         return ok({
@@ -203,15 +218,13 @@ function resolveKvV1PathParams(
     const [kv_v1_mount_path, ...segments] = normalizedPath.split('/').filter(Boolean);
     const path = segments.join('/');
 
-    if (
-        !kv_v1_mount_path || 
-        kv_v1_mount_path === '.' || 
-        (!allowEmptyPath && (!path || path === '.'))
-    ) {
-        return err(new VaultClientError({
-            code: 'VALIDATION_ERROR',
-            message: `Expected a KV v1 secret path like "secret/my-app/my-secret", got "${pathOrMount}"`,
-        }));
+    if (!kv_v1_mount_path || kv_v1_mount_path === '.' || (!allowEmptyPath && (!path || path === '.'))) {
+        return err(
+            new VaultClientError({
+                code: 'VALIDATION_ERROR',
+                message: `Expected a KV v1 secret path like "secret/my-app/my-secret", got "${pathOrMount}"`,
+            }),
+        );
     }
 
     return ok({

@@ -7,33 +7,39 @@ import { NodeVaultTransport } from '../../../../src/v2/transport/node-transport.
 
 import type { SinonSandbox } from 'sinon';
 import type { VaultRequestOptions, VaultTransportResponse } from '../../../../src/v2/transport/types.js';
+import { suite, test, beforeEachTest, afterEachTest } from '../../../mocha/decorators.js';
 
-describe('RawVaultClient unit test cases.', function () {
-    let sandbox: SinonSandbox;
+@suite('RawVaultClient unit test cases.')
+export class RawVaultClientUnitTests {
+    private sandbox!: SinonSandbox;
 
-    beforeEach(function () {
-        sandbox = createSandbox();
-    });
+    @beforeEachTest()
+    public beforeEach() {
+        this.sandbox = createSandbox();
+    }
 
-    afterEach(function () {
-        sandbox.restore();
-    });
+    @afterEachTest()
+    public afterEach() {
+        this.sandbox.restore();
+    }
 
-    it('should take the auth token from the environment by default', async function () {
-        sandbox.stub(process, 'env').value({
+    @test('should take the auth token from the environment by default')
+    public async shouldTakeTheAuthTokenFromTheEnvironmentByDefaultTest() {
+        this.sandbox.stub(process, 'env').value({
             NANVC_VAULT_AUTH_TOKEN: 'env-token',
         });
-        const transportStub = sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
+        const transportStub = this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
         const client = new RawVaultClient();
 
         await client.get('/sys/auth');
 
         assert.equal(transportStub.calledOnce, true);
         assert.equal(transportStub.firstCall.firstArg.token, 'env-token');
-    });
+    }
 
-    it('should allow overriding the token with setToken', async function () {
-        const transportStub = sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
+    @test('should allow overriding the token with setToken')
+    public async shouldAllowOverridingTheTokenWithSettokenTest() {
+        const transportStub = this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
         const client = new RawVaultClient({ authToken: 'initial-token' });
 
         client.setToken('updated-token');
@@ -41,10 +47,11 @@ describe('RawVaultClient unit test cases.', function () {
 
         assert.equal(transportStub.calledOnce, true);
         assert.equal(transportStub.firstCall.firstArg.token, 'updated-token');
-    });
+    }
 
-    it('should omit the current token for generated unauthenticated operations', async function () {
-        const transportStub = sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
+    @test('should omit the current token for generated unauthenticated operations')
+    public async shouldOmitTheCurrentTokenForGeneratedUnauthenticatedOperationsTest() {
+        const transportStub = this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
         const client = new RawVaultClient({ authToken: 'client-token' });
 
         await client.post('/auth/{approle_mount_path}/login', {
@@ -61,10 +68,11 @@ describe('RawVaultClient unit test cases.', function () {
 
         assert.equal(transportStub.calledOnce, true);
         assert.equal(transportStub.firstCall.firstArg.token, null);
-    });
+    }
 
-    it('should allow explicit unauthenticated requests for unknown paths', async function () {
-        const transportStub = sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
+    @test('should allow explicit unauthenticated requests for unknown paths')
+    public async shouldAllowExplicitUnauthenticatedRequestsForUnknownPathsTest() {
+        const transportStub = this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
         const client = new RawVaultClient({ authToken: 'client-token' });
 
         await client.post('/custom/login', {
@@ -76,10 +84,11 @@ describe('RawVaultClient unit test cases.', function () {
 
         assert.equal(transportStub.calledOnce, true);
         assert.equal(transportStub.firstCall.firstArg.token, null);
-    });
+    }
 
-    it('should allow forcing authentication for generated unauthenticated operations', async function () {
-        const transportStub = sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
+    @test('should allow forcing authentication for generated unauthenticated operations')
+    public async shouldAllowForcingAuthenticationForGeneratedUnauthenticatedOperationsTest() {
+        const transportStub = this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
         const client = new RawVaultClient({ authToken: 'client-token' });
 
         await client.get('/sys/health', {
@@ -88,10 +97,11 @@ describe('RawVaultClient unit test cases.', function () {
 
         assert.equal(transportStub.calledOnce, true);
         assert.equal(transportStub.firstCall.firstArg.token, 'client-token');
-    });
+    }
 
-    it('should shape request options before delegating to the transport', async function () {
-        const transportStub = sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
+    @test('should shape request options before delegating to the transport')
+    public async shouldShapeRequestOptionsBeforeDelegatingToTheTransportTest() {
+        const transportStub = this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
         const client = new RawVaultClient({ authToken: 'client-token' });
 
         await client.post('/sys/mounts/{path}', {
@@ -112,10 +122,11 @@ describe('RawVaultClient unit test cases.', function () {
             query: { detailed: true, limit: 10, optional: undefined },
             token: 'client-token',
         } satisfies VaultRequestOptions);
-    });
+    }
 
-    it('should resolve malformed template-like paths without regex backtracking', async function () {
-        const transportStub = sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
+    @test('should resolve malformed template-like paths without regex backtracking')
+    public async shouldResolveMalformedTemplateLikePathsWithoutRegexBacktrackingTest() {
+        const transportStub = this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse());
         const client = new RawVaultClient();
         const path = `/${'{{|'.repeat(1000)}tail`;
 
@@ -129,82 +140,93 @@ describe('RawVaultClient unit test cases.', function () {
 
         assert.equal(transportStub.calledOnce, true);
         assert.equal(transportStub.firstCall.firstArg.path, path.slice(1));
-    });
+    }
 
-    it('should throw a validation error when a required path parameter is missing', function () {
+    @test('should throw a validation error when a required path parameter is missing')
+    public shouldThrowAValidationErrorWhenARequiredPathParameterIsMissingTest() {
         const client = new RawVaultClient();
 
-        assert.throws(() => {
-            void client.get('/sys/mounts/{path}', {
-                params: {
-                    path: {},
-                },
-            });
-        }, (error: unknown) => {
-            assert.equal(error instanceof VaultClientError, true);
-            assert.equal((error as VaultClientError).code, 'VALIDATION_ERROR');
-            assert.equal((error as VaultClientError).message, 'Missing path parameter: path');
-            return true;
-        });
-    });
+        assert.throws(
+            () => {
+                void client.get('/sys/mounts/{path}', {
+                    params: {
+                        path: {},
+                    },
+                });
+            },
+            (error: unknown) => {
+                assert.equal(error instanceof VaultClientError, true);
+                assert.equal((error as VaultClientError).code, 'VALIDATION_ERROR');
+                assert.equal((error as VaultClientError).message, 'Missing path parameter: path');
+                return true;
+            },
+        );
+    }
 
-    it('should route patch through request with the PATCH method', async function () {
+    @test('should route patch through request with the PATCH method')
+    public async shouldRoutePatchThroughRequestWithThePatchMethodTest() {
         const client = new RawVaultClient();
-        const requestStub = sandbox.stub(client, 'request').resolves([undefined, null]);
+        const requestStub = this.sandbox.stub(client, 'request').resolves([undefined, null]);
 
         await client.patch('/sys/test');
 
         assert.equal(requestStub.calledOnceWithExactly('PATCH', '/sys/test', {}), true);
-    });
+    }
 
-    it('should route delete through request with the DELETE method', async function () {
+    @test('should route delete through request with the DELETE method')
+    public async shouldRouteDeleteThroughRequestWithTheDeleteMethodTest() {
         const client = new RawVaultClient();
-        const requestStub = sandbox.stub(client, 'request').resolves([undefined, null]);
+        const requestStub = this.sandbox.stub(client, 'request').resolves([undefined, null]);
 
         await client.delete('/sys/policy/test-policy');
 
         assert.equal(requestStub.calledOnceWithExactly('DELETE', '/sys/policy/test-policy', {}), true);
-    });
+    }
 
-    it('should route head through request with the HEAD method', async function () {
+    @test('should route head through request with the HEAD method')
+    public async shouldRouteHeadThroughRequestWithTheHeadMethodTest() {
         const client = new RawVaultClient();
-        const requestStub = sandbox.stub(client, 'request').resolves([undefined, null]);
+        const requestStub = this.sandbox.stub(client, 'request').resolves([undefined, null]);
 
         await client.head('/sys/health');
 
         assert.equal(requestStub.calledOnceWithExactly('HEAD', '/sys/health', {}), true);
-    });
+    }
 
-    it('should route list through request with the LIST method', async function () {
+    @test('should route list through request with the LIST method')
+    public async shouldRouteListThroughRequestWithTheListMethodTest() {
         const client = new RawVaultClient();
-        const requestStub = sandbox.stub(client, 'request').resolves([undefined, null]);
+        const requestStub = this.sandbox.stub(client, 'request').resolves([undefined, null]);
 
         await client.list('/sys/policy');
 
         assert.equal(requestStub.calledOnceWithExactly('LIST', '/sys/policy', {}), true);
-    });
+    }
 
-    it('should return ok tuples for successful responses', async function () {
-        sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse({ healthy: true }));
+    @test('should return ok tuples for successful responses')
+    public async shouldReturnOkTuplesForSuccessfulResponsesTest() {
+        this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse({ healthy: true }));
         const client = new RawVaultClient();
 
         const [data, error] = await client.get<{ healthy: boolean }>('/sys/health');
 
         assert.deepEqual(data, { healthy: true });
         assert.equal(error, null);
-    });
+    }
 
-    it('should unwrap successful results', async function () {
-        sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse({ healthy: true }));
+    @test('should unwrap successful results')
+    public async shouldUnwrapSuccessfulResultsTest() {
+        this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves(okResponse({ healthy: true }));
         const client = new RawVaultClient();
 
         const data = await client.get<{ healthy: boolean }>('/sys/health').unwrap();
 
         assert.deepEqual(data, { healthy: true });
-    });
+    }
 
-    it('should convert non-ok responses into HTTP_ERROR results', async function () {
-        sandbox.stub(NodeVaultTransport.prototype, 'request').resolves({
+    @test('should convert non-ok responses into HTTP_ERROR results')
+    public async shouldConvertNonOkResponsesIntoHttpErrorResultsTest() {
+        this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves({
             body: { errors: ['backend says no'] },
             headers: {},
             ok: false,
@@ -221,10 +243,11 @@ describe('RawVaultClient unit test cases.', function () {
         assert.equal(error?.message, 'backend says no');
         assert.equal(error?.status, 403);
         assert.deepEqual(error?.responseBody, { errors: ['backend says no'] });
-    });
+    }
 
-    it('should reject unwrap on failed results', async function () {
-        sandbox.stub(NodeVaultTransport.prototype, 'request').resolves({
+    @test('should reject unwrap on failed results')
+    public async shouldRejectUnwrapOnFailedResultsTest() {
+        this.sandbox.stub(NodeVaultTransport.prototype, 'request').resolves({
             body: { errors: ['backend says no'] },
             headers: {},
             ok: false,
@@ -233,32 +256,31 @@ describe('RawVaultClient unit test cases.', function () {
         });
         const client = new RawVaultClient();
 
-        await assert.rejects(
-            client.get('/sys/health').unwrap(),
-            (error: unknown) => {
-                assert.equal(error instanceof VaultClientError, true);
-                assert.equal((error as VaultClientError).code, 'HTTP_ERROR');
-                return true;
-            },
-        );
-    });
+        await assert.rejects(client.get('/sys/health').unwrap(), (error: unknown) => {
+            assert.equal(error instanceof VaultClientError, true);
+            assert.equal((error as VaultClientError).code, 'HTTP_ERROR');
+            return true;
+        });
+    }
 
-    it('should preserve VaultClientError instances thrown by the transport', async function () {
+    @test('should preserve VaultClientError instances thrown by the transport')
+    public async shouldPreserveVaultclienterrorInstancesThrownByTheTransportTest() {
         const transportError = new VaultClientError({
             code: 'TIMEOUT',
             message: 'Timed out',
         });
-        sandbox.stub(NodeVaultTransport.prototype, 'request').rejects(transportError);
+        this.sandbox.stub(NodeVaultTransport.prototype, 'request').rejects(transportError);
         const client = new RawVaultClient();
 
         const [data, error] = await client.get('/sys/health');
 
         assert.equal(data, null);
         assert.equal(error, transportError);
-    });
+    }
 
-    it('should wrap unknown transport failures in an UNKNOWN_ERROR result', async function () {
-        sandbox.stub(NodeVaultTransport.prototype, 'request').rejects(new Error('socket closed'));
+    @test('should wrap unknown transport failures in an UNKNOWN_ERROR result')
+    public async shouldWrapUnknownTransportFailuresInAnUnknownErrorResultTest() {
+        this.sandbox.stub(NodeVaultTransport.prototype, 'request').rejects(new Error('socket closed'));
         const client = new RawVaultClient();
 
         const [data, error] = await client.get('/sys/health');
@@ -268,8 +290,8 @@ describe('RawVaultClient unit test cases.', function () {
         assert.equal(error?.code, 'UNKNOWN_ERROR');
         assert.equal(error?.message, 'socket closed');
         assert.equal(error?.cause instanceof Error, true);
-    });
-});
+    }
+}
 
 function okResponse(body: unknown = undefined): VaultTransportResponse {
     return {

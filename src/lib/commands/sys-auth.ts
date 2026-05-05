@@ -7,7 +7,7 @@ export interface VaultAuthPayloadRequest {
     plugin_name?: string;
 }
 
-export const authSchema: VaultCommandSchema =  {
+export const authSchema: VaultCommandSchema = {
     req: {
         properties: {
             type: {

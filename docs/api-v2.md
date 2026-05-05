@@ -117,21 +117,10 @@ await vault.delete('secret/apps/demo').unwrap();
 Use `{ engineVersion: 2 }` for KV v2 mounts:
 
 ```ts
-await vault.write('secret-v2', 'apps/demo', {
-  foo: 'bar',
-}, {
-  engineVersion: 2,
-  cas: 1,
-}).unwrap();
-
-const secret = await vault.read<{ foo: string }>('secret-v2', 'apps/demo', {
-  engineVersion: 2,
-  version: 3,
-}).unwrap();
+await vault.write('secret-v2', 'apps/demo', { foo: 'bar' }, { engineVersion: 2, cas: 1 }).unwrap();
+const secret = await vault.read<{ foo: string }>('secret-v2', 'apps/demo', { engineVersion: 2, version: 3 }).unwrap();
 const keys = await vault.list('secret-v2', 'apps', { engineVersion: 2 }).unwrap();
 await vault.delete('secret-v2', 'apps/demo', { engineVersion: 2 }).unwrap();
-
-console.log(secret.data.foo);
 ```
 
 ### Client Structure
@@ -311,6 +300,76 @@ Example:
 
 ```ts
 const enabled = await vault.auth.isAuthMethodEnabled('approle').unwrap();
+```
+
+</details>
+
+##### Secrets / Cubbyhole
+
+<details id="secretcubbyholedelete" markdown="1">
+<summary><code>secret.cubbyhole.delete</code></summary>
+
+Delete a secret from the caller token's cubbyhole.
+
+Signatures:
+
+- `secret.cubbyhole.delete(path)`
+
+Example:
+
+```ts
+await vault.secret.cubbyhole.delete('my/secret').unwrap();
+```
+
+</details>
+
+<details id="secretcubbyholelist" markdown="1">
+<summary><code>secret.cubbyhole.list</code></summary>
+
+List secret keys stored in the caller token's cubbyhole at the given path prefix.
+
+Signatures:
+
+- `secret.cubbyhole.list(path?)`
+
+Example:
+
+```ts
+const keys = await vault.secret.cubbyhole.list('my').unwrap();
+```
+
+</details>
+
+<details id="secretcubbyholeread" markdown="1">
+<summary><code>secret.cubbyhole.read</code></summary>
+
+Read a secret from the caller token's cubbyhole.
+
+Signatures:
+
+- `secret.cubbyhole.read<T>(path)`
+
+Example:
+
+```ts
+const secret = await vault.secret.cubbyhole.read<{ token: string }>('my/secret').unwrap();
+```
+
+</details>
+
+<details id="secretcubbyholewrite" markdown="1">
+<summary><code>secret.cubbyhole.write</code></summary>
+
+Write a secret into the caller token's cubbyhole.
+
+Signatures:
+
+- `secret.cubbyhole.write(path, payload)`
+
+Example:
+
+```ts
+await vault.secret.cubbyhole.write('my/secret', { token: 'abc123' }).unwrap();
 ```
 
 </details>
@@ -1557,12 +1616,7 @@ await vault.sys.mount.enable('secret-v2', {
   },
 }).unwrap();
 
-await vault.secret.kv.v2.write('secret-v2', 'apps/demo', {
-  foo: 'bar',
-}, {
-  cas: 1,
-}).unwrap();
-
+await vault.secret.kv.v2.write('secret-v2', 'apps/demo', {foo: 'bar'}, {cas: 1}).unwrap();
 const secret = await vault.secret.kv.v2.read<{ foo: string }>('secret-v2', 'apps/demo').unwrap();
 const keys = await vault.secret.kv.v2.list('secret-v2', 'apps').unwrap();
 

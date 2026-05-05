@@ -37,13 +37,14 @@ async function ensureMountRemoved(client: VaultClientV2, path: string): Promise<
     await client.raw.put(`/sys/leases/revoke-force/${path}`);
     const [, retryError] = await client.sys.mount.disable(path);
     if (retryError && !isMountNotFoundError(retryError)) {
-        console.warn('Could not fully clean up mount "%s" (%s). %s',
+        console.warn(
+            'Could not fully clean up mount "%s" (%s). %s',
             path,
             retryError.message,
-            'The stale mount will be retried on the next run.');
+            'The stale mount will be retried on the next run.',
+        );
     }
 }
-
 
 async function createLegacyTestVaultClient(options: TestVaultClientOptions = {}): Promise<VaultClient> {
     await createTestVaultClient(options);
@@ -107,10 +108,12 @@ async function createTestVaultClient(options: TestVaultClientOptions = {}): Prom
 }
 
 function resolveTestVaultClusterAddress(options: TestVaultClientOptions): string {
-    return options.clusterAddress
-        ?? process.env.TEST_NANVC_VAULT_CLUSTER_ADDRESS
-        ?? process.env.NANVC_VAULT_CLUSTER_ADDRESS
-        ?? DEFAULT_TEST_VAULT_CLUSTER_ADDRESS;
+    return (
+        options.clusterAddress ??
+        process.env.TEST_NANVC_VAULT_CLUSTER_ADDRESS ??
+        process.env.NANVC_VAULT_CLUSTER_ADDRESS ??
+        DEFAULT_TEST_VAULT_CLUSTER_ADDRESS
+    );
 }
 
 function validateInitData(initData: VaultInitResponse): void {
@@ -164,7 +167,10 @@ function updateEnvFile(initData: VaultInitResponse): void {
 
     const updatedContent = content
         .split('\n')
-        .filter((line) => !line.startsWith('TEST_NANVC_VAULT_AUTH_TOKEN=') && !line.startsWith('TEST_NANVC_VAULT_UNSEAL_KEY='))
+        .filter(
+            (line) =>
+                !line.startsWith('TEST_NANVC_VAULT_AUTH_TOKEN=') && !line.startsWith('TEST_NANVC_VAULT_UNSEAL_KEY='),
+        )
         .filter((line) => line.trim() !== '')
         .concat(newVars)
         .join('\n');
@@ -175,21 +181,23 @@ function updateEnvFile(initData: VaultInitResponse): void {
 }
 
 function isMountAlreadyExistsError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && error.status === 400
-        && error.message.toLowerCase().includes('path is already in use');
+    return (
+        error.code === 'HTTP_ERROR' &&
+        error.status === 400 &&
+        error.message.toLowerCase().includes('path is already in use')
+    );
 }
 
 function isMountNotFoundError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && error.status === 404
-        && error.message.toLowerCase().includes('no matching mount');
+    return (
+        error.code === 'HTTP_ERROR' && error.status === 404 && error.message.toLowerCase().includes('no matching mount')
+    );
 }
 
 function isAuthMethodNotFoundError(error: VaultClientError): boolean {
-    return error.code === 'HTTP_ERROR'
-        && error.status === 404
-        && error.message.toLowerCase().includes('no auth engine at');
+    return (
+        error.code === 'HTTP_ERROR' && error.status === 404 && error.message.toLowerCase().includes('no auth engine at')
+    );
 }
 
 export function getTestUnsealKey(): string {

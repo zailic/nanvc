@@ -5,18 +5,21 @@
 ![npm](https://img.shields.io/npm/v/nanvc)
 ![downloads](https://img.shields.io/npm/dm/nanvc)
 
-`nanvc` is a small TypeScript client for the HashiCorp Vault HTTP API.
+`nanvc` is a lightweight TypeScript client for the HashiCorp Vault HTTP API.
+It is built for Node.js applications that need typed Vault access without a large framework around secrets, auth, or infrastructure automation.
 
-Full documentation is available at [zailic.github.io/nanvc](https://zailic.github.io/nanvc/).
-Release notes are available in the [changelog](https://github.com/zailic/nanvc/blob/master/CHANGELOG.md).
+Use it for typed KV v1/KV v2 secret workflows, AppRole authentication, response wrapping, system policy helpers, database secrets, optional request logging, and raw Vault API calls when you need an escape hatch.
 
-New development is focused on `VaultClientV2`, the typed client built on top of `RawVaultClient`.
-The original `VaultClient` remains available for compatibility, but it is expected to be deprecated and removed in a future major release.
+Full documentation: [zailic.github.io/nanvc](https://zailic.github.io/nanvc/)
 
-## Requirements
+## Why nanvc
 
-- Node.js `>= 20`
-- npm
+- **Typed Vault client for TypeScript**: exported request and response types for the v2 client surface.
+- **KV shortcuts that feel like the Vault CLI**: `read`, `write`, `delete`, and `list` support KV v1 by default and KV v2 with `{ engineVersion: 2 }`.
+- **Focused high-level APIs**: helpers for AppRole, KV v1, KV v2, system policies, response wrapping, and database secrets.
+- **Raw API escape hatch**: `RawVaultClient` lets you call unsupported Vault endpoints without leaving the same client setup.
+- **Result-based error handling**: use tuple-style results or `.unwrap()`, `.unwrapOr()`, and related helpers.
+- **Production-friendly basics**: ESM, Node.js `>=20`, optional TLS/mTLS, and opt-in request lifecycle logs.
 
 ## Install
 
@@ -24,286 +27,135 @@ The original `VaultClient` remains available for compatibility, but it is expect
 npm install nanvc
 ```
 
-## Usage
-
-### TypeScript / ESM
-
-```js
+```ts
 import { VaultClientV2 } from 'nanvc';
-
-const vault = new VaultClientV2({
-    clusterAddress: 'http://127.0.0.1:8200',
-    authToken: process.env.VAULT_TOKEN ?? null,
-});
-
-async function main() {
-    await vault.write('secret/my-app/my-secret', {
-        foo: 'my-password',
-    }).unwrap();
-
-    const secret = await vault.read('secret/my-app/my-secret').unwrap();
-    console.log(secret.foo);
-}
-
-main().catch(console.error);
+const vault = new VaultClientV2();
+await vault.write('secret/apps/demo', { password: 's3cr3t' }).unwrap();
+const secret = await vault.read<{ password: string }>('secret/apps/demo').unwrap();
 ```
 
-### Original Client
+## Common Workflows
 
-`VaultClient` is the original API shape based on command specs and `VaultResponse`.
-
-The `VaultClient` constructor accepts three optional arguments:
-
-1. Vault cluster address
-2. Vault auth token
-3. Vault API version
-
-If omitted, the client uses:
-
-- `NANVC_VAULT_CLUSTER_ADDRESS`
-- `NANVC_VAULT_AUTH_TOKEN`
-- `NANVC_VAULT_API_VERSION`
-
-and falls back to:
-
-- cluster address: `http://127.0.0.1:8200`
-- auth token: `null`
-- API version: `v1`
-
+### KV v2
 
 ```ts
-import VaultClient from 'nanvc';
+await vault.write('secret-v2', 'apps/demo', { apiKey: 'dev-key' }, { engineVersion: 2 }).unwrap();
 
-const vault = new VaultClient('http://127.0.0.1:8200', process.env.VAULT_TOKEN ?? null);
-
-async function main(): Promise<void> {
-    const writeResponse = await vault.write('/secret/my-app/my-secret', {
-        foo: 'my-password',
-    });
-
-    if (!writeResponse.succeeded) {
-        throw new Error(writeResponse.errorMessage ?? 'Vault write failed');
-    }
-
-    const readResponse = await vault.read('/secret/my-app/my-secret');
-
-    if (!readResponse.succeeded || !readResponse.apiResponse) {
-        throw new Error(readResponse.errorMessage ?? 'Vault read failed');
-    }
-
-    const secret = readResponse.apiResponse as { data?: { foo?: string } };
-    console.log(secret.data?.foo);
-}
-
-main().catch(console.error);
+const value = await vault.read<{ apiKey: string }>('secret-v2', 'apps/demo', { engineVersion: 2 }).unwrap();
 ```
 
-### CommonJS
+For the full versioned KV workflow, including patch, metadata, history, soft-delete, undelete, destroy, automatic deletion, and CAS examples, see the [versioned KV guide](https://zailic.github.io/nanvc/examples/versioned-kv/).
 
-Starting with version 1.2.0, `nanvc` is published as an ESM-only package. CommonJS consumers need to use dynamic `import()` to load the module.
+### AppRole
 
-```js
-async function main() {
-    const { default: VaultClient, VaultClientV2 } = await import('nanvc');
-
-    const vault = new VaultClient('http://127.0.0.1:8200', process.env.VAULT_TOKEN ?? null);
-    const secretResponse = await vault.read('/secret/my-app/my-secret');
-
-    if (!secretResponse.succeeded) {
-        throw new Error(secretResponse.errorMessage ?? 'Vault read failed');
-    }
-
-    console.log('v1 secret:', secretResponse.apiResponse);
-
-    const vaultV2 = new VaultClientV2({
-        clusterAddress: 'http://127.0.0.1:8200',
-        authToken: process.env.VAULT_TOKEN ?? null,
-    });
-
-    const secret = await vaultV2.read('secret/my-app/my-secret').unwrap();
-    console.log('v2 secret:', secret);
-}
-
-main().catch((error) => {
-    console.error(error);
-    process.exit(1);
-});
+```ts
+const login = await vault.auth
+    .loginWithAppRole({
+        role_id: process.env.VAULT_ROLE_ID,
+        secret_id: process.env.VAULT_SECRET_ID,
+    })
+    .unwrap();
 ```
 
+See the runnable [VaultClientV2 AppRole example](https://zailic.github.io/nanvc/examples/app-role/).
 
-### V2 Result Helpers
+### Response Wrapping
+
+```ts
+const wrapped = await vault.sys.wrapping.wrap({ role_id: '...', secret_id: '...' }, '5m').unwrap();
+
+const unwrapped = await vault.sys.wrapping.unwrap(wrapped.wrap_info.token).unwrap();
+```
+
+See the [request wrapping example](https://zailic.github.io/nanvc/examples/request-wrapping/).
+
+### Database Secrets
+
+```ts
+await vault.secret.db
+    .configureConnection('database', 'postgres', {
+        plugin_name: 'postgresql-database-plugin',
+        connection_url: 'postgresql://{{username}}:{{password}}@localhost/postgres',
+        allowed_roles: ['readonly'],
+    })
+    .unwrap();
+
+const creds = await vault.secret.db.generateCredentials('database', 'readonly').unwrap();
+```
+
+## Error Handling
 
 `VaultClientV2` and `RawVaultClient` return a promise-like `Result<T>`.
-This model is intentionally inspired by Rust's `Result`, adapted for TypeScript and promise-based APIs.
-
-You can await it as a tuple:
+You can use tuple-style handling:
 
 ```ts
-const [secret, error] = await vaultV2.read<{ foo: string }>('secret/my-app/my-secret');
+const [secret, error] = await vault.read<{ password: string }>('secret/apps/demo');
 
 if (error) {
     console.error(error.message);
 } else {
-    console.log(secret.foo);
+    console.log(secret.password);
 }
 ```
 
-Or use helper methods:
+Or use helpers:
 
 ```ts
-const secret = await vaultV2.secret.kv.v1.read<{ foo: string }>('secret', 'my-app/my-secret').unwrap();
-const fallbackSecret = await vaultV2.secret.kv.v1.read<{ foo: string }>('secret', 'my-app/my-secret').unwrapOr({ foo: 'fallback' });
-const error = await vaultV2.secret.kv.v1.read('secret', 'my-app/my-secret').intoErr();
+const secret = await vault.read<{ password: string }>('secret/apps/demo').unwrap();
+const fallback = await vault.read('secret/missing').unwrapOr({ password: 'fallback' });
 ```
 
-Available helpers:
+Read more in the [error handling guide](https://zailic.github.io/nanvc/error-handling/).
 
-- `.unwrap()` returns the success value or throws the error
-- `.unwrapOr(defaultValue)` returns a fallback value on error
-- `.unwrapOrElse(fn)` computes a fallback from the error
-- `.unwrapErr()` returns the error or throws if the result was successful
-- `.intoErr()` returns the error or `null`
+## Raw Vault API
 
-### V2 KV Shortcuts
-
-`VaultClientV2` exposes Vault CLI-style KV shortcuts: `read`, `write`, `delete`, and `list`.
-They default to KV v1 and support KV v2 with `{ engineVersion: 2 }`.
+When a high-level helper does not cover an endpoint yet, call Vault directly:
 
 ```ts
-await vault.write('secret/apps/demo', { foo: 'bar' }).unwrap();
-const kv1Secret = await vault.read<{ foo: string }>('secret/apps/demo').unwrap();
-
-await vault.write('secret-v2', 'apps/demo', { foo: 'bar' }, { engineVersion: 2 }).unwrap();
-const kv2Secret = await vault.read<{ foo: string }>('secret-v2', 'apps/demo', {
-    engineVersion: 2,
-}).unwrap();
-
-console.log(kv1Secret.foo);
-console.log(kv2Secret.data.foo);
+const info = await vault.raw.get('/sys/host-info').unwrap();
 ```
 
-### Optional mTLS
+See the [VaultClientV2 API reference](https://zailic.github.io/nanvc/api-v2/) for the full typed surface.
 
-TLS client authentication is optional and disabled by default. Existing constructor calls keep working as-is.
+## Logging
 
-For HTTPS Vault clusters that only need a custom CA, you can pass just `ca`:
-
-```ts
-import VaultClient from 'nanvc';
-
-const vault = new VaultClient({
-    clusterAddress: 'https://vault.local:8200',
-    authToken: process.env.VAULT_TOKEN ?? null,
-    tls: {
-        ca: process.env.VAULT_CA_PEM,
-        rejectUnauthorized: true,
-    },
-});
-```
-
-For HTTPS Vault clusters that require mTLS, use the object-based constructor:
-
-```ts
-import VaultClient from 'nanvc';
-
-const vault = new VaultClient({
-    clusterAddress: 'https://vault.local:8200',
-    authToken: process.env.VAULT_TOKEN ?? null,
-    apiVersion: 'v1',
-    tls: {
-        ca: process.env.VAULT_CA_PEM,
-        cert: process.env.VAULT_CLIENT_CERT_PEM,
-        key: process.env.VAULT_CLIENT_KEY_PEM,
-        passphrase: process.env.VAULT_CLIENT_KEY_PASSPHRASE,
-        rejectUnauthorized: true,
-    },
-});
-```
-
-The `tls` block supports:
-
-- `ca`
-- `cert`
-- `key`
-- `passphrase`
-- `rejectUnauthorized`
-
-## Examples
-
-- [AppRole example with `VaultClientV2`](https://github.com/zailic/nanvc/blob/master/examples/app-role/README.md)
-- [AppRole example with the original `VaultClient`](https://github.com/zailic/nanvc/blob/master/examples/app-role-v1/README.md)
-- [Versioned KV v2 — write, patch, version history, CAS, auto-deletion](https://github.com/zailic/nanvc/blob/master/examples/versioned-kv/README.md)
-
-## API
-
-For the typed v2 client, see the [VaultClientV2 API reference](https://zailic.github.io/nanvc/api-v2/).
-
-Original `VaultClient` methods:
-
-- `read(path)`
-- `write(path, payload)`
-- `update(path, payload)`
-- `delete(path)`
-- `list(path)`
-- `audits()`
-- `auditHash(path, payload)`
-- `auths()`
-- `enableAudit(path, payload)`
-- `disableAudit(path)`
-- `enableAuth(path, payload)`
-- `disableAuth(path)`
-- `isInitialized()`
-- `init(payload)`
-- `mount(path, payload)`
-- `mounts()`
-- `policies()`
-- `addPolicy(name, payload)`
-- `removePolicy(name)`
-- `remount(payload)`
-- `seal()`
-- `status()`
-- `unmount(path)`
-- `unseal(payload)`
-
-Every call resolves to a `VaultResponse` with:
-
-- `succeeded`
-- `httpStatusCode`
-- `apiResponse`
-- `errorMessage`
-
-### Logging
-
-Logging is disabled by default. Set `NANVC_LOG_LEVEL` to enable request lifecycle logs:
+Logging is disabled by default. Enable request lifecycle logs with:
 
 ```bash
 NANVC_LOG_LEVEL=debug node app.js
 ```
 
-Supported levels are `error`, `warn`, `info`, and `debug`. Logs include a local CLI-friendly timestamp, request method, URL, status, and duration, but not tokens or request/response bodies.
-Log level prefixes are colorized when output is attached to a TTY. Set `NANVC_LOG_NO_COLOR=1` to disable colors or `NANVC_LOG_FORCE_COLOR=1` to force them.
-![Logging Screenshot](https://github.com/zailic/nanvc/blob/master/docs/assets/images/logging_screenshot.png?raw=true)
+Supported levels are `error`, `warn`, `info`, and `debug`.
+Logs include method, URL, status, and duration, but never tokens or request/response bodies.
 
-## Contributing
+## Client Versions
 
-Contributions are welcome. Please read the [contributing guide](https://github.com/zailic/nanvc/blob/master/nanvc/CONTRIBUTING.md) before opening an issue or pull request.
+New development is focused on `VaultClientV2`, the typed client built on `RawVaultClient`.
+The original `VaultClient` remains available for compatibility and for optional mTLS support.
 
-This project follows a [Code of Conduct](https://github.com/zailic/nanvc/blob/master/nanvc/CODE_OF_CONDUCT.md) to help keep the community welcoming and respectful.
+Original client documentation:
 
-## Status
+- [VaultClient v1 API](https://zailic.github.io/nanvc/api-v1/)
+- [Original AppRole example](https://zailic.github.io/nanvc/examples/app-role-v1/)
 
-This library covers a focused subset of the Vault API, mainly:
+CommonJS consumers can load this ESM-only package with dynamic `import()`:
 
-- secret CRUD operations
-- initialization and seal management
-- mounts/remounts
-- auth backends
-- audits
-- policies
+```js
+const { VaultClientV2 } = await import('nanvc');
+```
 
-It does not aim to expose the full Vault API surface yet.
+## Links
 
-`secret.kv.v2` currently covers the common read, write, list, and soft-delete workflow. It is not a complete implementation of every KV v2 operation from the Vault OpenAPI specification; use `RawVaultClient` for unsupported KV v2 endpoints.
+- [Documentation](https://zailic.github.io/nanvc/)
+- [Getting started](https://zailic.github.io/nanvc/getting-started/)
+- [Examples](https://zailic.github.io/nanvc/examples/)
+- [Changelog](https://github.com/zailic/nanvc/blob/master/CHANGELOG.md)
+- [Issues](https://github.com/zailic/nanvc/issues)
+
+## Requirements
+
+- Node.js `>=20`
+- ESM project or dynamic `import()` from CommonJS
 
 ## License
 

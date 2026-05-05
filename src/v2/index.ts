@@ -51,6 +51,8 @@ export type {
     VaultKvV2VersionMetadata,
     VaultKvV2WriteOptions,
 } from './client/secret-kv-v2.js';
+export type { VaultCubbyholeListResponse, VaultCubbyholeReadResponse } from './client/secret-cubbyhole.js';
+export { VaultSecretCubbyholeClient } from './client/secret-cubbyhole.js';
 export type {
     VaultDbConfigureConnectionRequest,
     VaultDbConnectionData,
@@ -78,10 +80,7 @@ export type {
     VaultAuthReadConfigurationResponse,
 } from './client/auth.js';
 export { VaultClientError } from './core/errors.js';
-export type {
-    VaultClientErrorCode,
-    VaultClientErrorInput,
-} from './core/errors.js';
+export type { VaultClientErrorCode, VaultClientErrorInput } from './core/errors.js';
 export type {
     VaultClientOptions,
     VaultRequestMethod,

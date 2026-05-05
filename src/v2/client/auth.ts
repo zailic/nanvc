@@ -16,7 +16,7 @@ export type VaultAppRoleSecretIdResponse = components['schemas']['AppRoleWriteSe
 export type VaultAppRoleLoginRequest = components['schemas']['AppRoleLoginRequest'];
 export type VaultAppRoleLoginResponse = components['schemas']['AppRoleLoginResponse'];
 export class VaultAuthClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -32,24 +32,26 @@ export class VaultAuthClient {
      * @end-nanvc-doc
      */
     public enableAuthMethod(path: string, payload: VaultAuthMethodRequest): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            if (await this.isAuthMethodEnabled(path).unwrapOr(false)) {
-                return ok(undefined);
-            }
-            const [data, error] = await this.raw.post('/sys/auth/{path}', {
-                body: payload,
-                params: {
-                    path: {
-                        path: normalize(path),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                if (await this.isAuthMethodEnabled(path).unwrapOr(false)) {
+                    return ok(undefined);
+                }
+                const [data, error] = await this.raw.post('/sys/auth/{path}', {
+                    body: payload,
+                    params: {
+                        path: {
+                            path: normalize(path),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
-            void data;
-            return ok(undefined);
-        })());
+                });
+                if (error) {
+                    return err(error);
+                }
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -64,21 +66,23 @@ export class VaultAuthClient {
      * @end-nanvc-doc
      */
     public disableAuthMethod(path: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/sys/auth/{path}', {
-                params: {
-                    path: {
-                        path: normalize(path),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/sys/auth/{path}', {
+                    params: {
+                        path: {
+                            path: normalize(path),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -104,24 +108,26 @@ export class VaultAuthClient {
         roleNameOrPayload: string | VaultAppRoleRequest,
         maybePayload?: VaultAppRoleRequest,
     ): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const approleRef = resolveAppRoleParams(approleMountPathOrRoleName, roleNameOrPayload, maybePayload);
-            const [data, error] = await this.raw.post('/auth/{approle_mount_path}/role/{role_name}', {
-                body: approleRef.payload,
-                params: {
-                    path: {
-                        approle_mount_path: approleRef.approle_mount_path,
-                        role_name: approleRef.role_name,
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const approleRef = resolveAppRoleParams(approleMountPathOrRoleName, roleNameOrPayload, maybePayload);
+                const [data, error] = await this.raw.post('/auth/{approle_mount_path}/role/{role_name}', {
+                    body: approleRef.payload,
+                    params: {
+                        path: {
+                            approle_mount_path: approleRef.approle_mount_path,
+                            role_name: approleRef.role_name,
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -142,19 +148,21 @@ export class VaultAuthClient {
         approleMountPathOrRoleName: string,
         maybeRoleName?: string,
     ): Result<VaultAppRoleRoleIdResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultAppRoleRoleIdResponse>> => {
-            const approleRef = resolveAppRoleParams(approleMountPathOrRoleName, maybeRoleName);
-            const [data, error] = await this.raw.get('/auth/{approle_mount_path}/role/{role_name}/role-id', {
-                params: {
-                    path: approleRef,
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<VaultAppRoleRoleIdResponse>> => {
+                const approleRef = resolveAppRoleParams(approleMountPathOrRoleName, maybeRoleName);
+                const [data, error] = await this.raw.get('/auth/{approle_mount_path}/role/{role_name}/role-id', {
+                    params: {
+                        path: approleRef,
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(extractVaultData(data));
-        })());
+                return ok(extractVaultData(data));
+            })(),
+        );
     }
 
     /**
@@ -172,30 +180,36 @@ export class VaultAuthClient {
      * @end-nanvc-doc
      */
     public registerAppRoleRoleId(roleName: string, payload: VaultAppRoleRoleIdRequest): Result<void>;
-    public registerAppRoleRoleId(approleMountPath: string, roleName: string, payload: VaultAppRoleRoleIdRequest): Result<void>;
+    public registerAppRoleRoleId(
+        approleMountPath: string,
+        roleName: string,
+        payload: VaultAppRoleRoleIdRequest,
+    ): Result<void>;
     public registerAppRoleRoleId(
         approleMountPathOrRoleName: string,
         roleNameOrPayload: string | VaultAppRoleRoleIdRequest,
         maybePayload?: VaultAppRoleRoleIdRequest,
     ): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const approleRef = resolveAppRoleParams(approleMountPathOrRoleName, roleNameOrPayload, maybePayload);
-            const [data, error] = await this.raw.post('/auth/{approle_mount_path}/role/{role_name}/role-id', {
-                body: approleRef.payload,
-                params: {
-                    path: {
-                        approle_mount_path: approleRef.approle_mount_path,
-                        role_name: approleRef.role_name,
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const approleRef = resolveAppRoleParams(approleMountPathOrRoleName, roleNameOrPayload, maybePayload);
+                const [data, error] = await this.raw.post('/auth/{approle_mount_path}/role/{role_name}/role-id', {
+                    body: approleRef.payload,
+                    params: {
+                        path: {
+                            approle_mount_path: approleRef.approle_mount_path,
+                            role_name: approleRef.role_name,
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -210,7 +224,10 @@ export class VaultAuthClient {
      *   const { secret_id } = await vault.auth.generateAppRoleSecretId('jenkins').unwrap();
      * @end-nanvc-doc
      */
-    public generateAppRoleSecretId(roleName: string, payload?: VaultAppRoleSecretIdRequest): Result<VaultAppRoleSecretIdResponse>;
+    public generateAppRoleSecretId(
+        roleName: string,
+        payload?: VaultAppRoleSecretIdRequest,
+    ): Result<VaultAppRoleSecretIdResponse>;
     public generateAppRoleSecretId(
         approleMountPath: string,
         roleName: string,
@@ -221,23 +238,25 @@ export class VaultAuthClient {
         roleNameOrPayload?: string | VaultAppRoleSecretIdRequest,
         maybePayload: VaultAppRoleSecretIdRequest = {},
     ): Result<VaultAppRoleSecretIdResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultAppRoleSecretIdResponse>> => {
-            const approleRef = resolveAppRoleParams(approleMountPathOrRoleName, roleNameOrPayload, maybePayload);
-            const [data, error] = await this.raw.post('/auth/{approle_mount_path}/role/{role_name}/secret-id', {
-                body: approleRef.payload,
-                params: {
-                    path: {
-                        approle_mount_path: approleRef.approle_mount_path,
-                        role_name: approleRef.role_name,
+        return toResult(
+            (async (): Promise<ResultTuple<VaultAppRoleSecretIdResponse>> => {
+                const approleRef = resolveAppRoleParams(approleMountPathOrRoleName, roleNameOrPayload, maybePayload);
+                const [data, error] = await this.raw.post('/auth/{approle_mount_path}/role/{role_name}/secret-id', {
+                    body: approleRef.payload,
+                    params: {
+                        path: {
+                            approle_mount_path: approleRef.approle_mount_path,
+                            role_name: approleRef.role_name,
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(extractVaultData(data));
-        })());
+                return ok(extractVaultData(data));
+            })(),
+        );
     }
 
     /**
@@ -256,35 +275,40 @@ export class VaultAuthClient {
      * @end-nanvc-doc
      */
     public loginWithAppRole(payload: VaultAppRoleLoginRequest): Result<VaultAppRoleLoginResponse>;
-    public loginWithAppRole(approleMountPath: string, payload: VaultAppRoleLoginRequest): Result<VaultAppRoleLoginResponse>;
+    public loginWithAppRole(
+        approleMountPath: string,
+        payload: VaultAppRoleLoginRequest,
+    ): Result<VaultAppRoleLoginResponse>;
     public loginWithAppRole(
         approleMountPathOrPayload: string | VaultAppRoleLoginRequest,
         maybePayload?: VaultAppRoleLoginRequest,
     ): Result<VaultAppRoleLoginResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultAppRoleLoginResponse>> => {
-            const [approleRef, resolveError] = resolveAppRoleLoginParams(approleMountPathOrPayload, maybePayload);
-            if (resolveError) {
-                return err(resolveError);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<VaultAppRoleLoginResponse>> => {
+                const [approleRef, resolveError] = resolveAppRoleLoginParams(approleMountPathOrPayload, maybePayload);
+                if (resolveError) {
+                    return err(resolveError);
+                }
 
-            const [data, error] = await this.raw.post('/auth/{approle_mount_path}/login', {
-                body: approleRef.payload,
-                params: {
-                    path: {
-                        approle_mount_path: approleRef.approle_mount_path,
+                const [data, error] = await this.raw.post('/auth/{approle_mount_path}/login', {
+                    body: approleRef.payload,
+                    params: {
+                        path: {
+                            approle_mount_path: approleRef.approle_mount_path,
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            if (typeof data.auth?.client_token === 'string' && data.auth.client_token.length > 0) {
-                this.raw.setToken(data.auth.client_token);
-            }
+                if (typeof data.auth?.client_token === 'string' && data.auth.client_token.length > 0) {
+                    this.raw.setToken(data.auth.client_token);
+                }
 
-            return ok(data);
-        })());
+                return ok(data);
+            })(),
+        );
     }
 
     /**
@@ -299,20 +323,22 @@ export class VaultAuthClient {
      * @end-nanvc-doc
      */
     public getAuthMethodConfig(path: string): Result<VaultAuthReadConfigurationResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultAuthReadConfigurationResponse>> => {
-            const [data, error] = await this.raw.get('/sys/auth/{path}', {
-                params: {
-                    path: {
-                        path: normalize(path),
+        return toResult(
+            (async (): Promise<ResultTuple<VaultAuthReadConfigurationResponse>> => {
+                const [data, error] = await this.raw.get('/sys/auth/{path}', {
+                    params: {
+                        path: {
+                            path: normalize(path),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data);
-        })());
+                return ok(data);
+            })(),
+        );
     }
 
     /**
@@ -327,21 +353,19 @@ export class VaultAuthClient {
      * @end-nanvc-doc
      */
     public isAuthMethodEnabled(path: string): Result<boolean> {
-        return toResult((async (): Promise<ResultTuple<boolean>> => {
-            const [data, error] = await this.getAuthMethodConfig(path);
-            if (error) {
-                if (
-                    error.code === 'HTTP_ERROR' &&
-                    (error.status === 404 ||
-                        error.status === 400)
-                ) {
-                    return ok(false);
+        return toResult(
+            (async (): Promise<ResultTuple<boolean>> => {
+                const [data, error] = await this.getAuthMethodConfig(path);
+                if (error) {
+                    if (error.code === 'HTTP_ERROR' && (error.status === 404 || error.status === 400)) {
+                        return ok(false);
+                    }
+                    return err(error);
                 }
-                return err(error);
-            }
-            void data;
-            return ok(true);
-        })());
+                void data;
+                return ok(true);
+            })(),
+        );
     }
 }
 
@@ -413,10 +437,12 @@ function extractVaultData<T>(response: T | { data?: T }): T {
 }
 
 function hasVaultDataEnvelope<T>(response: T | { data?: T }): response is { data: T } {
-    return typeof response === 'object'
-        && response !== null
-        && 'data' in response
-        && (response as { data?: T }).data !== undefined;
+    return (
+        typeof response === 'object' &&
+        response !== null &&
+        'data' in response &&
+        (response as { data?: T }).data !== undefined
+    );
 }
 
 function resolveAppRoleLoginParams(
@@ -428,10 +454,12 @@ function resolveAppRoleLoginParams(
 }> {
     if (typeof approleMountPathOrPayload === 'string') {
         if (!maybePayload) {
-            return err(new VaultClientError({
-                code: 'VALIDATION_ERROR',
-                message: 'VaultAuthClient.loginWithAppRole requires a payload object',
-            }));
+            return err(
+                new VaultClientError({
+                    code: 'VALIDATION_ERROR',
+                    message: 'VaultAuthClient.loginWithAppRole requires a payload object',
+                }),
+            );
         }
 
         return ok({

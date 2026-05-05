@@ -1,20 +1,11 @@
 {
-  "extends": "../tsconfig.json",
-  "experimentalDecorators": false,
-  "emitDecoratorMetadata": false,
-  "compilerOptions": {
-    "rootDir": "..",
-    "types": [
-      "node",
-      "mocha"
-    ]
-  },
-  "include": [
-    "./**/*.ts",
-    "../src/**/*.ts",
-    "../examples/**/*.ts",
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+    "extends": "../tsconfig.json",
+    "experimentalDecorators": false,
+    "emitDecoratorMetadata": false,
+    "compilerOptions": {
+        "rootDir": "..",
+        "types": ["node", "mocha"]
+    },
+    "include": ["./**/*.ts", "../src/**/*.ts", "../examples/**/*.ts"],
+    "exclude": ["node_modules"]
 }

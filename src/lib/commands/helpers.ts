@@ -40,7 +40,9 @@ export function joinUrl(...parts: string[]): string {
     return parts
         .map((part, index) => {
             if (part.length > MAX_URL_PART_LENGTH) {
-                throw new Error(`URL part at index ${index} exceeds maximum length of ${MAX_URL_PART_LENGTH} characters`);
+                throw new Error(
+                    `URL part at index ${index} exceeds maximum length of ${MAX_URL_PART_LENGTH} characters`,
+                );
             }
 
             if (index === 0) {
@@ -53,15 +55,10 @@ export function joinUrl(...parts: string[]): string {
         .join('/');
 }
 
-function resolveCommandArguments(
-    path: string,
-    args: unknown[],
-): { payload?: VaultPayload; resolvedPath: string } {
+function resolveCommandArguments(path: string, args: unknown[]): { payload?: VaultPayload; resolvedPath: string } {
     const hasPathParam = /\/:[a-z_]+$/i.test(path);
     const pathArg = hasPathParam ? String(args[0] ?? '').replace(/^\/+/, '') : '';
-    const resolvedPath = hasPathParam
-        ? path.replace(/\/:[a-z_]+$/i, `/${pathArg}`)
-        : path;
+    const resolvedPath = hasPathParam ? path.replace(/\/:[a-z_]+$/i, `/${pathArg}`) : path;
     const payloadIndex = hasPathParam ? 1 : 0;
     const payload = args[payloadIndex] as VaultPayload | undefined;
 

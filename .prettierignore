@@ -1,0 +1,9 @@
+# Ignore artifacts:
+_site
+docs
+coverage
+dist
+node_modules
+src/v2/generated
+.github
+docker-compose.yml

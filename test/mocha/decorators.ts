@@ -29,7 +29,13 @@ const instanceStore = new WeakMap<object, InstanceMeta>();
 function getInstanceMeta(instance: object): InstanceMeta {
     let meta = instanceStore.get(instance);
     if (!meta) {
-        meta = { tests: [], beforeAll: [], afterAll: [], beforeEach: [], afterEach: [] };
+        meta = {
+            tests: [],
+            beforeAll: [],
+            afterAll: [],
+            beforeEach: [],
+            afterEach: [],
+        };
         instanceStore.set(instance, meta);
     }
     return meta;

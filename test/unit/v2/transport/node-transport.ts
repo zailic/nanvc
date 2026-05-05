@@ -5,9 +5,12 @@ import type { AddressInfo } from 'node:net';
 
 import { VaultClientError } from '../../../../src/v2/core/errors.js';
 import { NodeVaultTransport } from '../../../../src/v2/transport/node-transport.js';
+import { suite, test } from '../../../mocha/decorators.js';
 
-describe('NodeVaultTransport unit test cases.', function () {
-    it('should build URLs from explicit options with LIST and query parameters', function () {
+@suite('NodeVaultTransport unit test cases.')
+export class NodeVaultTransportUnitTests {
+    @test('should build URLs from explicit options with LIST and query parameters')
+    public shouldBuildUrlsFromExplicitOptionsWithListAndQueryParametersTest() {
         const transport = new NodeVaultTransport({
             apiVersion: 'v2',
             clusterAddress: 'https://vault.example.test/',
@@ -24,9 +27,10 @@ describe('NodeVaultTransport unit test cases.', function () {
         });
 
         assert.equal(url.toString(), 'https://vault.example.test/v2/secret/apps?list=true&limit=10&recurse=true');
-    });
+    }
 
-    it('should build URLs from environment defaults when options are omitted', function () {
+    @test('should build URLs from environment defaults when options are omitted')
+    public shouldBuildUrlsFromEnvironmentDefaultsWhenOptionsAreOmittedTest() {
         const originalClusterAddress = process.env.NANVC_VAULT_CLUSTER_ADDRESS;
         const originalApiVersion = process.env.NANVC_VAULT_API_VERSION;
         process.env.NANVC_VAULT_CLUSTER_ADDRESS = 'http://vault.local:8200/';
@@ -45,18 +49,25 @@ describe('NodeVaultTransport unit test cases.', function () {
             restoreEnv('NANVC_VAULT_CLUSTER_ADDRESS', originalClusterAddress);
             restoreEnv('NANVC_VAULT_API_VERSION', originalApiVersion);
         }
-    });
+    }
 
-    it('should build request options with JSON body headers and tokens', function () {
+    @test('should build request options with JSON body headers and tokens')
+    public shouldBuildRequestOptionsWithJsonBodyHeadersAndTokensTest() {
         const transport = new NodeVaultTransport();
         const url = new URL('http://127.0.0.1:8200/v1/secret/apps?list=true');
 
-        const options = getPrivate<Record<string, unknown>>(transport, 'buildRequestOptions', url, {
-            headers: { 'X-Custom': 'custom' },
-            method: 'LIST',
-            path: 'secret/apps',
-            token: 'vault-token',
-        }, '{"hello":"vault"}');
+        const options = getPrivate<Record<string, unknown>>(
+            transport,
+            'buildRequestOptions',
+            url,
+            {
+                headers: { 'X-Custom': 'custom' },
+                method: 'LIST',
+                path: 'secret/apps',
+                token: 'vault-token',
+            },
+            '{"hello":"vault"}',
+        );
 
         assert.equal(options.method, 'GET');
         assert.equal(options.path, '/v1/secret/apps?list=true');
@@ -68,9 +79,10 @@ describe('NodeVaultTransport unit test cases.', function () {
             'X-Custom': 'custom',
             'X-Vault-Token': 'vault-token',
         });
-    });
+    }
 
-    it('should apply TLS options only for HTTPS URLs', function () {
+    @test('should apply TLS options only for HTTPS URLs')
+    public shouldApplyTlsOptionsOnlyForHttpsUrlsTest() {
         const transport = new NodeVaultTransport({
             tls: {
                 ca: 'ca',
@@ -81,14 +93,24 @@ describe('NodeVaultTransport unit test cases.', function () {
             },
         });
 
-        const httpsOptions = getPrivate<Record<string, unknown>>(transport, 'buildRequestOptions', new URL('https://vault.local/v1/sys/health'), {
-            method: 'GET',
-            path: 'sys/health',
-        });
-        const httpOptions = getPrivate<Record<string, unknown>>(transport, 'buildRequestOptions', new URL('http://vault.local/v1/sys/health'), {
-            method: 'GET',
-            path: 'sys/health',
-        });
+        const httpsOptions = getPrivate<Record<string, unknown>>(
+            transport,
+            'buildRequestOptions',
+            new URL('https://vault.local/v1/sys/health'),
+            {
+                method: 'GET',
+                path: 'sys/health',
+            },
+        );
+        const httpOptions = getPrivate<Record<string, unknown>>(
+            transport,
+            'buildRequestOptions',
+            new URL('http://vault.local/v1/sys/health'),
+            {
+                method: 'GET',
+                path: 'sys/health',
+            },
+        );
 
         assert.equal(httpsOptions.ca, 'ca');
         assert.equal(httpsOptions.cert, 'cert');
@@ -98,36 +120,51 @@ describe('NodeVaultTransport unit test cases.', function () {
         assert.equal('ca' in httpOptions, false);
         assert.equal('cert' in httpOptions, false);
         assert.equal('key' in httpOptions, false);
-    });
+    }
 
-    it('should omit Content-Type and Content-Length when there is no body', function () {
+    @test('should omit Content-Type and Content-Length when there is no body')
+    public shouldOmitContentTypeAndContentLengthWhenThereIsNoBodyTest() {
         const transport = new NodeVaultTransport();
         const url = new URL('http://127.0.0.1:8200/v1/sys/health');
 
-        const options = getPrivate<Record<string, unknown>>(transport, 'buildRequestOptions', url, {
-            method: 'GET',
-            path: 'sys/health',
-        }, undefined);
+        const options = getPrivate<Record<string, unknown>>(
+            transport,
+            'buildRequestOptions',
+            url,
+            {
+                method: 'GET',
+                path: 'sys/health',
+            },
+            undefined,
+        );
 
         const headers = options.headers as Record<string, string>;
         assert.equal('Content-Type' in headers, false);
         assert.equal('Content-Length' in headers, false);
-    });
+    }
 
-    it('should preserve a pre-existing Content-Type header when building request options with a body', function () {
+    @test('should preserve a pre-existing Content-Type header when building request options with a body')
+    public shouldPreserveAPreExistingContentTypeHeaderWhenBuildingRequestOptionsWithABodyTest() {
         const transport = new NodeVaultTransport();
         const url = new URL('http://127.0.0.1:8200/v1/secret/data/apps/demo');
 
-        const options = getPrivate<Record<string, unknown>>(transport, 'buildRequestOptions', url, {
-            headers: { 'Content-Type': 'application/merge-patch+json' },
-            method: 'PATCH',
-            path: 'secret/data/apps/demo',
-        }, '{"foo":"bar"}');
+        const options = getPrivate<Record<string, unknown>>(
+            transport,
+            'buildRequestOptions',
+            url,
+            {
+                headers: { 'Content-Type': 'application/merge-patch+json' },
+                method: 'PATCH',
+                path: 'secret/data/apps/demo',
+            },
+            '{"foo":"bar"}',
+        );
 
         assert.equal((options.headers as Record<string, string>)['Content-Type'], 'application/merge-patch+json');
-    });
+    }
 
-    it('should resolve a successful HTTP response as an ok transport response', async function () {
+    @test('should resolve a successful HTTP response as an ok transport response')
+    public async shouldResolveASuccessfulHttpResponseAsAnOkTransportResponseTest() {
         const { server, port } = await startLocalServer((_req, res) => {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ initialized: true }));
@@ -144,9 +181,10 @@ describe('NodeVaultTransport unit test cases.', function () {
         } finally {
             await closeServer(server);
         }
-    });
+    }
 
-    it('should return a non-ok response for non-2xx HTTP status codes', async function () {
+    @test('should return a non-ok response for non-2xx HTTP status codes')
+    public async shouldReturnANonOkResponseForNon2xxHttpStatusCodesTest() {
         const { server, port } = await startLocalServer((_req, res) => {
             res.writeHead(403, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ errors: ['permission denied'] }));
@@ -163,9 +201,10 @@ describe('NodeVaultTransport unit test cases.', function () {
         } finally {
             await closeServer(server);
         }
-    });
+    }
 
-    it('should parse a non-JSON response body as a raw string', async function () {
+    @test('should parse a non-JSON response body as a raw string')
+    public async shouldParseANonJsonResponseBodyAsARawStringTest() {
         const { server, port } = await startLocalServer((_req, res) => {
             res.writeHead(200, { 'Content-Type': 'text/plain' });
             res.end('plain text response');
@@ -181,9 +220,10 @@ describe('NodeVaultTransport unit test cases.', function () {
         } finally {
             await closeServer(server);
         }
-    });
+    }
 
-    it('should return undefined body for empty HTTP responses', async function () {
+    @test('should return undefined body for empty HTTP responses')
+    public async shouldReturnUndefinedBodyForEmptyHttpResponsesTest() {
         const { server, port } = await startLocalServer((_req, res) => {
             res.writeHead(204);
             res.end();
@@ -200,13 +240,16 @@ describe('NodeVaultTransport unit test cases.', function () {
         } finally {
             await closeServer(server);
         }
-    });
+    }
 
-    it('should write the serialized JSON body to the HTTP request', async function () {
+    @test('should write the serialized JSON body to the HTTP request')
+    public async shouldWriteTheSerializedJsonBodyToTheHttpRequestTest() {
         let capturedBody = '';
         const { server, port } = await startLocalServer((req, res) => {
             let data = '';
-            req.on('data', (chunk: Buffer) => { data += chunk.toString(); });
+            req.on('data', (chunk: Buffer) => {
+                data += chunk.toString();
+            });
             req.on('end', () => {
                 capturedBody = data;
                 res.writeHead(200);
@@ -217,15 +260,21 @@ describe('NodeVaultTransport unit test cases.', function () {
         try {
             const transport = new NodeVaultTransport({ clusterAddress: `http://127.0.0.1:${port}` });
 
-            await transport.request({ body: { foo: 'bar' }, method: 'POST', path: 'secret/data/apps/demo', token: null });
+            await transport.request({
+                body: { foo: 'bar' },
+                method: 'POST',
+                path: 'secret/data/apps/demo',
+                token: null,
+            });
 
             assert.equal(capturedBody, '{"foo":"bar"}');
         } finally {
             await closeServer(server);
         }
-    });
+    }
 
-    it('should reject with a NETWORK_ERROR when the connection is refused', async function () {
+    @test('should reject with a NETWORK_ERROR when the connection is refused')
+    public async shouldRejectWithANetworkErrorWhenTheConnectionIsRefusedTest() {
         const port = await unusedPort();
         const transport = new NodeVaultTransport({ clusterAddress: `http://127.0.0.1:${port}` });
 
@@ -237,9 +286,10 @@ describe('NodeVaultTransport unit test cases.', function () {
                 return true;
             },
         );
-    });
+    }
 
-    it('should reject with a TIMEOUT error when the request exceeds timeoutMs', async function () {
+    @test('should reject with a TIMEOUT error when the request exceeds timeoutMs')
+    public async shouldRejectWithATimeoutErrorWhenTheRequestExceedsTimeoutmsTest() {
         const { server, port } = await startLocalServer(() => {
             // intentionally never respond — let the client time out
         });
@@ -258,8 +308,8 @@ describe('NodeVaultTransport unit test cases.', function () {
         } finally {
             await closeServer(server);
         }
-    });
-});
+    }
+}
 
 function getPrivate<T>(
     transport: NodeVaultTransport,

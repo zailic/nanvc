@@ -4,27 +4,31 @@ import { createSandbox } from 'sinon';
 import { VaultSecretKvV1Client } from '../../../../src/v2/client/secret-kv-v1.js';
 import { VaultClientError } from '../../../../src/main.js';
 import { RawVaultClient } from '../../../../src/v2/core/raw-client.js';
+import { suite, test, beforeEachTest, afterEachTest } from '../../../mocha/decorators.js';
 
+@suite('VaultSecretKvV1Client unit test cases.')
+export class VaultSecretKvV1ClientUnitTests {
+    private sandbox!: SinonSandbox;
 
-describe('VaultSecretKvV1Client unit test cases.', function () {
-    let sandbox: SinonSandbox;
+    @beforeEachTest()
+    public beforeEach() {
+        this.sandbox = createSandbox();
+    }
 
-    beforeEach(function () {
-        sandbox = createSandbox();
-    });
+    @afterEachTest()
+    public afterEach() {
+        this.sandbox.restore();
+    }
 
-    afterEach(function () {
-        sandbox.restore();
-    });
-
-    it('should surface resolveKvV1PathParams validation errors', async function() {
+    @test('should surface resolveKvV1PathParams validation errors')
+    public async shouldSurfaceResolvekvv1pathparamsValidationErrorsTest() {
         const client = new VaultSecretKvV1Client(new RawVaultClient());
 
         const [deleteData, deleteError] = await client.delete('some-path', '');
         const [readData, readError] = await client.read('', '');
         const [writeData, writeError] = await client.write('invalid-path', { foo: 'bar' });
         const [listData, listError] = await client.list('');
-        
+
         assert.equal(deleteData, null);
         assert.equal(deleteError instanceof VaultClientError, true);
         assert.equal(deleteError?.code, 'VALIDATION_ERROR');
@@ -34,15 +38,18 @@ describe('VaultSecretKvV1Client unit test cases.', function () {
         assert.equal(readError instanceof VaultClientError, true);
         assert.equal(readError?.code, 'VALIDATION_ERROR');
         assert.equal(readError?.message, 'Expected a KV v1 mount path, got ""');
-        
+
         assert.equal(writeData, null);
         assert.equal(writeError instanceof VaultClientError, true);
         assert.equal(writeError?.code, 'VALIDATION_ERROR');
-        assert.equal(writeError?.message, 'Expected a KV v1 secret path like "secret/my-app/my-secret", got "invalid-path"');
+        assert.equal(
+            writeError?.message,
+            'Expected a KV v1 secret path like "secret/my-app/my-secret", got "invalid-path"',
+        );
 
         assert.equal(listData, null);
         assert.equal(listError instanceof VaultClientError, true);
         assert.equal(listError?.code, 'VALIDATION_ERROR');
         assert.equal(listError?.message, 'Expected a KV v1 secret path like "secret/my-app/my-secret", got ""');
-    });
-});
+    }
+}

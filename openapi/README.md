@@ -23,10 +23,7 @@ export const targetPaths = [
     },
 ];
 
-export const targetSchemas = [
-    'ExampleRequest',
-    'ExampleResponse',
-];
+export const targetSchemas = ['ExampleRequest', 'ExampleResponse'];
 ```
 
 Rules:

@@ -8,7 +8,8 @@ export type VaultAclPolicyReadResponse = components['schemas']['PatchedPoliciesR
 export type VaultAclPolicyWriteRequest = components['schemas']['PoliciesWriteAclPolicyRequest'];
 export type VaultEgpPolicyReadResponse = components['schemas']['PoliciesReadEgpPolicyResponse'];
 export type VaultEgpPolicyWriteRequest = components['schemas']['SystemWritePoliciesEgpNameRequest'];
-export type VaultPasswordPolicyGenerateResponse = components['schemas']['PoliciesGeneratePasswordFromPasswordPolicyResponse'];
+export type VaultPasswordPolicyGenerateResponse =
+    components['schemas']['PoliciesGeneratePasswordFromPasswordPolicyResponse'];
 export type VaultPasswordPolicyReadResponse = components['schemas']['PoliciesReadPasswordPolicyResponse'];
 export type VaultPasswordPolicyWriteRequest = components['schemas']['PoliciesWritePasswordPolicyRequest'];
 export type VaultRgpPolicyReadResponse = components['schemas']['PoliciesReadRgpPolicyResponse'];
@@ -17,7 +18,7 @@ export type VaultRotationPolicyReadResponse = components['schemas']['PoliciesRea
 export type VaultRotationPolicyWriteRequest = components['schemas']['PoliciesWriteRotationPolicyRequest'];
 
 export class VaultSystemPoliciesAclClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -31,20 +32,22 @@ export class VaultSystemPoliciesAclClient {
      * @end-nanvc-doc
      */
     public list(): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [response, error] = await this.raw.get('/sys/policies/acl/', {
-                params: {
-                    query: {
-                        list: 'true',
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [response, error] = await this.raw.get('/sys/policies/acl/', {
+                    params: {
+                        query: {
+                            list: 'true',
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(response.data?.keys ?? []);
-        })());
+                return ok(response.data?.keys ?? []);
+            })(),
+        );
     }
 
     /**
@@ -82,22 +85,24 @@ export class VaultSystemPoliciesAclClient {
      * @end-nanvc-doc
      */
     public write(name: string, payload: VaultAclPolicyWriteRequest): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/sys/policies/acl/{name}', {
-                body: payload,
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/sys/policies/acl/{name}', {
+                    body: payload,
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -112,26 +117,28 @@ export class VaultSystemPoliciesAclClient {
      * @end-nanvc-doc
      */
     public delete(name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/sys/policies/acl/{name}', {
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/sys/policies/acl/{name}', {
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 }
 
 export class VaultSystemPoliciesEgpClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -145,20 +152,22 @@ export class VaultSystemPoliciesEgpClient {
      * @end-nanvc-doc
      */
     public list(): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [data, error] = await this.raw.list('/sys/policies/egp/', {
-                params: {
-                    query: {
-                        list: 'true',
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [data, error] = await this.raw.list('/sys/policies/egp/', {
+                    params: {
+                        query: {
+                            list: 'true',
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.keys ?? []);
-        })());
+                return ok(data.keys ?? []);
+            })(),
+        );
     }
 
     /**
@@ -198,22 +207,24 @@ export class VaultSystemPoliciesEgpClient {
      * @end-nanvc-doc
      */
     public write(name: string, payload: VaultEgpPolicyWriteRequest): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/sys/policies/egp/{name}', {
-                body: payload,
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/sys/policies/egp/{name}', {
+                    body: payload,
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -228,26 +239,28 @@ export class VaultSystemPoliciesEgpClient {
      * @end-nanvc-doc
      */
     public delete(name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/sys/policies/egp/{name}', {
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/sys/policies/egp/{name}', {
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 }
 
 export class VaultSystemPoliciesPasswordClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -261,20 +274,22 @@ export class VaultSystemPoliciesPasswordClient {
      * @end-nanvc-doc
      */
     public list(): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [data, error] = await this.raw.list('/sys/policies/password/', {
-                params: {
-                    query: {
-                        list: 'true',
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [data, error] = await this.raw.list('/sys/policies/password/', {
+                    params: {
+                        query: {
+                            list: 'true',
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.keys ?? []);
-        })());
+                return ok(data.keys ?? []);
+            })(),
+        );
     }
 
     /**
@@ -312,22 +327,24 @@ export class VaultSystemPoliciesPasswordClient {
      * @end-nanvc-doc
      */
     public write(name: string, payload: VaultPasswordPolicyWriteRequest): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/sys/policies/password/{name}', {
-                body: payload,
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/sys/policies/password/{name}', {
+                    body: payload,
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -342,21 +359,23 @@ export class VaultSystemPoliciesPasswordClient {
      * @end-nanvc-doc
      */
     public delete(name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/sys/policies/password/{name}', {
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/sys/policies/password/{name}', {
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -371,25 +390,27 @@ export class VaultSystemPoliciesPasswordClient {
      * @end-nanvc-doc
      */
     public generate(name: string): Result<VaultPasswordPolicyGenerateResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultPasswordPolicyGenerateResponse>> => {
-            const [data, error] = await this.raw.get('/sys/policies/password/{name}/generate', {
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<VaultPasswordPolicyGenerateResponse>> => {
+                const [data, error] = await this.raw.get('/sys/policies/password/{name}/generate', {
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data);
-        })());
+                return ok(data);
+            })(),
+        );
     }
 }
 
 export class VaultSystemPoliciesRgpClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -403,20 +424,22 @@ export class VaultSystemPoliciesRgpClient {
      * @end-nanvc-doc
      */
     public list(): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [data, error] = await this.raw.list('/sys/policies/rgp/', {
-                params: {
-                    query: {
-                        list: 'true',
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [data, error] = await this.raw.list('/sys/policies/rgp/', {
+                    params: {
+                        query: {
+                            list: 'true',
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.keys ?? []);
-        })());
+                return ok(data.keys ?? []);
+            })(),
+        );
     }
 
     /**
@@ -455,22 +478,24 @@ export class VaultSystemPoliciesRgpClient {
      * @end-nanvc-doc
      */
     public write(name: string, payload: VaultRgpPolicyWriteRequest): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/sys/policies/rgp/{name}', {
-                body: payload,
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/sys/policies/rgp/{name}', {
+                    body: payload,
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -485,26 +510,28 @@ export class VaultSystemPoliciesRgpClient {
      * @end-nanvc-doc
      */
     public delete(name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/sys/policies/rgp/{name}', {
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/sys/policies/rgp/{name}', {
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 }
 
 export class VaultSystemPoliciesRotationClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -541,22 +568,24 @@ export class VaultSystemPoliciesRotationClient {
      * @end-nanvc-doc
      */
     public write(name: string, payload: VaultRotationPolicyWriteRequest): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/sys/policies/rotation/{name}', {
-                body: payload,
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/sys/policies/rotation/{name}', {
+                    body: payload,
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -571,21 +600,23 @@ export class VaultSystemPoliciesRotationClient {
      * @end-nanvc-doc
      */
     public delete(name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/sys/policies/rotation/{name}', {
-                params: {
-                    path: {
-                        name: normalize(name),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/sys/policies/rotation/{name}', {
+                    params: {
+                        path: {
+                            name: normalize(name),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 }
 
@@ -603,7 +634,4 @@ export class VaultSystemPoliciesClient {
         this.rgp = new VaultSystemPoliciesRgpClient(raw);
         this.rotation = new VaultSystemPoliciesRotationClient(raw);
     }
-
-
-
 }

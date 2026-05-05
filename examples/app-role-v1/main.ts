@@ -30,10 +30,7 @@ async function main(): Promise<void> {
         // ── Step 2: Admin — write the application secret ───────────────────────
         // Store a database credential set that the app will read later.
         // KV v1 stores data at the path directly with no versioning.
-        await expectSuccess(
-            vault.write('/credentials/mysql/webapp', secretData),
-            'Vault KV v1 write failed',
-        );
+        await expectSuccess(vault.write('/credentials/mysql/webapp', secretData), 'Vault KV v1 write failed');
 
         // ── Step 3: Admin — enable AppRole auth method ─────────────────────────
         // AppRole is a machine-oriented auth method that issues tokens in exchange
@@ -45,9 +42,9 @@ async function main(): Promise<void> {
         // The app token will only be able to call 'read' on that path.
         const jenkinsPolicy = [
             "# Read-only permission on secrets stored at 'credentials/mysql/webapp'",
-            "path \"credentials/mysql/webapp\" {",
-            "  capabilities = [\"read\"]",
-            "}",
+            'path "credentials/mysql/webapp" {',
+            '  capabilities = ["read"]',
+            '}',
         ].join('\n');
         await admin.createPolicy('jenkins', jenkinsPolicy);
 
@@ -77,21 +74,16 @@ async function main(): Promise<void> {
         // ── Step 8: App — read the secret and verify data ─────────────────────
         // The 'jenkins' policy allows read; the KV v1 response wraps the data
         // inside an `apiResponse.data` envelope from the legacy client.
-        const secretResponse = await expectSuccess(
-            vault.read('/credentials/mysql/webapp'),
-            'Vault KV v1 read failed',
-        );
-        const secret = secretResponse.apiResponse as VaultResponseData<{
-            db_name: string;
-            username: string;
-            password: string;
-        }> | undefined;
+        const secretResponse = await expectSuccess(vault.read('/credentials/mysql/webapp'), 'Vault KV v1 read failed');
+        const secret = secretResponse.apiResponse as
+            | VaultResponseData<{
+                  db_name: string;
+                  username: string;
+                  password: string;
+              }>
+            | undefined;
 
-        assert.deepStrictEqual(
-            secret?.data,
-            secretData,
-            "Retrieved secret data does not match the expected value",
-        );
+        assert.deepStrictEqual(secret?.data, secretData, 'Retrieved secret data does not match the expected value');
     });
 
     printSuccessBanner('AppRole v1 workflow complete');

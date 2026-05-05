@@ -51,14 +51,10 @@ export class VaultClient {
 
     constructor();
     constructor(options: VaultClientOptions);
+    constructor(clusterAddress?: string, authToken?: string | null, apiVersion?: string, tls?: VaultClientTlsOptions);
     constructor(
-        clusterAddress?: string,
-        authToken?: string | null,
-        apiVersion?: string,
-        tls?: VaultClientTlsOptions,
-    );
-    constructor(
-        clusterAddressOrOptions: string | VaultClientOptions = process.env.NANVC_VAULT_CLUSTER_ADDRESS || 'http://127.0.0.1:8200',
+        clusterAddressOrOptions: string | VaultClientOptions = process.env.NANVC_VAULT_CLUSTER_ADDRESS ||
+            'http://127.0.0.1:8200',
         authToken: string | null = process.env.NANVC_VAULT_AUTH_TOKEN || null,
         apiVersion: string = process.env.NANVC_VAULT_API_VERSION || 'v1',
         tls?: VaultClientTlsOptions,
@@ -166,7 +162,9 @@ export class VaultClient {
             partialVaultResponse.errorMessage = err instanceof Error ? err.message : String(err);
         }
 
-        const vaultResponse = VaultResponse.fromPartial(partialVaultResponse) as VaultResponse & { succeeded?: boolean };
+        const vaultResponse = VaultResponse.fromPartial(partialVaultResponse) as VaultResponse & {
+            succeeded?: boolean;
+        };
         if (typeof requestSucceeded === 'boolean') {
             Object.defineProperty(vaultResponse, 'succeeded', {
                 value: requestSucceeded,
@@ -182,26 +180,18 @@ export class VaultClient {
         return joinUrl(this._clusterAddress, this._apiVersion);
     }
 
-    private buildRequestOptions(
-        commandSpec: VaultCommandSpec,
-        args: unknown[],
-    ): RequestOptions {
+    private buildRequestOptions(commandSpec: VaultCommandSpec, args: unknown[]): RequestOptions {
         const request: RequestOptions = {
             headers: this._authToken
                 ? {
-                    'X-Vault-Token': this._authToken,
-                }
+                      'X-Vault-Token': this._authToken,
+                  }
                 : undefined,
             method: commandSpec.method as HttpMethod,
             url: this._clusterAddress,
         };
 
-        return buildRequestOptions(
-            this.getBaseUrl(),
-            request,
-            commandSpec.method,
-            commandSpec.path, args,
-        );
+        return buildRequestOptions(this.getBaseUrl(), request, commandSpec.method, commandSpec.path, args);
     }
 
     private buildTransportOptions(
@@ -312,13 +302,8 @@ export class VaultClient {
         }
     }
 
-    private extractResponseErrorMessage(
-        responseBody: unknown,
-        statusText: string,
-    ): string | undefined {
-        const errorBody = responseBody as
-            | { errors?: unknown; message?: unknown }
-            | undefined;
+    private extractResponseErrorMessage(responseBody: unknown, statusText: string): string | undefined {
+        const errorBody = responseBody as { errors?: unknown; message?: unknown } | undefined;
 
         if (Array.isArray(errorBody?.errors) && typeof errorBody.errors[0] === 'string') {
             return errorBody.errors[0];

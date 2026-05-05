@@ -4,13 +4,7 @@ export { VaultClient };
 export type { VaultClientOptions, VaultClientTlsOptions } from './lib/client.js';
 export { createLogger, createLoggerFromEnv } from './logger.js';
 export type { NanvcLogger, NanvcLogLevel } from './logger.js';
-export {
-    RawVaultClient,
-    VaultClientError,
-    VaultClientV2,
-    err,
-    ok,
-} from './v2/index.js';
+export { RawVaultClient, VaultClientError, VaultClientV2, VaultSecretCubbyholeClient, err, ok } from './v2/index.js';
 export type {
     Err,
     Ok,
@@ -19,6 +13,8 @@ export type {
     VaultAclPolicyWriteRequest,
     VaultClientErrorCode,
     VaultClientErrorInput,
+    VaultCubbyholeListResponse,
+    VaultCubbyholeReadResponse,
     VaultDbConfigureConnectionRequest,
     VaultDbConnectionData,
     VaultDbCredentialsData,

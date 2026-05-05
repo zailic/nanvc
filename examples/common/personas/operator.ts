@@ -1,9 +1,5 @@
 import VaultClient, { VaultClientV2 } from '../../../src/main.js';
-import {
-    expectSuccessOrAlreadyExists,
-    isMountAlreadyExistsError,
-    toExampleAuthError,
-} from './helpers.js';
+import { expectSuccessOrAlreadyExists, isMountAlreadyExistsError, toExampleAuthError } from './helpers.js';
 import type { PersonaOptions, VaultClientFor, VaultClientVersion, WorkflowContext } from './types.js';
 
 export class OperatorPersona<V extends VaultClientVersion> {
@@ -24,14 +20,12 @@ export class OperatorPersona<V extends VaultClientVersion> {
         return new OperatorPersona('v2', options);
     }
 
-    public async withWorkflow<R>(
-        workflow: (context: WorkflowContext<V>) => Promise<R> | R,
-    ): Promise<R> {
+    public async withWorkflow<R>(workflow: (context: WorkflowContext<V>) => Promise<R> | R): Promise<R> {
         return workflow({ vault: this.vault });
     }
 
     public async ensureKvMountAvailable(
-        path: string, 
+        path: string,
         engineVersion: 1 | 2 = this.version === 'v1' ? 1 : 2,
     ): Promise<void> {
         if (this.version === 'v1') {
