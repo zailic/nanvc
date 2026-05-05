@@ -182,7 +182,10 @@ Signatures:
 Example:
 
 ```ts
-const login = await vault.auth.loginWithAppRole({ role_id: roleId, secret_id: secretId }).unwrap();
+const login = await vault.auth.loginWithAppRole({
+    role_id: roleId,
+    secret_id: secretId,
+}).unwrap();
 ```
 
 </details>
@@ -260,7 +263,9 @@ Signatures:
 Example:
 
 ```ts
-await vault.auth.enableAuthMethod('approle', { type: 'approle' }).unwrap();
+await vault.auth.enableAuthMethod('approle', {
+    type: 'approle',
+}).unwrap();
 ```
 
 </details>
