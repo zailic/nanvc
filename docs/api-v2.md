@@ -117,21 +117,10 @@ await vault.delete('secret/apps/demo').unwrap();
 Use `{ engineVersion: 2 }` for KV v2 mounts:
 
 ```ts
-await vault.write('secret-v2', 'apps/demo', {
-  foo: 'bar',
-}, {
-  engineVersion: 2,
-  cas: 1,
-}).unwrap();
-
-const secret = await vault.read<{ foo: string }>('secret-v2', 'apps/demo', {
-  engineVersion: 2,
-  version: 3,
-}).unwrap();
+await vault.write('secret-v2', 'apps/demo', { foo: 'bar' }, { engineVersion: 2, cas: 1 }).unwrap();
+const secret = await vault.read<{ foo: string }>('secret-v2', 'apps/demo', { engineVersion: 2, version: 3 }).unwrap();
 const keys = await vault.list('secret-v2', 'apps', { engineVersion: 2 }).unwrap();
 await vault.delete('secret-v2', 'apps/demo', { engineVersion: 2 }).unwrap();
-
-console.log(secret.data.foo);
 ```
 
 ### Client Structure
@@ -193,10 +182,7 @@ Signatures:
 Example:
 
 ```ts
-const login = await vault.auth.loginWithAppRole({
-    role_id: roleId,
-    secret_id: secretId,
-}).unwrap();
+const login = await vault.auth.loginWithAppRole({ role_id: roleId, secret_id: secretId }).unwrap();
 ```
 
 </details>
@@ -274,9 +260,7 @@ Signatures:
 Example:
 
 ```ts
-await vault.auth.enableAuthMethod('approle', {
-    type: 'approle',
-}).unwrap();
+await vault.auth.enableAuthMethod('approle', { type: 'approle' }).unwrap();
 ```
 
 </details>
@@ -1627,12 +1611,7 @@ await vault.sys.mount.enable('secret-v2', {
   },
 }).unwrap();
 
-await vault.secret.kv.v2.write('secret-v2', 'apps/demo', {
-  foo: 'bar',
-}, {
-  cas: 1,
-}).unwrap();
-
+await vault.secret.kv.v2.write('secret-v2', 'apps/demo', {foo: 'bar'}, {cas: 1}).unwrap();
 const secret = await vault.secret.kv.v2.read<{ foo: string }>('secret-v2', 'apps/demo').unwrap();
 const keys = await vault.secret.kv.v2.list('secret-v2', 'apps').unwrap();
 

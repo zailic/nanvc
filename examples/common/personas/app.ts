@@ -54,15 +54,17 @@ export class AppPersona<TVersion extends VaultClientVersion> {
             return;
         }
 
-        await (this.vault as VaultClientV2).auth.loginWithAppRole({
-            role_id: credentials.roleId,
-            secret_id: credentials.secretId,
-        }).unwrap();
+        await (this.vault as VaultClientV2).auth
+            .loginWithAppRole({
+                role_id: credentials.roleId,
+                secret_id: credentials.secretId,
+            })
+            .unwrap();
     }
 }
 
 function createUnauthenticatedClient<TVersion extends VaultClientVersion>(version: TVersion): VaultClientFor<TVersion> {
-    return (version === 'v1'
-        ? new VaultClient({ authToken: null })
-        : new VaultClientV2({ authToken: null })) as VaultClientFor<TVersion>;
+    return (
+        version === 'v1' ? new VaultClient({ authToken: null }) : new VaultClientV2({ authToken: null })
+    ) as VaultClientFor<TVersion>;
 }

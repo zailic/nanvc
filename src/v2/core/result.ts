@@ -20,9 +20,7 @@ export function err<E>(error: E): Err<E> {
     return [null, error] as const;
 }
 
-export function toResult<T, E = VaultClientError>(
-    promise: Promise<ResultTuple<T, E>>,
-): Result<T, E> {
+export function toResult<T, E = VaultClientError>(promise: Promise<ResultTuple<T, E>>): Result<T, E> {
     const result = promise as Result<T, E>;
 
     result.unwrap = async (): Promise<T> => {
@@ -55,7 +53,7 @@ export function toResult<T, E = VaultClientError>(
         return data as T;
     };
 
-    // Rust like unwrapErr for cases where the caller expects an error and 
+    // Rust like unwrapErr for cases where the caller expects an error and
     // wants to get it directly, throwing if it's actually an Ok value
     result.unwrapErr = async (): Promise<E> => {
         const [data, error] = await promise;
@@ -74,7 +72,6 @@ export function toResult<T, E = VaultClientError>(
         void data;
         return error;
     };
-
 
     return result;
 }

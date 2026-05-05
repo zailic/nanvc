@@ -9,7 +9,7 @@ export type VaultCubbyholeReadResponse = components['schemas']['CubbyholeReadRes
 export type VaultCubbyholeListResponse = components['schemas']['CubbyholeListResponse'];
 
 export class VaultSecretCubbyholeClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -23,23 +23,25 @@ export class VaultSecretCubbyholeClient {
      * @end-nanvc-doc
      */
     public read<T = Record<string, unknown>>(path: string): Result<T> {
-        return toResult((async (): Promise<ResultTuple<T>> => {
-            const [normalizedPath, resolveError] = resolveCubbyholePathParam(path);
-            if (resolveError) {
-                return err(resolveError);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<T>> => {
+                const [normalizedPath, resolveError] = resolveCubbyholePathParam(path);
+                if (resolveError) {
+                    return err(resolveError);
+                }
 
-            const [data, error] = await this.raw.get('/cubbyhole/{path}', {
-                params: {
-                    path: { path: normalizedPath },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                const [data, error] = await this.raw.get('/cubbyhole/{path}', {
+                    params: {
+                        path: { path: normalizedPath },
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data as T);
-        })());
+                return ok(data.data as T);
+            })(),
+        );
     }
 
     /**
@@ -54,32 +56,36 @@ export class VaultSecretCubbyholeClient {
      * @end-nanvc-doc
      */
     public write(path: string, payload: Record<string, unknown>): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [normalizedPath, resolveError] = resolveCubbyholePathParam(path);
-            if (resolveError) {
-                return err(resolveError);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [normalizedPath, resolveError] = resolveCubbyholePathParam(path);
+                if (resolveError) {
+                    return err(resolveError);
+                }
 
-            if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-                return err(new VaultClientError({
-                    code: 'VALIDATION_ERROR',
-                    message: 'VaultSecretCubbyholeClient.write requires a payload object',
-                }));
-            }
+                if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+                    return err(
+                        new VaultClientError({
+                            code: 'VALIDATION_ERROR',
+                            message: 'VaultSecretCubbyholeClient.write requires a payload object',
+                        }),
+                    );
+                }
 
-            const [data, error] = await this.raw.post('/cubbyhole/{path}', {
-                body: payload,
-                params: {
-                    path: { path: normalizedPath },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                const [data, error] = await this.raw.post('/cubbyhole/{path}', {
+                    body: payload,
+                    params: {
+                        path: { path: normalizedPath },
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -94,24 +100,26 @@ export class VaultSecretCubbyholeClient {
      * @end-nanvc-doc
      */
     public delete(path: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [normalizedPath, resolveError] = resolveCubbyholePathParam(path);
-            if (resolveError) {
-                return err(resolveError);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [normalizedPath, resolveError] = resolveCubbyholePathParam(path);
+                if (resolveError) {
+                    return err(resolveError);
+                }
 
-            const [data, error] = await this.raw.delete('/cubbyhole/{path}', {
-                params: {
-                    path: { path: normalizedPath },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                const [data, error] = await this.raw.delete('/cubbyhole/{path}', {
+                    params: {
+                        path: { path: normalizedPath },
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -126,33 +134,37 @@ export class VaultSecretCubbyholeClient {
      * @end-nanvc-doc
      */
     public list(path?: string): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const normalizedPath = path ? normalize(path) : '';
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const normalizedPath = path ? normalize(path) : '';
 
-            const [data, error] = await this.raw.list('/cubbyhole/{path}/', {
-                params: {
-                    path: { path: normalizedPath },
-                    query: {
-                        list: 'true',
+                const [data, error] = await this.raw.list('/cubbyhole/{path}/', {
+                    params: {
+                        path: { path: normalizedPath },
+                        query: {
+                            list: 'true',
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data?.keys ?? []);
-        })());
+                return ok(data.data?.keys ?? []);
+            })(),
+        );
     }
 }
 
 function resolveCubbyholePathParam(path: string): ResultTuple<string> {
     const normalized = normalize(path);
     if (!normalized || normalized === '.') {
-        return err(new VaultClientError({
-            code: 'VALIDATION_ERROR',
-            message: `Expected a cubbyhole secret path, got "${path}"`,
-        }));
+        return err(
+            new VaultClientError({
+                code: 'VALIDATION_ERROR',
+                message: `Expected a cubbyhole secret path, got "${path}"`,
+            }),
+        );
     }
     return ok(normalized);
 }

@@ -5,49 +5,36 @@ import { err, ok, toResult, type Result, type ResultTuple } from '../core/result
 
 // ── Public type aliases ───────────────────────────────────────────────────────
 
-export type VaultDbConfigureConnectionRequest =
-    components['schemas']['DatabaseConfigureConnectionRequest'];
+export type VaultDbConfigureConnectionRequest = components['schemas']['DatabaseConfigureConnectionRequest'];
 
-export type VaultDbWriteRoleRequest =
-    components['schemas']['DatabaseWriteRoleRequest'];
+export type VaultDbWriteRoleRequest = components['schemas']['DatabaseWriteRoleRequest'];
 
-export type VaultDbWriteStaticRoleRequest =
-    components['schemas']['DatabaseWriteStaticRoleRequest'];
+export type VaultDbWriteStaticRoleRequest = components['schemas']['DatabaseWriteStaticRoleRequest'];
 
-export type VaultDbConnectionData =
-    components['schemas']['DatabaseConnectionData'];
+export type VaultDbConnectionData = components['schemas']['DatabaseConnectionData'];
 
-export type VaultDbReadConnectionResponse =
-    components['schemas']['DatabaseReadConnectionResponse'];
+export type VaultDbReadConnectionResponse = components['schemas']['DatabaseReadConnectionResponse'];
 
-export type VaultDbCredentialsData =
-    components['schemas']['DatabaseCredentialsData'];
+export type VaultDbCredentialsData = components['schemas']['DatabaseCredentialsData'];
 
-export type VaultDbGenerateCredentialsResponse =
-    components['schemas']['DatabaseGenerateCredentialsResponse'];
+export type VaultDbGenerateCredentialsResponse = components['schemas']['DatabaseGenerateCredentialsResponse'];
 
-export type VaultDbRoleData =
-    components['schemas']['DatabaseRoleData'];
+export type VaultDbRoleData = components['schemas']['DatabaseRoleData'];
 
-export type VaultDbReadRoleResponse =
-    components['schemas']['DatabaseReadRoleResponse'];
+export type VaultDbReadRoleResponse = components['schemas']['DatabaseReadRoleResponse'];
 
-export type VaultDbStaticCredentialsData =
-    components['schemas']['DatabaseStaticCredentialsData'];
+export type VaultDbStaticCredentialsData = components['schemas']['DatabaseStaticCredentialsData'];
 
-export type VaultDbReadStaticCredsResponse =
-    components['schemas']['DatabaseReadStaticCredsResponse'];
+export type VaultDbReadStaticCredsResponse = components['schemas']['DatabaseReadStaticCredsResponse'];
 
-export type VaultDbStaticRoleData =
-    components['schemas']['DatabaseStaticRoleData'];
+export type VaultDbStaticRoleData = components['schemas']['DatabaseStaticRoleData'];
 
-export type VaultDbReadStaticRoleResponse =
-    components['schemas']['DatabaseReadStaticRoleResponse'];
+export type VaultDbReadStaticRoleResponse = components['schemas']['DatabaseReadStaticRoleResponse'];
 
 // ── Client ────────────────────────────────────────────────────────────────────
 
 export class VaultSecretDbClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     // ── Connections ───────────────────────────────────────────────────────────
 
@@ -66,28 +53,23 @@ export class VaultSecretDbClient {
      *   }).unwrap();
      * @end-nanvc-doc
      */
-    public configureConnection(
-        mount: string,
-        name: string,
-        options: VaultDbConfigureConnectionRequest,
-    ): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post(
-                '/{database_mount_path}/config/{name}',
-                {
+    public configureConnection(mount: string, name: string, options: VaultDbConfigureConnectionRequest): Result<void> {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{database_mount_path}/config/{name}', {
                     body: options,
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -101,25 +83,21 @@ export class VaultSecretDbClient {
      *   const conn = await vault.secret.db.readConnection('database', 'my-db').unwrap();
      * @end-nanvc-doc
      */
-    public readConnection(
-        mount: string,
-        name: string,
-    ): Result<VaultDbConnectionData> {
-        return toResult((async (): Promise<ResultTuple<VaultDbConnectionData>> => {
-            const [data, error] = await this.raw.get(
-                '/{database_mount_path}/config/{name}',
-                {
+    public readConnection(mount: string, name: string): Result<VaultDbConnectionData> {
+        return toResult(
+            (async (): Promise<ResultTuple<VaultDbConnectionData>> => {
+                const [data, error] = await this.raw.get('/{database_mount_path}/config/{name}', {
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data ?? {});
-        })());
+                return ok(data.data ?? {});
+            })(),
+        );
     }
 
     /**
@@ -134,22 +112,21 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public deleteConnection(mount: string, name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete(
-                '/{database_mount_path}/config/{name}',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/{database_mount_path}/config/{name}', {
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -164,26 +141,25 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public listConnections(mount: string): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [data, error] = await this.raw.list(
-                '/{database_mount_path}/config/',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [data, error] = await this.raw.list('/{database_mount_path}/config/', {
                     params: {
                         path: { database_mount_path: mount },
                         query: { list: 'true' },
                     },
-                },
-            );
-            if (error) {
-                // Vault returns 404 when no connections are configured
-                if (error instanceof VaultClientError && error.status === 404) {
-                    return ok([]);
+                });
+                if (error) {
+                    // Vault returns 404 when no connections are configured
+                    if (error instanceof VaultClientError && error.status === 404) {
+                        return ok([]);
+                    }
+                    return err(error);
                 }
-                return err(error);
-            }
 
-            return ok(extractListKeys(data));
-        })());
+                return ok(extractListKeys(data));
+            })(),
+        );
     }
 
     /**
@@ -198,22 +174,21 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public resetConnection(mount: string, name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post(
-                '/{database_mount_path}/reset/{name}',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{database_mount_path}/reset/{name}', {
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -228,22 +203,21 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public rotateRootCredentials(mount: string, name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post(
-                '/{database_mount_path}/rotate-root/{name}',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{database_mount_path}/rotate-root/{name}', {
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     // ── Dynamic roles and credentials ─────────────────────────────────────────
@@ -264,28 +238,23 @@ export class VaultSecretDbClient {
      *   }).unwrap();
      * @end-nanvc-doc
      */
-    public writeRole(
-        mount: string,
-        name: string,
-        options: VaultDbWriteRoleRequest,
-    ): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post(
-                '/{database_mount_path}/roles/{name}',
-                {
+    public writeRole(mount: string, name: string, options: VaultDbWriteRoleRequest): Result<void> {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{database_mount_path}/roles/{name}', {
                     body: options,
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -300,21 +269,20 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public readRole(mount: string, name: string): Result<VaultDbRoleData> {
-        return toResult((async (): Promise<ResultTuple<VaultDbRoleData>> => {
-            const [data, error] = await this.raw.get(
-                '/{database_mount_path}/roles/{name}',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<VaultDbRoleData>> => {
+                const [data, error] = await this.raw.get('/{database_mount_path}/roles/{name}', {
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data ?? {});
-        })());
+                return ok(data.data ?? {});
+            })(),
+        );
     }
 
     /**
@@ -329,22 +297,21 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public deleteRole(mount: string, name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete(
-                '/{database_mount_path}/roles/{name}',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/{database_mount_path}/roles/{name}', {
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -359,26 +326,25 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public listRoles(mount: string): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [data, error] = await this.raw.list(
-                '/{database_mount_path}/roles/',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [data, error] = await this.raw.list('/{database_mount_path}/roles/', {
                     params: {
                         path: { database_mount_path: mount },
                         query: { list: 'true' },
                     },
-                },
-            );
-            if (error) {
-                // Vault returns 404 when no roles are configured
-                if (error instanceof VaultClientError && error.status === 404) {
-                    return ok([]);
+                });
+                if (error) {
+                    // Vault returns 404 when no roles are configured
+                    if (error instanceof VaultClientError && error.status === 404) {
+                        return ok([]);
+                    }
+                    return err(error);
                 }
-                return err(error);
-            }
 
-            return ok(extractListKeys(data));
-        })());
+                return ok(extractListKeys(data));
+            })(),
+        );
     }
 
     /**
@@ -392,10 +358,7 @@ export class VaultSecretDbClient {
      *   const creds = await vault.secret.db.generateCredentials('database', 'my-role').unwrap();
      * @end-nanvc-doc
      */
-    public generateCredentials(
-        mount: string,
-        role: string,
-    ): Result<VaultDbGenerateCredentialsResponse> {
+    public generateCredentials(mount: string, role: string): Result<VaultDbGenerateCredentialsResponse> {
         return this.raw.get('/{database_mount_path}/creds/{name}', {
             params: {
                 path: toDbPathParams(mount, role),
@@ -420,28 +383,23 @@ export class VaultSecretDbClient {
      *   }).unwrap();
      * @end-nanvc-doc
      */
-    public writeStaticRole(
-        mount: string,
-        name: string,
-        options: VaultDbWriteStaticRoleRequest,
-    ): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post(
-                '/{database_mount_path}/static-roles/{name}',
-                {
+    public writeStaticRole(mount: string, name: string, options: VaultDbWriteStaticRoleRequest): Result<void> {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{database_mount_path}/static-roles/{name}', {
                     body: options,
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -455,25 +413,21 @@ export class VaultSecretDbClient {
      *   const role = await vault.secret.db.readStaticRole('database', 'my-static-role').unwrap();
      * @end-nanvc-doc
      */
-    public readStaticRole(
-        mount: string,
-        name: string,
-    ): Result<VaultDbStaticRoleData> {
-        return toResult((async (): Promise<ResultTuple<VaultDbStaticRoleData>> => {
-            const [data, error] = await this.raw.get(
-                '/{database_mount_path}/static-roles/{name}',
-                {
+    public readStaticRole(mount: string, name: string): Result<VaultDbStaticRoleData> {
+        return toResult(
+            (async (): Promise<ResultTuple<VaultDbStaticRoleData>> => {
+                const [data, error] = await this.raw.get('/{database_mount_path}/static-roles/{name}', {
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data ?? {});
-        })());
+                return ok(data.data ?? {});
+            })(),
+        );
     }
 
     /**
@@ -488,22 +442,21 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public deleteStaticRole(mount: string, name: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete(
-                '/{database_mount_path}/static-roles/{name}',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/{database_mount_path}/static-roles/{name}', {
                     params: {
                         path: toDbPathParams(mount, name),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -518,26 +471,25 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public listStaticRoles(mount: string): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [data, error] = await this.raw.list(
-                '/{database_mount_path}/static-roles/',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [data, error] = await this.raw.list('/{database_mount_path}/static-roles/', {
                     params: {
                         path: { database_mount_path: mount },
                         query: { list: 'true' },
                     },
-                },
-            );
-            if (error) {
-                // Vault returns 404 when no static roles are configured
-                if (error instanceof VaultClientError && error.status === 404) {
-                    return ok([]);
+                });
+                if (error) {
+                    // Vault returns 404 when no static roles are configured
+                    if (error instanceof VaultClientError && error.status === 404) {
+                        return ok([]);
+                    }
+                    return err(error);
                 }
-                return err(error);
-            }
 
-            return ok(extractListKeys(data));
-        })());
+                return ok(extractListKeys(data));
+            })(),
+        );
     }
 
     /**
@@ -551,10 +503,7 @@ export class VaultSecretDbClient {
      *   const creds = await vault.secret.db.readStaticCredentials('database', 'my-static-role').unwrap();
      * @end-nanvc-doc
      */
-    public readStaticCredentials(
-        mount: string,
-        role: string,
-    ): Result<VaultDbReadStaticCredsResponse> {
+    public readStaticCredentials(mount: string, role: string): Result<VaultDbReadStaticCredsResponse> {
         return this.raw.get('/{database_mount_path}/static-creds/{name}', {
             params: {
                 path: toDbPathParams(mount, role),
@@ -574,22 +523,21 @@ export class VaultSecretDbClient {
      * @end-nanvc-doc
      */
     public rotateStaticCredentials(mount: string, role: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post(
-                '/{database_mount_path}/rotate-role/{name}',
-                {
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{database_mount_path}/rotate-role/{name}', {
                     params: {
                         path: toDbPathParams(mount, role),
                     },
-                },
-            );
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 }
 

@@ -7,7 +7,7 @@ export interface VaultAuditPayloadRequest {
     local?: boolean;
 }
 
-export const auditSchema: VaultCommandSchema =  {
+export const auditSchema: VaultCommandSchema = {
     req: {
         properties: {
             description: {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createSandbox } from 'sinon';
 
-import {suite, test, beforeEachTest, afterEachTest} from '../../../mocha/decorators.js';
+import { suite, test, beforeEachTest, afterEachTest } from '../../../mocha/decorators.js';
 import { resultOf } from '../../../helpers/types.js';
 
 import { VaultAuthClient } from '../../../../src/v2/client/auth.js';
@@ -14,7 +14,6 @@ import type { SinonSandbox } from 'sinon';
 
 @suite('VaultAuthClient unit test cases.')
 export class VaultAuthClientUnitTests {
-
     private sandbox!: SinonSandbox;
 
     @beforeEachTest()
@@ -30,15 +29,17 @@ export class VaultAuthClientUnitTests {
     @test('should enable an auth method when it is not already enabled')
     public async shouldEnableAuthMethodWhenNotEnabledTest() {
         const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(new VaultClientError({
-                code: 'HTTP_ERROR',
-                message: 'Not Found',
-                status: 404,
-            }))),
+            resultOf(
+                err(
+                    new VaultClientError({
+                        code: 'HTTP_ERROR',
+                        message: 'Not Found',
+                        status: 404,
+                    }),
+                ),
+            ),
         );
-        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         const [data, error] = await client.enableAuthMethod('/team/auth/approle', {
@@ -62,7 +63,7 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should surface errors from Vault when enabling an auth method')
     public async shouldSurfaceErrorsFromVaultWhenEnablingAuthMethodTest() {
@@ -71,33 +72,33 @@ export class VaultAuthClientUnitTests {
             message: 'Forbidden',
             status: 403,
         });
-        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         await assert.rejects(
-            client.enableAuthMethod('team/auth/approle', {
-                type: 'approle',
-            }).unwrap(),
+            client
+                .enableAuthMethod('team/auth/approle', {
+                    type: 'approle',
+                })
+                .unwrap(),
             (error: unknown) => {
                 assert.equal(error, clientError);
                 return true;
             },
         );
-    };
+    }
 
     @test('should skip enabling an auth method when it already exists')
     public async shouldSkipEnablingAuthMethodWhenAlreadyExistsTest() {
         this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                accessor: 'auth_approle_123',
-                type: 'approle',
-            })),
+            resultOf(
+                ok({
+                    accessor: 'auth_approle_123',
+                    type: 'approle',
+                }),
+            ),
         );
-        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         const [data, error] = await client.enableAuthMethod('team/auth/approle', {
@@ -107,13 +108,11 @@ export class VaultAuthClientUnitTests {
         assert.equal(data, undefined);
         assert.equal(error, null);
         assert.equal(postStub.called, false);
-    };
+    }
 
     @test('should disable an auth method through the sys auth path')
     public async shouldDisableAuthMethodThroughSysAuthPathTest() {
-        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(ok(undefined)),
-        );
+        const deleteStub = this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(ok(undefined)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         const [data, error] = await client.disableAuthMethod('/team/auth/approle');
@@ -129,7 +128,7 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should surface disable errors from Vault')
     public async shouldSurfaceDisableErrorsFromVaultTest() {
@@ -138,25 +137,18 @@ export class VaultAuthClientUnitTests {
             message: 'Forbidden',
             status: 403,
         });
-        this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'delete').returns(resultOf(err(clientError)));
         const client = new VaultAuthClient(new RawVaultClient());
 
-        await assert.rejects(
-            client.disableAuthMethod('team/auth/approle').unwrap(),
-            (error: unknown) => {
-                assert.equal(error, clientError);
-                return true;
-            },
-        );
-    };
+        await assert.rejects(client.disableAuthMethod('team/auth/approle').unwrap(), (error: unknown) => {
+            assert.equal(error, clientError);
+            return true;
+        });
+    }
 
     @test('should register an AppRole on the default approle mount')
     public async shouldRegisterAppRoleOnDefaultAppRoleMountTest() {
-        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         const [data, error] = await client.registerAppRole('jenkins', {
@@ -182,13 +174,11 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should register an AppRole on a custom approle mount')
     public async shouldRegisterAppRoleOnCustomAppRoleMountTest() {
-        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         const [data, error] = await client.registerAppRole('/team/approle', '/jenkins', {
@@ -210,7 +200,7 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should surface AppRole registration errors from Vault')
     public async shouldSurfaceAppRoleRegistrationErrorsFromVaultTest() {
@@ -219,9 +209,7 @@ export class VaultAuthClientUnitTests {
             message: 'missing auth backend',
             status: 404,
         });
-        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         await assert.rejects(
@@ -231,16 +219,18 @@ export class VaultAuthClientUnitTests {
                 return true;
             },
         );
-    };
+    }
 
     @test('should read an AppRole role id from the default approle mount')
     public async shouldReadAppRoleRoleIdFromDefaultAppRoleMountTest() {
         const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                data: {
-                    role_id: 'role-id-value',
-                },
-            })),
+            resultOf(
+                ok({
+                    data: {
+                        role_id: 'role-id-value',
+                    },
+                }),
+            ),
         );
         const client = new VaultAuthClient(new RawVaultClient());
 
@@ -259,14 +249,16 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should defensively return an AppRole role id response when no Vault data envelope exists')
     public async shouldDefensivelyReturnAppRoleRoleIdResponseWhenNoVaultDataEnvelopeExistsTest() {
         this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                role_id: 'role-id-value',
-            })),
+            resultOf(
+                ok({
+                    role_id: 'role-id-value',
+                }),
+            ),
         );
         const client = new VaultAuthClient(new RawVaultClient());
 
@@ -275,7 +267,7 @@ export class VaultAuthClientUnitTests {
         assert.deepEqual(roleId, {
             role_id: 'role-id-value',
         });
-    };
+    }
 
     @test('should surface errors from Vault when reading an AppRole role id')
     public async shouldSurfaceErrorsFromVaultWhenReadingAppRoleRoleIdTest() {
@@ -284,25 +276,18 @@ export class VaultAuthClientUnitTests {
             code: 'NETWORK_ERROR',
             message: 'Simulated network error',
         });
-        this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(err(clientError)));
         const client = new VaultAuthClient(new RawVaultClient());
 
-        await assert.rejects(
-            client.getAppRoleRoleId('jenkins').unwrap(),
-            (error: unknown) => {
-                assert.equal(error, clientError);
-                return true;
-            },
-        );
-    };
+        await assert.rejects(client.getAppRoleRoleId('jenkins').unwrap(), (error: unknown) => {
+            assert.equal(error, clientError);
+            return true;
+        });
+    }
 
     @test('should register an AppRole role id on a custom approle mount')
     public async shouldRegisterAppRoleRoleIdOnCustomAppRoleMountTest() {
-        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         const [data, error] = await client.registerAppRoleRoleId('/team/approle', '/jenkins', {
@@ -324,7 +309,7 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should surface errors from Vault when registering an AppRole role id')
     public async shouldSurfaceErrorsFromVaultWhenRegisteringAppRoleRoleIdTest() {
@@ -333,9 +318,7 @@ export class VaultAuthClientUnitTests {
             code: 'NETWORK_ERROR',
             message: 'Simulated network error',
         });
-        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         await assert.rejects(
@@ -345,17 +328,19 @@ export class VaultAuthClientUnitTests {
                 return true;
             },
         );
-    };
+    }
 
     @test('should generate an AppRole secret id from the default approle mount')
     public async shouldGenerateAppRoleSecretIdFromDefaultAppRoleMountTest() {
         const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok({
-                data: {
-                    secret_id: 'secret-id-value',
-                    secret_id_accessor: 'secret-id-accessor',
-                },
-            })),
+            resultOf(
+                ok({
+                    data: {
+                        secret_id: 'secret-id-value',
+                        secret_id_accessor: 'secret-id-accessor',
+                    },
+                }),
+            ),
         );
         const client = new VaultAuthClient(new RawVaultClient());
 
@@ -376,24 +361,28 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should generate an AppRole secret id with options on a custom approle mount')
     public async shouldGenerateAppRoleSecretIdWithOptionsOnCustomAppRoleMountTest() {
         const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok({
-                data: {
-                    secret_id: 'secret-id-value',
-                    secret_id_accessor: 'secret-id-accessor',
-                },
-            })),
+            resultOf(
+                ok({
+                    data: {
+                        secret_id: 'secret-id-value',
+                        secret_id_accessor: 'secret-id-accessor',
+                    },
+                }),
+            ),
         );
         const client = new VaultAuthClient(new RawVaultClient());
 
-        const secretId = await client.generateAppRoleSecretId('team/approle', 'jenkins', {
-            metadata: '{"env":"test"}',
-            ttl: '30m',
-        }).unwrap();
+        const secretId = await client
+            .generateAppRoleSecretId('team/approle', 'jenkins', {
+                metadata: '{"env":"test"}',
+                ttl: '30m',
+            })
+            .unwrap();
 
         assert.deepEqual(secretId, {
             secret_id: 'secret-id-value',
@@ -411,7 +400,7 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should surface network errors when generating an AppRole secret id')
     public async shouldSurfaceNetworkErrorsWhenGeneratingAppRoleSecretIdTest() {
@@ -420,37 +409,36 @@ export class VaultAuthClientUnitTests {
             code: 'NETWORK_ERROR',
             message: 'Simulated network error',
         });
-        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
         const client = new VaultAuthClient(new RawVaultClient());
-        
-        await assert.rejects(
-            client.generateAppRoleSecretId('jenkins', { ttl: '30m' }).unwrap(),
-            (error: unknown) => {
-                assert.equal(error, clientError);
-                return true;
-            },
-        );
-    };
+
+        await assert.rejects(client.generateAppRoleSecretId('jenkins', { ttl: '30m' }).unwrap(), (error: unknown) => {
+            assert.equal(error, clientError);
+            return true;
+        });
+    }
 
     @test('should login with AppRole on the default approle mount and set the raw token')
     public async shouldLoginWithAppRoleOnDefaultAppRoleMountAndSetRawTokenTest() {
         const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok({
-                auth: {
-                    client_token: 'app-token',
-                    policies: ['default'],
-                },
-            })),
+            resultOf(
+                ok({
+                    auth: {
+                        client_token: 'app-token',
+                        policies: ['default'],
+                    },
+                }),
+            ),
         );
         const setTokenSpy = this.sandbox.spy(RawVaultClient.prototype, 'setToken');
         const client = new VaultAuthClient(new RawVaultClient());
 
-        const login = await client.loginWithAppRole({
-            role_id: 'role-id-value',
-            secret_id: 'secret-id-value',
-        }).unwrap();
+        const login = await client
+            .loginWithAppRole({
+                role_id: 'role-id-value',
+                secret_id: 'secret-id-value',
+            })
+            .unwrap();
 
         assert.deepEqual(login, {
             auth: {
@@ -472,16 +460,18 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should login with AppRole on a custom approle mount')
     public async shouldLoginWithAppRoleOnCustomAppRoleMountTest() {
         const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok({
-                auth: {
-                    client_token: 'app-token',
-                },
-            })),
+            resultOf(
+                ok({
+                    auth: {
+                        client_token: 'app-token',
+                    },
+                }),
+            ),
         );
         const client = new VaultAuthClient(new RawVaultClient());
 
@@ -503,7 +493,7 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should surface AppRole login errors from Vault')
     public async shouldSurfaceAppRoleLoginErrorsFromVaultTest() {
@@ -512,31 +502,33 @@ export class VaultAuthClientUnitTests {
             message: 'invalid credentials',
             status: 400,
         });
-        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(err(clientError)));
         const client = new VaultAuthClient(new RawVaultClient());
 
         await assert.rejects(
-            client.loginWithAppRole({
-                role_id: 'role-id-value',
-                secret_id: 'secret-id-value',
-            }).unwrap(),
+            client
+                .loginWithAppRole({
+                    role_id: 'role-id-value',
+                    secret_id: 'secret-id-value',
+                })
+                .unwrap(),
             (error: unknown) => {
                 assert.equal(error, clientError);
                 return true;
             },
         );
-    };
+    }
 
     @test('should read auth method configuration from the sys auth path')
     public async shouldReadAuthMethodConfigurationFromSysAuthPathTest() {
         const getStub = this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(ok({
-                accessor: 'auth_approle_123',
-                description: 'Team AppRole backend',
-                type: 'approle',
-            })),
+            resultOf(
+                ok({
+                    accessor: 'auth_approle_123',
+                    description: 'Team AppRole backend',
+                    type: 'approle',
+                }),
+            ),
         );
         const client = new VaultAuthClient(new RawVaultClient());
 
@@ -556,23 +548,27 @@ export class VaultAuthClientUnitTests {
                 },
             },
         });
-    };
+    }
 
     @test('should report auth methods as disabled when Vault returns 404')
     public async shouldReportAuthMethodsAsDisabledWhenVaultReturns404Test() {
         this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(new VaultClientError({
-                code: 'HTTP_ERROR',
-                message: 'Not Found',
-                status: 404,
-            }))),
+            resultOf(
+                err(
+                    new VaultClientError({
+                        code: 'HTTP_ERROR',
+                        message: 'Not Found',
+                        status: 404,
+                    }),
+                ),
+            ),
         );
         const client = new VaultAuthClient(new RawVaultClient());
 
         const enabled = await client.isAuthMethodEnabled('team/auth/approle').unwrap();
 
         assert.equal(enabled, false);
-    };
+    }
 
     @test('should propagate non-404 errors while checking auth method status')
     public async shouldPropagateNon404ErrorsWhileCheckingAuthMethodStatusTest() {
@@ -581,28 +577,24 @@ export class VaultAuthClientUnitTests {
             message: 'Forbidden',
             status: 403,
         });
-        this.sandbox.stub(RawVaultClient.prototype, 'get').returns(
-            resultOf(err(clientError)),
-        );
+        this.sandbox.stub(RawVaultClient.prototype, 'get').returns(resultOf(err(clientError)));
         const client = new VaultAuthClient(new RawVaultClient());
 
-        await assert.rejects(
-            client.isAuthMethodEnabled('team/auth/approle').unwrap(),
-            (error: unknown) => {
-                assert.equal(error, clientError);
-                return true;
-            },
-        );
-    };
-    
+        await assert.rejects(client.isAuthMethodEnabled('team/auth/approle').unwrap(), (error: unknown) => {
+            assert.equal(error, clientError);
+            return true;
+        });
+    }
+
     @test('should surface validation errors when payload is not specified for loginWithAppRole')
     public async shouldSurfaceValidationErrorsWhenPayloadIsNotSpecifiedForLoginWithAppRoleTest() {
-        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(
-            resultOf(ok(undefined)),
-        );
+        const postStub = this.sandbox.stub(RawVaultClient.prototype, 'post').returns(resultOf(ok(undefined)));
         const client = new VaultAuthClient(new RawVaultClient());
 
-        const [data, error] = await client.loginWithAppRole('team/approle', undefined as unknown as VaultAppRoleLoginRequest);
+        const [data, error] = await client.loginWithAppRole(
+            'team/approle',
+            undefined as unknown as VaultAppRoleLoginRequest,
+        );
 
         assert.equal(data, null);
         assert.equal(error instanceof VaultClientError, true);
@@ -614,10 +606,12 @@ export class VaultAuthClientUnitTests {
             (err: unknown) => {
                 assert.equal(err instanceof VaultClientError, true);
                 assert.equal((err as VaultClientError).code, 'VALIDATION_ERROR');
-                assert.equal((err as VaultClientError).message, 'VaultAuthClient.loginWithAppRole requires a payload object');
+                assert.equal(
+                    (err as VaultClientError).message,
+                    'VaultAuthClient.loginWithAppRole requires a payload object',
+                );
                 return true;
             },
         );
-    };
-
-};
+    }
+}

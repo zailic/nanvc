@@ -31,4 +31,16 @@ export class VaultClientError extends Error {
         this.responseBody = input.responseBody;
         this.cause = input.cause;
     }
+
+    public isMountAlreadyExistsError(): boolean {
+        return (
+            this.code === 'HTTP_ERROR' &&
+            this.status === 400 &&
+            typeof this.responseBody === 'object' &&
+            this.responseBody !== null &&
+            'errors' in this.responseBody &&
+            Array.isArray(this.responseBody.errors) &&
+            this.responseBody.errors.some((error: string) => error.includes('path is already in use'))
+        );
+    }
 }

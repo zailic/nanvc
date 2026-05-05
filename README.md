@@ -39,19 +39,9 @@ const secret = await vault.read<{ password: string }>('secret/apps/demo').unwrap
 ### KV v2
 
 ```ts
-await vault.write(
-    'secret-v2',
-    'apps/demo',
-    { apiKey: 'dev-key' },
-    { engineVersion: 2 },
-).unwrap();
+await vault.write('secret-v2', 'apps/demo', { apiKey: 'dev-key' }, { engineVersion: 2 }).unwrap();
 
-const value = await vault.read<{ apiKey: string }>(
-    'secret-v2',
-    'apps/demo',
-    { engineVersion: 2 },
-).unwrap();
-
+const value = await vault.read<{ apiKey: string }>('secret-v2', 'apps/demo', { engineVersion: 2 }).unwrap();
 ```
 
 For the full versioned KV workflow, including patch, metadata, history, soft-delete, undelete, destroy, automatic deletion, and CAS examples, see the [versioned KV guide](https://zailic.github.io/nanvc/examples/versioned-kv/).
@@ -59,21 +49,20 @@ For the full versioned KV workflow, including patch, metadata, history, soft-del
 ### AppRole
 
 ```ts
-const login = await vault.auth.loginWithAppRole({
-    role_id: process.env.VAULT_ROLE_ID,
-    secret_id: process.env.VAULT_SECRET_ID,
-}).unwrap();
-
+const login = await vault.auth
+    .loginWithAppRole({
+        role_id: process.env.VAULT_ROLE_ID,
+        secret_id: process.env.VAULT_SECRET_ID,
+    })
+    .unwrap();
 ```
+
 See the runnable [VaultClientV2 AppRole example](https://zailic.github.io/nanvc/examples/app-role/).
 
 ### Response Wrapping
 
 ```ts
-const wrapped = await vault.sys.wrapping.wrap(
-    { role_id: '...', secret_id: '...' },
-    '5m',
-).unwrap();
+const wrapped = await vault.sys.wrapping.wrap({ role_id: '...', secret_id: '...' }, '5m').unwrap();
 
 const unwrapped = await vault.sys.wrapping.unwrap(wrapped.wrap_info.token).unwrap();
 ```
@@ -83,11 +72,13 @@ See the [request wrapping example](https://zailic.github.io/nanvc/examples/reque
 ### Database Secrets
 
 ```ts
-await vault.secret.db.configureConnection('database', 'postgres', {
-    plugin_name: 'postgresql-database-plugin',
-    connection_url: 'postgresql://{{username}}:{{password}}@localhost/postgres',
-    allowed_roles: ['readonly'],
-}).unwrap();
+await vault.secret.db
+    .configureConnection('database', 'postgres', {
+        plugin_name: 'postgresql-database-plugin',
+        connection_url: 'postgresql://{{username}}:{{password}}@localhost/postgres',
+        allowed_roles: ['readonly'],
+    })
+    .unwrap();
 
 const creds = await vault.secret.db.generateCredentials('database', 'readonly').unwrap();
 ```

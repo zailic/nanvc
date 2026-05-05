@@ -2,11 +2,7 @@ import { unauthenticatedOperations, type paths as GeneratedPaths } from '../gene
 import { err, ok, toResult, type Result, type ResultTuple } from './result.js';
 import { VaultClientError } from './errors.js';
 import { NodeVaultTransport } from '../transport/node-transport.js';
-import type {
-    VaultClientOptions,
-    VaultRequestMethod,
-    VaultRequestOptions,
-} from '../transport/types.js';
+import type { VaultClientOptions, VaultRequestMethod, VaultRequestOptions } from '../transport/types.js';
 
 type GeneratedMethod = 'delete' | 'get' | 'head' | 'patch' | 'post' | 'put';
 
@@ -17,60 +13,52 @@ type PathsWithMethod<TMethod extends GeneratedMethod> = {
 type OperationFor<
     TPath extends keyof GeneratedPaths,
     TMethod extends GeneratedMethod,
-> = TMethod extends keyof GeneratedPaths[TPath]
-    ? GeneratedPaths[TPath][TMethod]
-    : never;
+> = TMethod extends keyof GeneratedPaths[TPath] ? GeneratedPaths[TPath][TMethod] : never;
 
-type JsonBodyOf<TOperation> =
-    TOperation extends {
-        requestBody: {
-            content: {
-                'application/json': infer TBody;
-            };
-        };
-    }
-        ? TBody
-        : never;
-
-type JsonResponseOf<TResponse> =
-    TResponse extends {
+type JsonBodyOf<TOperation> = TOperation extends {
+    requestBody: {
         content: {
-            'application/json': infer TContent;
+            'application/json': infer TBody;
         };
-    }
-        ? TContent
-        : void;
-
-type SuccessResponseOf<TOperation> =
-    TOperation extends {
-        responses: infer TResponses;
-    }
-        ? 200 extends keyof TResponses
-            ? JsonResponseOf<TResponses[200]>
-            : 204 extends keyof TResponses
-                ? JsonResponseOf<TResponses[204]>
-                : unknown
-        : unknown;
-
-type PathParamsOf<TPath extends keyof GeneratedPaths> =
-    GeneratedPaths[TPath] extends {
-        parameters: {
-            path: infer TPathParams;
-        };
-    }
-        ? TPathParams
-        : never;
-
-type QueryParamsOf<
-    TPath extends keyof GeneratedPaths,
-    TMethod extends GeneratedMethod,
-> = OperationFor<TPath, TMethod> extends {
-    parameters: {
-        query: infer TQueryParams;
     };
 }
-    ? TQueryParams
+    ? TBody
     : never;
+
+type JsonResponseOf<TResponse> = TResponse extends {
+    content: {
+        'application/json': infer TContent;
+    };
+}
+    ? TContent
+    : void;
+
+type SuccessResponseOf<TOperation> = TOperation extends {
+    responses: infer TResponses;
+}
+    ? 200 extends keyof TResponses
+        ? JsonResponseOf<TResponses[200]>
+        : 204 extends keyof TResponses
+          ? JsonResponseOf<TResponses[204]>
+          : unknown
+    : unknown;
+
+type PathParamsOf<TPath extends keyof GeneratedPaths> = GeneratedPaths[TPath] extends {
+    parameters: {
+        path: infer TPathParams;
+    };
+}
+    ? TPathParams
+    : never;
+
+type QueryParamsOf<TPath extends keyof GeneratedPaths, TMethod extends GeneratedMethod> =
+    OperationFor<TPath, TMethod> extends {
+        parameters: {
+            query: infer TQueryParams;
+        };
+    }
+        ? TQueryParams
+        : never;
 
 type RawRequestConfig = {
     authenticated?: boolean;
@@ -82,10 +70,7 @@ type RawRequestConfig = {
     };
 };
 
-type GeneratedRequestConfig<
-    TPath extends keyof GeneratedPaths,
-    TMethod extends GeneratedMethod,
-> = {
+type GeneratedRequestConfig<TPath extends keyof GeneratedPaths, TMethod extends GeneratedMethod> = {
     authenticated?: boolean;
     body?: JsonBodyOf<OperationFor<TPath, TMethod>>;
     headers?: Record<string, string>;
@@ -96,8 +81,7 @@ type GeneratedRequestConfig<
 };
 
 type ListPaths = {
-    [TPath in PathsWithMethod<'get'>]:
-    OperationFor<TPath, 'get'> extends {
+    [TPath in PathsWithMethod<'get'>]: OperationFor<TPath, 'get'> extends {
         parameters: {
             query: {
                 list: 'true';
@@ -126,14 +110,16 @@ export class RawVaultClient {
         path: string,
         config: RawRequestConfig = {},
     ): Result<TResponse> {
-        return toResult(this.execute<TResponse>({
-            body: config.body,
-            headers: config.headers,
-            method,
-            path: resolvePathTemplate(path, config.params?.path),
-            query: config.params?.query,
-            token: this.resolveRequestToken(method, path, config),
-        }));
+        return toResult(
+            this.execute<TResponse>({
+                body: config.body,
+                headers: config.headers,
+                method,
+                path: resolvePathTemplate(path, config.params?.path),
+                query: config.params?.query,
+                token: this.resolveRequestToken(method, path, config),
+            }),
+        );
     }
 
     public delete<TPath extends PathsWithMethod<'delete'>>(
@@ -204,12 +190,14 @@ export class RawVaultClient {
             const response = await this.transport.request(request);
 
             if (!response.ok) {
-                return err(new VaultClientError({
-                    code: 'HTTP_ERROR',
-                    message: extractErrorMessage(response.body, response.statusText),
-                    responseBody: response.body,
-                    status: response.status,
-                }));
+                return err(
+                    new VaultClientError({
+                        code: 'HTTP_ERROR',
+                        message: extractErrorMessage(response.body, response.statusText),
+                        responseBody: response.body,
+                        status: response.status,
+                    }),
+                );
             }
 
             return ok(response.body as TResponse);
@@ -218,15 +206,21 @@ export class RawVaultClient {
                 return err(cause);
             }
 
-            return err(new VaultClientError({
-                cause,
-                code: 'UNKNOWN_ERROR',
-                message: cause instanceof Error ? cause.message : 'Unknown error',
-            }));
+            return err(
+                new VaultClientError({
+                    cause,
+                    code: 'UNKNOWN_ERROR',
+                    message: cause instanceof Error ? cause.message : 'Unknown error',
+                }),
+            );
         }
     }
 
-    private resolveRequestToken(method: VaultRequestMethod, path: string, config: RawRequestConfig = {}): string | null {
+    private resolveRequestToken(
+        method: VaultRequestMethod,
+        path: string,
+        config: RawRequestConfig = {},
+    ): string | null {
         if (config.authenticated === false) {
             return null;
         }
@@ -247,7 +241,7 @@ function isUnauthenticatedOperation(method: VaultRequestMethod, path: string): b
     }
 
     const methodKey = method.toLowerCase();
-    return unauthenticatedOperations[path][methodKey as keyof typeof unauthenticatedOperations[typeof path]] === true;
+    return unauthenticatedOperations[path][methodKey as keyof (typeof unauthenticatedOperations)[typeof path]] === true;
 }
 
 function isGeneratedUnauthenticatedPath(path: string): path is keyof typeof unauthenticatedOperations {
@@ -274,10 +268,7 @@ function extractErrorMessage(responseBody: unknown, fallback: string): string {
     return fallback || 'Vault request failed';
 }
 
-function resolvePathTemplate(
-    pathTemplate: string,
-    pathParams?: Record<string, string>,
-): string {
+function resolvePathTemplate(pathTemplate: string, pathParams?: Record<string, string>): string {
     const normalizedTemplate = stripLeadingSlashes(pathTemplate);
     if (!pathParams) {
         return normalizedTemplate;

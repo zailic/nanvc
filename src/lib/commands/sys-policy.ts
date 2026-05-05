@@ -4,7 +4,7 @@ export interface VaultPolicyPayloadRequest {
     policy: string;
 }
 
-export const policySchema: VaultCommandSchema =  {
+export const policySchema: VaultCommandSchema = {
     req: {
         properties: {
             policy: {

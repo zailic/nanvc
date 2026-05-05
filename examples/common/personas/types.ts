@@ -3,9 +3,7 @@ import type { VaultClientV2 } from '../../../src/main.js';
 
 export type VaultClientVersion = 'v1' | 'v2';
 
-export type VaultClientFor<V extends VaultClientVersion> = V extends 'v1'
-    ? VaultClient
-    : VaultClientV2;
+export type VaultClientFor<V extends VaultClientVersion> = V extends 'v1' ? VaultClient : VaultClientV2;
 
 export type PersonaOptions<V extends VaultClientVersion> = {
     client?: VaultClientFor<V>;

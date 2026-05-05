@@ -143,9 +143,9 @@ async function main(): Promise<void> {
         // The policy grants read-only access to the single secret path.
         const jenkinsPolicy = [
             "# Read-only permission on secrets stored at 'secret/data/mysql/webapp'",
-            "path \"secret/data/mysql/webapp\" {",
-            "  capabilities = [\"read\"]",
-            "}",
+            'path "secret/data/mysql/webapp" {',
+            '  capabilities = ["read"]',
+            '}',
         ].join('\n');
         await admin.createPolicy('jenkins', jenkinsPolicy);
 
@@ -167,10 +167,15 @@ async function main(): Promise<void> {
         // is allowed; any further attempt returns an error, preventing replay.
         // The admin hands only this wrapping token to the app — not the raw
         // role_id / secret_id.
-        const wrappedResponse = await vault.sys.wrapping.wrap({
-            role_id: credentials.roleId,
-            secret_id: credentials.secretId,
-        }, '60s').unwrap();
+        const wrappedResponse = await vault.sys.wrapping
+            .wrap(
+                {
+                    role_id: credentials.roleId,
+                    secret_id: credentials.secretId,
+                },
+                '60s',
+            )
+            .unwrap();
         const wrappingToken = wrappedResponse.wrap_info?.token;
         if (!wrappingToken) {
             throw new Error('Failed to create wrapping token');
@@ -205,7 +210,7 @@ async function main(): Promise<void> {
         assert.deepStrictEqual(
             secretResponse.data,
             secretData,
-            "Retrieved secret data does not match the expected value",
+            'Retrieved secret data does not match the expected value',
         );
     });
 

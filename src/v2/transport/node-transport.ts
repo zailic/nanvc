@@ -5,11 +5,7 @@ import type { RequestOptions as NodeHttpsRequestOptions } from 'node:https';
 
 import { createLoggerFromEnv } from '../../logger.js';
 import { VaultClientError } from '../core/errors.js';
-import type {
-    VaultClientOptions,
-    VaultRequestOptions,
-    VaultTransportResponse,
-} from './types.js';
+import type { VaultClientOptions, VaultRequestOptions, VaultTransportResponse } from './types.js';
 
 export class NodeVaultTransport {
     private readonly logger = this.options.logger ?? createLoggerFromEnv();
@@ -65,11 +61,13 @@ export class NodeVaultTransport {
                         url: url.toString(),
                     });
 
-                    reject(new VaultClientError({
-                        cause,
-                        code: 'NETWORK_ERROR',
-                        message: cause.message,
-                    }));
+                    reject(
+                        new VaultClientError({
+                            cause,
+                            code: 'NETWORK_ERROR',
+                            message: cause.message,
+                        }),
+                    );
                 });
             });
 
@@ -86,20 +84,24 @@ export class NodeVaultTransport {
                     return;
                 }
 
-                reject(new VaultClientError({
-                    cause,
-                    code: 'NETWORK_ERROR',
-                    message: cause.message,
-                }));
+                reject(
+                    new VaultClientError({
+                        cause,
+                        code: 'NETWORK_ERROR',
+                        message: cause.message,
+                    }),
+                );
             });
 
             const timeoutMs = this.options.timeoutMs;
             if (typeof timeoutMs === 'number' && timeoutMs > 0) {
                 req.setTimeout(timeoutMs, () => {
-                    req.destroy(new VaultClientError({
-                        code: 'TIMEOUT',
-                        message: `Vault request timed out after ${timeoutMs}ms`,
-                    }));
+                    req.destroy(
+                        new VaultClientError({
+                            code: 'TIMEOUT',
+                            message: `Vault request timed out after ${timeoutMs}ms`,
+                        }),
+                    );
                 });
             }
 
@@ -149,12 +151,9 @@ export class NodeVaultTransport {
     }
 
     private buildUrl(request: VaultRequestOptions): URL {
-        const clusterAddress = this.options.clusterAddress
-            ?? process.env.NANVC_VAULT_CLUSTER_ADDRESS
-            ?? 'http://127.0.0.1:8200';
-        const apiVersion = this.options.apiVersion
-            ?? process.env.NANVC_VAULT_API_VERSION
-            ?? 'v1';
+        const clusterAddress =
+            this.options.clusterAddress ?? process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
+        const apiVersion = this.options.apiVersion ?? process.env.NANVC_VAULT_API_VERSION ?? 'v1';
         const normalizedClusterAddress = clusterAddress.replace(/\/+$/g, '');
         const normalizedPath = request.path.replace(/^\/+/g, '');
         const url = new URL(`${normalizedClusterAddress}/${apiVersion}/${normalizedPath}`);

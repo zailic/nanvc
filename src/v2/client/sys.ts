@@ -15,7 +15,7 @@ export type VaultUnsealRequest = components['schemas']['UnsealRequest'];
 export type VaultUnsealResponse = components['schemas']['UnsealResponse'];
 
 export class VaultSystemMountClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -31,22 +31,24 @@ export class VaultSystemMountClient {
      * @end-nanvc-doc
      */
     public enable(path: string, payload: VaultMountRequest): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/sys/mounts/{path}', {
-                body: payload,
-                params: {
-                    path: {
-                        path: normalize(path),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/sys/mounts/{path}', {
+                    body: payload,
+                    params: {
+                        path: {
+                            path: normalize(path),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -61,21 +63,23 @@ export class VaultSystemMountClient {
      * @end-nanvc-doc
      */
     public disable(path: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/sys/mounts/{path}', {
-                params: {
-                    path: {
-                        path: normalize(path),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/sys/mounts/{path}', {
+                    params: {
+                        path: {
+                            path: normalize(path),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 }
 
@@ -102,14 +106,16 @@ export class VaultSystemClient {
      * @end-nanvc-doc
      */
     public isInitialized(): Result<boolean> {
-        return toResult((async (): Promise<ResultTuple<boolean>> => {
-            const [data, error] = await this.raw.get('/sys/init');
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<boolean>> => {
+                const [data, error] = await this.raw.get('/sys/init');
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(Boolean(data.initialized));
-        })());
+                return ok(Boolean(data.initialized));
+            })(),
+        );
     }
 
     /**
@@ -122,20 +128,22 @@ export class VaultSystemClient {
      * @end-nanvc-doc
      */
     public init(payload: VaultInitRequest): Result<VaultInitResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultInitResponse>> => {
-            const [data, error] = await this.raw.post('/sys/init', {
-                body: payload,
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<VaultInitResponse>> => {
+                const [data, error] = await this.raw.post('/sys/init', {
+                    body: payload,
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            if (typeof data.root_token === 'string' && data.root_token.length > 0) {
-                this.raw.setToken(data.root_token);
-            }
+                if (typeof data.root_token === 'string' && data.root_token.length > 0) {
+                    this.raw.setToken(data.root_token);
+                }
 
-            return ok(data);
-        })());
+                return ok(data);
+            })(),
+        );
     }
 
     /**
@@ -193,21 +201,19 @@ export class VaultSystemClient {
      * @end-nanvc-doc
      */
     public isReady(): Result<boolean> {
-        return toResult((async (): Promise<ResultTuple<boolean>> => {
-            const [data, error] = await this.raw.get('/sys/health');
-            if (error) {
-                if (
-                    error.code === 'HTTP_ERROR' &&
-                    error.status !== undefined &&
-                    error.status != 200
-                ) {
-                    return ok(false);
+        return toResult(
+            (async (): Promise<ResultTuple<boolean>> => {
+                const [data, error] = await this.raw.get('/sys/health');
+                if (error) {
+                    if (error.code === 'HTTP_ERROR' && error.status !== undefined && error.status != 200) {
+                        return ok(false);
+                    }
+                    return err(error);
                 }
-                return err(error);
-            }
 
-            void data;
-            return ok(true);
-        })());
+                void data;
+                return ok(true);
+            })(),
+        );
     }
 }

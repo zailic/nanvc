@@ -10,7 +10,7 @@ export type VaultWrappingRewrapResponse = components['schemas']['WrappingRewrapR
 export type VaultWrappingUnwrapResponse = components['schemas']['WrappingUnwrapResponse'];
 
 export class VaultSystemWrappingClient {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
 
     /**
      * @nanvc-doc
@@ -24,24 +24,28 @@ export class VaultSystemWrappingClient {
      * @end-nanvc-doc
      */
     public lookup(token: string): Result<VaultWrappingLookupResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultWrappingLookupResponse>> => {
-            const [response, error] = await this.raw.post('/sys/wrapping/lookup', {
-                body: { token },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<VaultWrappingLookupResponse>> => {
+                const [response, error] = await this.raw.post('/sys/wrapping/lookup', {
+                    body: { token },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            if (!response.data) {
-                return err(new VaultClientError({
-                    code: 'VALIDATION_ERROR',
-                    message: 'Vault wrapping lookup response did not include data',
-                    responseBody: response,
-                }));
-            }
+                if (!response.data) {
+                    return err(
+                        new VaultClientError({
+                            code: 'VALIDATION_ERROR',
+                            message: 'Vault wrapping lookup response did not include data',
+                            responseBody: response,
+                        }),
+                    );
+                }
 
-            return ok(response.data);
-        })());
+                return ok(response.data);
+            })(),
+        );
     }
 
     /**
@@ -81,13 +85,11 @@ export class VaultSystemWrappingClient {
         // todo: allow passing wrapping token in the body instead of using the
         // X-Vault-Token header. This header may be reserved for a different token
         // which authenticates to access this endpoint.
-        return this.raw.post(
-            '/sys/wrapping/unwrap', {
-                headers: {
-                    'X-Vault-Token': token,
-                },
-            }
-        );
+        return this.raw.post('/sys/wrapping/unwrap', {
+            headers: {
+                'X-Vault-Token': token,
+            },
+        });
     }
 
     /**

@@ -9,6 +9,4 @@ export const targetPaths = [
     },
 ];
 
-export const targetSchemas = [
-    'StandardListResponse',
-];
+export const targetSchemas = ['StandardListResponse'];

@@ -39,15 +39,12 @@ async function main() {
     throw new Error(secretResponse.errorMessage ?? 'Vault read failed');
   }
 
-  console.log('v1 secret:', secretResponse.apiResponse);
-
   const vault2 = new VaultClientV2({
     clusterAddress: 'http://127.0.0.1:8200',
     authToken: process.env.VAULT_TOKEN ?? null,
   });
 
   const secret = await vault2.read('secret/my-app/my-secret').unwrap();
-  console.log('v2 secret:', secret);
 }
 
 main().catch((error) => {
@@ -191,9 +188,7 @@ import VaultClient from 'nanvc';
 const vault = new VaultClient('http://127.0.0.1:8200', process.env.VAULT_TOKEN ?? null);
 
 async function main(): Promise<void> {
-  const writeResponse = await vault.write('/secret/my-app/my-secret', {
-    foo: 'my-password',
-  });
+  const writeResponse = await vault.write('/secret/my-app/my-secret', { foo: 'my-password'});
 
   if (!writeResponse.succeeded) {
     throw new Error(writeResponse.errorMessage ?? 'Vault write failed');
@@ -223,13 +218,8 @@ const vault = new VaultClientV2({
 });
 
 async function main(): Promise<void> {
-  await vault.write('secret/my-app/my-secret', {
-    foo: 'my-password',
-  }).unwrap();
-
+  await vault.write('secret/my-app/my-secret', { foo: 'my-password' }).unwrap();
   const secret = await vault.read<{ foo: string }>('secret/my-app/my-secret').unwrap();
-
-  console.log(secret.foo);
 }
 
 main().catch(console.error);

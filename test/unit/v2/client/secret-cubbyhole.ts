@@ -32,7 +32,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.equal(error instanceof VaultClientError, true);
         assert.equal(error?.code, 'VALIDATION_ERROR');
         assert.equal(error?.message, 'Expected a cubbyhole secret path, got ""');
-    };
+    }
 
     @test('write should return a VALIDATION_ERROR for an empty path')
     public async writeShouldReturnValidationErrorForEmptyPath() {
@@ -44,7 +44,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.equal(error instanceof VaultClientError, true);
         assert.equal(error?.code, 'VALIDATION_ERROR');
         assert.equal(error?.message, 'Expected a cubbyhole secret path, got ""');
-    };
+    }
 
     @test('delete should return a VALIDATION_ERROR for an empty path')
     public async deleteShouldReturnValidationErrorForEmptyPath() {
@@ -56,7 +56,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.equal(error instanceof VaultClientError, true);
         assert.equal(error?.code, 'VALIDATION_ERROR');
         assert.equal(error?.message, 'Expected a cubbyhole secret path, got ""');
-    };
+    }
 
     @test('read should call raw.get with the correct path')
     public async readShouldCallRawGetWithCorrectPath() {
@@ -76,7 +76,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.deepEqual(data, { token: 'abc' });
         assert.equal(stub.calledOnce, true);
         assert.equal(stub.firstCall.args[0], '/cubbyhole/{path}');
-    };
+    }
 
     @test('write should call raw.post with the correct path and body')
     public async writeShouldCallRawPostWithCorrectPathAndBody() {
@@ -96,7 +96,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.equal(data, undefined);
         assert.equal(stub.calledOnce, true);
         assert.equal(stub.firstCall.args[0], '/cubbyhole/{path}');
-    };
+    }
 
     @test('delete should call raw.delete with the correct path')
     public async deleteShouldCallRawDeleteWithCorrectPath() {
@@ -116,7 +116,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.equal(data, undefined);
         assert.equal(stub.calledOnce, true);
         assert.equal(stub.firstCall.args[0], '/cubbyhole/{path}');
-    };
+    }
 
     @test('list should call raw.list with the correct path')
     public async listShouldCallRawListWithCorrectPath() {
@@ -136,7 +136,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.deepEqual(keys, ['secret-a', 'secret-b']);
         assert.equal(stub.calledOnce, true);
         assert.equal(stub.firstCall.args[0], '/cubbyhole/{path}/');
-    };
+    }
 
     @test('list with no path should call raw.list with empty path')
     public async listWithNoPathShouldCallRawListWithEmptyPath() {
@@ -157,7 +157,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.equal(stub.calledOnce, true);
         const callConfig = stub.firstCall.args[1] as { params?: { path?: { path?: string } } };
         assert.equal(callConfig?.params?.path?.path, '');
-    };
+    }
 
     @test('read should propagate errors from raw.get')
     public async readShouldPropagateErrorsFromRawGet() {
@@ -176,7 +176,7 @@ export class VaultSecretCubbyholeClientTests {
 
         assert.equal(data, null);
         assert.equal(error, vaultError);
-    };
+    }
 
     @test('write should propagate errors from raw.post')
     public async writeShouldPropagateErrorsFromRawPost() {
@@ -195,7 +195,7 @@ export class VaultSecretCubbyholeClientTests {
 
         assert.equal(data, null);
         assert.equal(error, vaultError);
-    };
+    }
 
     @test('write should return a VALIDATION_ERROR for a non-object payload')
     public async writeShouldReturnValidationErrorForNonObjectPayload() {
@@ -206,7 +206,7 @@ export class VaultSecretCubbyholeClientTests {
         assert.equal(data, null);
         assert.equal(error instanceof VaultClientError, true);
         assert.equal(error?.code, 'VALIDATION_ERROR');
-    };
+    }
 
     @test('delete should propagate errors from raw.delete')
     public async deleteShouldPropagateErrorsFromRawDelete() {
@@ -225,7 +225,7 @@ export class VaultSecretCubbyholeClientTests {
 
         assert.equal(data, null);
         assert.equal(error, vaultError);
-    };
+    }
 
     @test('list should propagate errors from raw.list')
     public async listShouldPropagateErrorsFromRawList() {
@@ -244,7 +244,7 @@ export class VaultSecretCubbyholeClientTests {
 
         assert.equal(keys, null);
         assert.equal(error, vaultError);
-    };
+    }
 
     @test('list should return empty array when keys is missing in response')
     public async listShouldReturnEmptyArrayWhenKeysIsMissingInResponse() {
@@ -262,5 +262,5 @@ export class VaultSecretCubbyholeClientTests {
 
         assert.equal(error, null);
         assert.deepEqual(keys, []);
-    };
-};
+    }
+}

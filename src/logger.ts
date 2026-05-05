@@ -157,7 +157,11 @@ function formatContext(context?: Record<string, unknown>, colors?: boolean): str
     }
 
     return ` ${Object.entries(context)
-        .map(([key, value]) => colors ? `${color.Dim}${key}${color.Reset}=${formatContextValue(value)}` : `${key}=${formatContextValue(value)}`)
+        .map(([key, value]) =>
+            colors
+                ? `${color.Dim}${key}${color.Reset}=${formatContextValue(value)}`
+                : `${key}=${formatContextValue(value)}`,
+        )
         .join(' ')}`;
 }
 
@@ -203,10 +207,9 @@ function supportsColorOutput(): boolean {
 }
 
 function formatTimestamp(time: Date): string {
-    return [
-        time.getHours(),
-        time.getMinutes(),
-        time.getSeconds(),
-    ].map((part) => part.toString().padStart(2, '0')).join(':')
-        + `.${time.getMilliseconds().toString().padStart(3, '0')}`;
+    return (
+        [time.getHours(), time.getMinutes(), time.getSeconds()]
+            .map((part) => part.toString().padStart(2, '0'))
+            .join(':') + `.${time.getMilliseconds().toString().padStart(3, '0')}`
+    );
 }

@@ -135,16 +135,8 @@ export class VaultClient {
             : this.secret.kv.v1.read<T>(pathOrMount);
     }
 
-    public write(
-        path: string,
-        payload: Record<string, unknown>,
-        options?: VaultKvShortcutV1Options,
-    ): Result<void>;
-    public write(
-        path: string,
-        payload: Record<string, unknown>,
-        options: VaultKvShortcutV2WriteOptions,
-    ): Result<void>;
+    public write(path: string, payload: Record<string, unknown>, options?: VaultKvShortcutV1Options): Result<void>;
+    public write(path: string, payload: Record<string, unknown>, options: VaultKvShortcutV2WriteOptions): Result<void>;
     public write(
         mount: string,
         path: string,
@@ -166,15 +158,19 @@ export class VaultClient {
         const payload = typeof pathOrPayload === 'string' ? payloadOrOptions : pathOrPayload;
 
         if (!isRecord(payload)) {
-            return errorResult(new VaultClientError({
-                code: 'VALIDATION_ERROR',
-                message: 'VaultClient.write requires a payload object',
-            }));
+            return errorResult(
+                new VaultClientError({
+                    code: 'VALIDATION_ERROR',
+                    message: 'VaultClient.write requires a payload object',
+                }),
+            );
         }
 
         const [ref, resolveError] = resolveKvShortcutRef(
             pathOrMount,
-            typeof pathOrPayload === 'string' ? pathOrPayload : payloadOrOptions as VaultKvShortcutWriteOptions | undefined,
+            typeof pathOrPayload === 'string'
+                ? pathOrPayload
+                : (payloadOrOptions as VaultKvShortcutWriteOptions | undefined),
             maybeOptions,
         );
         if (resolveError) {
@@ -218,10 +214,12 @@ function resolveKvShortcutRef<TOptions extends VaultKvShortcutReadOptions>(
     const path = pathSegments.join('/');
 
     if (!mount || (!allowEmptyPath && !path)) {
-        return err(new VaultClientError({
-            code: 'VALIDATION_ERROR',
-            message: `Expected a KV secret path like "secret/my-app/my-secret", got "${pathOrMount}"`,
-        }));
+        return err(
+            new VaultClientError({
+                code: 'VALIDATION_ERROR',
+                message: `Expected a KV secret path like "secret/my-app/my-secret", got "${pathOrMount}"`,
+            }),
+        );
     }
 
     return ok({

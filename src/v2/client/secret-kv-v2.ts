@@ -13,7 +13,7 @@ export type VaultKvV2WriteOptions = {
     /**
      * This flag is required if cas_required is set to true on either the secret or the engine's config.
      * If not set the write will be allowed. In order for a write to be successful, cas must be set to
-     * the current version of the secret. If set to 0 a write will only be allowed if the key doesn't 
+     * the current version of the secret. If set to 0 a write will only be allowed if the key doesn't
      * exist as unset keys do not have any version information. Also remember that soft deletes do not
      * remove any underlying version data from storage. In order to write to a soft deleted key, the cas
      * parameter must match the key's current version.
@@ -63,9 +63,11 @@ type VaultKvV2ReadEnvelope<T> = {
     };
 };
 
-type VaultKvV2ListEnvelope = components['schemas']['StandardListResponse'] | {
-    data?: components['schemas']['StandardListResponse'];
-};
+type VaultKvV2ListEnvelope =
+    | components['schemas']['StandardListResponse']
+    | {
+          data?: components['schemas']['StandardListResponse'];
+      };
 
 type VaultKvV2MetadataEnvelope = {
     data?: VaultKvV2GeneratedMetadataResponse;
@@ -80,7 +82,7 @@ type VaultKvV2SubkeysEnvelope = {
 };
 
 export class VaultKvV2Client {
-    constructor(private readonly raw: RawVaultClient) { }
+    constructor(private readonly raw: RawVaultClient) {}
     /**
      * @nanvc-doc
      * id: secret.kv.v2.delete
@@ -93,19 +95,21 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public delete(mount: string, path: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/{kv_v2_mount_path}/data/{path}', {
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/{kv_v2_mount_path}/data/{path}', {
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -120,21 +124,26 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public list(mount: string, path = ''): Result<string[]> {
-        return toResult((async (): Promise<ResultTuple<string[]>> => {
-            const [data, error] = await this.raw.list<VaultKvV2ListEnvelope>('/{kv_v2_mount_path}/metadata/{path}/', {
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                    query: {
-                        list: 'true',
+        return toResult(
+            (async (): Promise<ResultTuple<string[]>> => {
+                const [data, error] = await this.raw.list<VaultKvV2ListEnvelope>(
+                    '/{kv_v2_mount_path}/metadata/{path}/',
+                    {
+                        params: {
+                            path: toKvV2PathParams(mount, path),
+                            query: {
+                                list: 'true',
+                            },
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                );
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(extractKvV2ListKeys(data));
-        })());
+                return ok(extractKvV2ListKeys(data));
+            })(),
+        );
     }
 
     /**
@@ -153,26 +162,28 @@ export class VaultKvV2Client {
         path: string,
         options: VaultKvV2ReadOptions = {},
     ): Result<VaultKvV2ReadResponse<T>> {
-        return toResult((async (): Promise<ResultTuple<VaultKvV2ReadResponse<T>>> => {
-            const [data, error] = await this.raw.get<VaultKvV2ReadEnvelope<T>>('/{kv_v2_mount_path}/data/{path}', {
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                    query: {
-                        version: options.version,
+        return toResult(
+            (async (): Promise<ResultTuple<VaultKvV2ReadResponse<T>>> => {
+                const [data, error] = await this.raw.get<VaultKvV2ReadEnvelope<T>>('/{kv_v2_mount_path}/data/{path}', {
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                        query: {
+                            version: options.version,
+                        },
                     },
-                },
-            });
-            if (error) {
-                const deletedSecretResponse = extractDeletedKvV2ReadEnvelope<T>(error);
-                if (deletedSecretResponse) {
-                    return ok(toKvV2ReadResponse(deletedSecretResponse));
+                });
+                if (error) {
+                    const deletedSecretResponse = extractDeletedKvV2ReadEnvelope<T>(error);
+                    if (deletedSecretResponse) {
+                        return ok(toKvV2ReadResponse(deletedSecretResponse));
+                    }
+
+                    return err(error);
                 }
 
-                return err(error);
-            }
-
-            return ok(toKvV2ReadResponse(data));
-        })());
+                return ok(toKvV2ReadResponse(data));
+            })(),
+        );
     }
 
     /**
@@ -196,24 +207,28 @@ export class VaultKvV2Client {
         payload: Record<string, unknown>,
         options: VaultKvV2WriteOptions = {},
     ): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const body: VaultKvV2GeneratedWriteRequest = options.cas === undefined
-                ? { data: payload }
-                : { data: payload, options: { cas: options.cas } };
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const body: VaultKvV2GeneratedWriteRequest =
+                    options.cas === undefined ? { data: payload } : { data: payload, options: { cas: options.cas } };
 
-            const [data, error] = await this.raw.post<VaultKvV2GeneratedWriteResponse>('/{kv_v2_mount_path}/data/{path}', {
-                body,
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                const [data, error] = await this.raw.post<VaultKvV2GeneratedWriteResponse>(
+                    '/{kv_v2_mount_path}/data/{path}',
+                    {
+                        body,
+                        params: {
+                            path: toKvV2PathParams(mount, path),
+                        },
+                    },
+                );
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -233,27 +248,28 @@ export class VaultKvV2Client {
         payload: Record<string, unknown>,
         options: VaultKvV2PatchOptions = {},
     ): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const body: components['schemas']['KvV2PatchRequest'] = options.cas === undefined
-                ? { data: payload }
-                : { data: payload, options: { cas: options.cas } };
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const body: components['schemas']['KvV2PatchRequest'] =
+                    options.cas === undefined ? { data: payload } : { data: payload, options: { cas: options.cas } };
 
-            const [data, error] = await this.raw.patch('/{kv_v2_mount_path}/data/{path}', {
-                body,
-                headers: {
-                    'Content-Type': 'application/merge-patch+json',
-                },
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                const [data, error] = await this.raw.patch('/{kv_v2_mount_path}/data/{path}', {
+                    body,
+                    headers: {
+                        'Content-Type': 'application/merge-patch+json',
+                    },
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -268,20 +284,22 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public deleteVersions(mount: string, path: string, versions: number[]): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/{kv_v2_mount_path}/delete/{path}', {
-                body: { versions },
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{kv_v2_mount_path}/delete/{path}', {
+                    body: { versions },
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -296,20 +314,22 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public undeleteVersions(mount: string, path: string, versions: number[]): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/{kv_v2_mount_path}/undelete/{path}', {
-                body: { versions },
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{kv_v2_mount_path}/undelete/{path}', {
+                    body: { versions },
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -324,20 +344,22 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public destroyVersions(mount: string, path: string, versions: number[]): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/{kv_v2_mount_path}/destroy/{path}', {
-                body: { versions },
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{kv_v2_mount_path}/destroy/{path}', {
+                    body: { versions },
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -352,18 +374,23 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public readMetadata(mount: string, path: string): Result<VaultKvV2GeneratedMetadataResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultKvV2GeneratedMetadataResponse>> => {
-            const [data, error] = await this.raw.get<VaultKvV2MetadataEnvelope>('/{kv_v2_mount_path}/metadata/{path}', {
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<VaultKvV2GeneratedMetadataResponse>> => {
+                const [data, error] = await this.raw.get<VaultKvV2MetadataEnvelope>(
+                    '/{kv_v2_mount_path}/metadata/{path}',
+                    {
+                        params: {
+                            path: toKvV2PathParams(mount, path),
+                        },
+                    },
+                );
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data ?? {});
-        })());
+                return ok(data.data ?? {});
+            })(),
+        );
     }
 
     /**
@@ -378,20 +405,22 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public writeMetadata(mount: string, path: string, options: VaultKvV2MetadataWriteOptions = {}): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/{kv_v2_mount_path}/metadata/{path}', {
-                body: options,
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{kv_v2_mount_path}/metadata/{path}', {
+                    body: options,
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -406,23 +435,25 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public patchMetadata(mount: string, path: string, options: VaultKvV2MetadataWriteOptions = {}): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.patch('/{kv_v2_mount_path}/metadata/{path}', {
-                body: options,
-                headers: {
-                    'Content-Type': 'application/merge-patch+json',
-                },
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.patch('/{kv_v2_mount_path}/metadata/{path}', {
+                    body: options,
+                    headers: {
+                        'Content-Type': 'application/merge-patch+json',
+                    },
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -437,19 +468,21 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public deleteMetadata(mount: string, path: string): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.delete('/{kv_v2_mount_path}/metadata/{path}', {
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.delete('/{kv_v2_mount_path}/metadata/{path}', {
+                    params: {
+                        path: toKvV2PathParams(mount, path),
+                    },
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -464,20 +497,22 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public readConfig(mount: string): Result<VaultKvV2GeneratedConfigurationResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultKvV2GeneratedConfigurationResponse>> => {
-            const [data, error] = await this.raw.get<VaultKvV2ConfigEnvelope>('/{kv_v2_mount_path}/config', {
-                params: {
-                    path: {
-                        kv_v2_mount_path: normalize(mount),
+        return toResult(
+            (async (): Promise<ResultTuple<VaultKvV2GeneratedConfigurationResponse>> => {
+                const [data, error] = await this.raw.get<VaultKvV2ConfigEnvelope>('/{kv_v2_mount_path}/config', {
+                    params: {
+                        path: {
+                            kv_v2_mount_path: normalize(mount),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data ?? {});
-        })());
+                return ok(data.data ?? {});
+            })(),
+        );
     }
 
     /**
@@ -492,22 +527,24 @@ export class VaultKvV2Client {
      * @end-nanvc-doc
      */
     public writeConfig(mount: string, options: VaultKvV2ConfigureOptions = {}): Result<void> {
-        return toResult((async (): Promise<ResultTuple<void>> => {
-            const [data, error] = await this.raw.post('/{kv_v2_mount_path}/config', {
-                body: options,
-                params: {
-                    path: {
-                        kv_v2_mount_path: normalize(mount),
+        return toResult(
+            (async (): Promise<ResultTuple<void>> => {
+                const [data, error] = await this.raw.post('/{kv_v2_mount_path}/config', {
+                    body: options,
+                    params: {
+                        path: {
+                            kv_v2_mount_path: normalize(mount),
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                });
+                if (error) {
+                    return err(error);
+                }
 
-            void data;
-            return ok(undefined);
-        })());
+                void data;
+                return ok(undefined);
+            })(),
+        );
     }
 
     /**
@@ -521,27 +558,39 @@ export class VaultKvV2Client {
      *   const subkeys = await vault.secret.kv.v2.readSubkeys('secret-v2', 'apps/demo').unwrap();
      * @end-nanvc-doc
      */
-    public readSubkeys(mount: string, path: string, options: VaultKvV2SubkeysOptions = {}): Result<VaultKvV2GeneratedSubkeysResponse> {
-        return toResult((async (): Promise<ResultTuple<VaultKvV2GeneratedSubkeysResponse>> => {
-            const [data, error] = await this.raw.get<VaultKvV2SubkeysEnvelope>('/{kv_v2_mount_path}/subkeys/{path}', {
-                params: {
-                    path: toKvV2PathParams(mount, path),
-                    query: {
-                        depth: options.depth,
-                        version: options.version,
+    public readSubkeys(
+        mount: string,
+        path: string,
+        options: VaultKvV2SubkeysOptions = {},
+    ): Result<VaultKvV2GeneratedSubkeysResponse> {
+        return toResult(
+            (async (): Promise<ResultTuple<VaultKvV2GeneratedSubkeysResponse>> => {
+                const [data, error] = await this.raw.get<VaultKvV2SubkeysEnvelope>(
+                    '/{kv_v2_mount_path}/subkeys/{path}',
+                    {
+                        params: {
+                            path: toKvV2PathParams(mount, path),
+                            query: {
+                                depth: options.depth,
+                                version: options.version,
+                            },
+                        },
                     },
-                },
-            });
-            if (error) {
-                return err(error);
-            }
+                );
+                if (error) {
+                    return err(error);
+                }
 
-            return ok(data.data ?? {});
-        })());
+                return ok(data.data ?? {});
+            })(),
+        );
     }
 }
 
-function toKvV2PathParams(mount: string, path: string): {
+function toKvV2PathParams(
+    mount: string,
+    path: string,
+): {
     kv_v2_mount_path: string;
     path: string;
 } {

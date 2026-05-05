@@ -48,10 +48,7 @@ export class AdminPersona<TVersion extends VaultClientVersion> {
 
     public async createPolicy(name: string, policy: string): Promise<void> {
         if (this.version === 'v1') {
-            await expectSuccess(
-                (this.vault as VaultClient).addPolicy(name, { policy }),
-                'Vault policy write failed',
-            );
+            await expectSuccess((this.vault as VaultClient).addPolicy(name, { policy }), 'Vault policy write failed');
             return;
         }
 
@@ -79,7 +76,7 @@ export class AdminPersona<TVersion extends VaultClientVersion> {
         const roleIdData = await vault.auth.getAppRoleRoleId(roleName).unwrap();
         const secretIdData = await vault.auth.generateAppRoleSecretId(roleName).unwrap();
         const asString = (value: unknown): string => value as string;
-        
+
         return {
             roleId: asString(roleIdData.role_id),
             secretId: asString(secretIdData.secret_id),
@@ -113,8 +110,6 @@ export class AdminPersona<TVersion extends VaultClientVersion> {
         return { roleId, secretId };
     }
 }
-
-
 
 function createClient<TVersion extends VaultClientVersion>(version: TVersion): VaultClientFor<TVersion> {
     return (version === 'v1' ? new VaultClient() : new VaultClientV2()) as VaultClientFor<TVersion>;

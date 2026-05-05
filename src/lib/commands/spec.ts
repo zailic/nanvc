@@ -34,11 +34,7 @@ export class VaultResponse {
     }
 
     public static fromPartial(partial: PartialVaultResponse): VaultResponse {
-        return new VaultResponse(
-            partial.httpStatusCode,
-            partial.apiResponse,
-            partial.errorMessage,
-        );
+        return new VaultResponse(partial.httpStatusCode, partial.apiResponse, partial.errorMessage);
     }
 }
 
