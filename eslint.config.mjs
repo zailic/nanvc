@@ -37,5 +37,13 @@ export default defineConfig(
             '@typescript-eslint/no-unused-vars': 'warn',
         },
     },
+    {
+        files: ['scripts/**/*.{js,mjs,cjs}'],
+        languageOptions: {
+            globals: {
+                console: 'readonly',
+            },
+        },
+    },
     eslintConfigPrettier,
 );

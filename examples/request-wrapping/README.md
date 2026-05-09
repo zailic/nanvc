@@ -1,40 +1,23 @@
 # Request wrapping example with `VaultClientV2`
 
 This example demonstrates an AppRole flow where the admin wraps the generated
-`role_id` and `secret_id`, then the app unwraps them before logging in:
+`role_id` and `secret_id`, then the app unwraps them before logging in.
 
-- prepare a local Vault server if needed
-- mount a KV v2 secrets engine at `secret`
-- write a database secret
-- enable AppRole auth
-- create a read-only policy and role
-- wrap the AppRole credentials with a short-lived wrapping token
-- unwrap the credentials as the app
-- log in as an app and read the secret with the app token
+## What the workflow demonstrates
 
-The example reuses the local Vault setup helper from `test/helpers/vault.ts`.
-That helper initializes and unseals the local Vault instance when needed, caches
-the root credentials, and returns a ready root `VaultClientV2`. The operator and
-admin personas receive that shared root client so they work against the same
-Vault instance.
+- Prepare Vault by enabling a KV v2 mount at `secret`.
+- Write an application secret at `secret/mysql/webapp`.
+- Enable the `approle` auth method.
+- Create a read-only `jenkins` policy for that one secret path.
+- Register an AppRole with short-lived tokens.
+- Generate `role_id` and `secret_id` credentials.
+- Wrap those credentials with `vault.sys.wrapping.wrap` and a `60s` TTL.
+- Clear the app token before unwrapping to model an unauthenticated receiver.
+- Unwrap the credentials with `vault.sys.wrapping.unwrap`.
+- Log in as the app and read the protected secret.
 
-The workflow is still organized around three reusable personas from
-`examples/common/personas`:
-
-- `OperatorPersona.v2()` performs operator-level setup for this example, namely
-  ensuring the KV mount exists.
-- `AdminPersona.v2()` configures AppRole, writes the policy, registers the role,
-  creates the AppRole credentials, and wraps them.
-- `AppPersona.v2()` starts with an unauthenticated client, unwraps the
-  credentials, logs in with AppRole, and reads the application secret.
-
-Each persona exposes `withWorkflow(async ({ vault }) => { ... })`, so the
-example-specific request wrapping flow stays in this file while repeated setup
-lives in common helpers.
-
-`OperatorPersona` is intentionally thin here because Vault initialization now
-lives in the shared test helper. It remains useful as an example extension point
-for workflows that need extra operator-only setup before admin/app actions run.
+This example uses the shared decorator-based runner and personas described in
+`examples/README.md`.
 
 ## Local Vault
 
@@ -44,10 +27,10 @@ From the repository root, start only the plain Vault service:
 docker compose up -d vault
 ```
 
-One Vault instance is enough for this example. You do not need to start the
-`vault_tls` or `vault_mtls` services unless you are specifically testing TLS.
+One Vault instance is enough. You do not need `vault_tls` or `vault_mtls` unless
+you are specifically testing TLS.
 
-If you want a fresh Vault state:
+For a fresh Vault state:
 
 ```bash
 docker compose down --volumes --remove-orphans
@@ -65,11 +48,11 @@ npm install
 Then run the example:
 
 ```bash
-npx tsx examples/request-wrapping/main.ts
+NANVC_VAULT_CLUSTER_ADDRESS=http://127.0.0.1:8200 npx tsx examples/request-wrapping/main.ts
 ```
 
-The default client configuration points at `http://127.0.0.1:8200`, which
-matches the `vault` service port mapping.
+The helper defaults to `http://vault.local:8200`. Use the environment variable
+above when `vault.local` is not mapped on your machine.
 
 ## Environment
 
@@ -87,8 +70,7 @@ the helper writes a shared cache file under your OS temp directory with:
 - `TEST_NANVC_VAULT_AUTH_TOKEN`
 - `TEST_NANVC_VAULT_UNSEAL_KEY`
 
-Those cached values let tests and examples reuse the same initialized local
-Vault instance. Shell-exported `TEST_NANVC_*` variables take precedence over the
-cached values. If Vault reports `invalid token`, the cached credentials probably
-belong to another Vault instance or an older Docker volume. Export valid
-`TEST_NANVC_*` values, or reset local Vault with the fresh-state commands above.
+Shell-exported `TEST_NANVC_*` variables take precedence over cached values. If
+Vault reports `invalid token`, the cached credentials probably belong to another
+Vault instance or an older Docker volume. Export valid `TEST_NANVC_*` values, or
+reset local Vault with the fresh-state commands above.

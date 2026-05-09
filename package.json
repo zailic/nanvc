@@ -83,7 +83,7 @@
         "coverage:integration:v2": "nyc --silent --clean=false npm run test:integration:v2",
         "coverage:report": "nyc report",
         "prepack": "npm run build",
-        "examples": "for d in examples/*/ ; do echo \"Running example in $d\" && [ -f \"$d/main.ts\" ] && NANVC_LOG_LEVEL=debug npx tsx \"$d/main.ts\"; done"
+        "examples": "node ./scripts/run-examples.mjs"
     },
     "nyc": {
         "include": [
@@ -120,6 +120,7 @@
         "@types/chai": "^5.2.3",
         "@types/mocha": "^10.0.0",
         "@types/node": "^24.0.0",
+        "@types/pg": "^8.20.0",
         "@types/sinon": "^21.0.0",
         "@types/tv4": "^1.2.0",
         "eslint": "^10.0.1",
@@ -127,6 +128,7 @@
         "eslint-plugin-prettier": "^5.5.5",
         "mocha": "^11.0.0",
         "nyc": "^18.0.0",
+        "pg": "8.20.0",
         "prettier": "3.8.3",
         "rimraf": "^6.0.0",
         "serialize-javascript": "^7.0.5",

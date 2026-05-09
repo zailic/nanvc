@@ -1,19 +1,20 @@
 import assert from 'node:assert';
 
+import type { AdminPersona } from '../common/personas/admin.js';
 import { VaultClientError } from '../../src/main.js';
-import { AdminPersona } from '../common/personas/admin.js';
-import { printSuccessBanner, toExampleAuthError } from '../common/personas/helpers.js';
-import { createTestVaultClient } from '../../test/helpers/vault.js';
+import { toExampleAuthError } from '../common/personas/helpers.js';
+import { example, workflow, runAs, runExample } from '../common/workflow/decorators.js';
 
 const MOUNT = 'secret-versioned';
 const SECRET_PATH = 'customer/acme';
-const VAULT_CLUSTER_ADDRESS = process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
 
-async function main(): Promise<void> {
-    const rootVault = await createTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
+@example('Versioned KV example')
+class VersionedKVExample {
+    @workflow('admin', 'Demonstrate KV v2 features')
+    @runAs({ persona: 'admin' })
+    public async demonstrateKVFeatures(admin: AdminPersona<'v2'>): Promise<void> {
+        const vault = admin.vault;
 
-    const admin = AdminPersona.v2({ client: rootVault });
-    await admin.withWorkflow(async ({ vault }) => {
         // Start with a clean mount so the example is repeatable.
         const disableError = await vault.sys.mount.disable(MOUNT).intoErr();
         if (disableError && disableError.status !== 404) {
@@ -226,12 +227,10 @@ async function main(): Promise<void> {
 
         const [, notFoundError] = await vault.secret.kv.v2.readMetadata(MOUNT, SECRET_PATH);
         assert.strictEqual(notFoundError?.status, 404, 'Metadata must be gone after deleteMetadata');
-
-        printSuccessBanner('Versioned KV tutorial workflow complete');
-    });
+    }
 }
 
-main().catch((error) => {
+runExample(VersionedKVExample).catch((error) => {
     console.error(error);
     process.exitCode = 1;
 });

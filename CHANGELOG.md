@@ -7,7 +7,13 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 ### Added
 
+- Added a database secrets engine example that configures Vault dynamic PostgreSQL credentials against the local Docker Compose database service.
+- Added generated SQL setup documentation for the database secrets example from `test/util/db/init.sh`.
+
 ### Changed
+
+- Refactored runnable examples around shared workflow decorators and persona helpers for consistent operator, admin, and app flows.
+- Updated generated example documentation to support an optional third tab for additional example resources.
 
 ### Fixed
 
@@ -30,6 +36,7 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 - Added focused v2 unit coverage for system policy and system wrapping clients.
 - Added focused unit and integration coverage for the v2 database secrets client.
 - Added lightweight Mocha decorators and reorganized v2 tests under client, core, and transport-focused folders.
+- Added a database-secrets example that demonstrates the full dynamic-credentials workflow using the typed `vault.secret.db` API (configureConnection, writeRole, generateCredentials) against a local PostgreSQL instance.
 
 ### Changed
 

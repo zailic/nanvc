@@ -6,6 +6,14 @@ const ROOT_DIR = process.cwd();
 const EXAMPLES_DIR = resolve(ROOT_DIR, 'examples');
 const DOCS_EXAMPLES_DIR = resolve(ROOT_DIR, 'docs/examples');
 const DOCS_EXAMPLES_INDEX_PATH = resolve(ROOT_DIR, 'docs/examples.md');
+const EXAMPLE_THIRD_TABS = {
+    'database-secrets': {
+        label: 'SQL setup',
+        language: 'sql',
+        path: resolve(ROOT_DIR, 'test/util/db/init.sh'),
+        transform: extractSqlHeredoc,
+    },
+};
 
 const examples = readExamples(EXAMPLES_DIR);
 
@@ -29,6 +37,7 @@ function readExamples(examplesDir) {
 function readExample(exampleDir) {
     const readmePath = join(exampleDir, 'README.md');
     const mainPath = join(exampleDir, 'main.ts');
+    const slug = basename(exampleDir);
 
     let readme;
     try {
@@ -43,13 +52,39 @@ function readExample(exampleDir) {
     return {
         body: stripTopLevelHeading(readme),
         code: readFileSync(mainPath, 'utf8').trimEnd(),
+        extraTab: readThirdTab(slug),
         mainPath: relative(ROOT_DIR, mainPath),
         readmePath: relative(ROOT_DIR, readmePath),
         runCommand: `npx tsx ${relative(ROOT_DIR, mainPath)}`,
-        slug: basename(exampleDir),
+        slug,
         summary: extractSummary(readme),
         title: extractTitle(readme),
     };
+}
+
+function readThirdTab(slug) {
+    const tab = EXAMPLE_THIRD_TABS[slug];
+
+    if (!tab) {
+        return null;
+    }
+
+    return {
+        content: tab.transform(readFileSync(tab.path, 'utf8')).trimEnd(),
+        label: tab.label,
+        language: tab.language,
+        sourcePath: relative(ROOT_DIR, tab.path),
+    };
+}
+
+function extractSqlHeredoc(shellScript) {
+    const heredocMatch = shellScript.match(/<<-EOSQL\n(?<sql>[\s\S]*?)\nEOSQL/m);
+
+    if (!heredocMatch?.groups?.sql) {
+        throw new Error('Could not find EOSQL heredoc in PostgreSQL init script.');
+    }
+
+    return heredocMatch.groups.sql;
 }
 
 function extractTitle(markdown) {
@@ -128,6 +163,41 @@ function renderExamplePage(example) {
         '{% endhighlight %}',
         '{% endcapture %}',
         '',
+    ];
+
+    if (example.extraTab) {
+        lines.push('{% capture example_extra %}');
+        lines.push(`{% highlight ${example.extraTab.language} %}`);
+        lines.push(example.extraTab.content);
+        lines.push('{% endhighlight %}');
+        lines.push('{% endcapture %}');
+        lines.push('');
+    }
+
+    lines.push(...renderExampleTabs(example));
+    lines.push(
+        '',
+        '## Source Files',
+        '',
+        `- README source: \`${example.readmePath}\``,
+        `- Runnable source: \`${example.mainPath}\``,
+    );
+
+    if (example.extraTab) {
+        lines.push(`- ${example.extraTab.label} source: \`${example.extraTab.sourcePath}\``);
+    }
+
+    lines.push(
+        '',
+        '> This page is generated from the example README. Edit the source README and run `npm run generate:docs` to update it.',
+        '',
+    );
+
+    return lines.join('\n');
+}
+
+function renderExampleTabs(example) {
+    const lines = [
         '{% include doc-tabs.html',
         `  id="example-${example.slug}"`,
         '  aria_label="Example content"',
@@ -136,18 +206,16 @@ function renderExamplePage(example) {
         '  panel_one=example_guide',
         '  panel_two=example_source',
         '  markdown_one=true',
-        '%}',
-        '',
-        '## Source Files',
-        '',
-        `- README source: \`${example.readmePath}\``,
-        `- Runnable source: \`${example.mainPath}\``,
-        '',
-        '> This page is generated from the example README. Edit the source README and run `npm run generate:docs` to update it.',
-        '',
     ];
 
-    return lines.join('\n');
+    if (example.extraTab) {
+        lines.push(`  label_three="${example.extraTab.label}"`);
+        lines.push('  panel_three=example_extra');
+    }
+
+    lines.push('%}');
+
+    return lines;
 }
 
 function quoteYaml(value) {
