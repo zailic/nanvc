@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { readdirSync, statSync, existsSync } from 'fs';
 import { join } from 'path';
+import process from 'node:process';
 
 const examplesDir = join(process.cwd(), 'examples');
 

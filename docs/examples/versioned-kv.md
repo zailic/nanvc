@@ -118,8 +118,8 @@ reset local Vault with the fresh-state commands above.
 {% highlight ts %}
 import assert from 'node:assert';
 
+import type { AdminPersona } from '../common/personas/admin.js';
 import { VaultClientError } from '../../src/main.js';
-import { AdminPersona } from '../common/personas/admin.js';
 import { toExampleAuthError } from '../common/personas/helpers.js';
 import { example, workflow, runAs, runExample } from '../common/workflow/decorators.js';
 
@@ -128,7 +128,6 @@ const SECRET_PATH = 'customer/acme';
 
 @example('Versioned KV example')
 class VersionedKVExample {
-    
     @workflow('admin', 'Demonstrate KV v2 features')
     @runAs({ persona: 'admin' })
     public async demonstrateKVFeatures(admin: AdminPersona<'v2'>): Promise<void> {

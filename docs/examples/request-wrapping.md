@@ -85,11 +85,10 @@ reset local Vault with the fresh-state commands above.
 {% highlight ts %}
 import assert from 'node:assert';
 
-import { AdminPersona } from '../common/personas/admin.js';
-import { AppPersona } from '../common/personas/app.js';
-import { OperatorPersona } from '../common/personas/operator.js';
+import type { AdminPersona } from '../common/personas/admin.js';
+import type { AppPersona } from '../common/personas/app.js';
+import type { OperatorPersona } from '../common/personas/operator.js';
 import { example, runAs, runExample, workflow } from '../common/workflow/decorators.js';
-
 
 const secretData = {
     db_name: 'users',

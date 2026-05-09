@@ -84,12 +84,12 @@ reset local Vault with the fresh-state commands above.
 {% capture example_source %}
 {% highlight ts %}
 import assert from 'node:assert';
-import { AdminPersona } from '../common/personas/admin.js';
-import { AppPersona } from '../common/personas/app.js';
-import { OperatorPersona } from '../common/personas/operator.js';
+import type { AdminPersona } from '../common/personas/admin.js';
+import type { AppPersona } from '../common/personas/app.js';
+import type { OperatorPersona } from '../common/personas/operator.js';
 import { VaultClientError } from '../../src/main.js';
 import { example, runAs, runExample, workflow } from '../common/workflow/decorators.js';
-import { AppRoleCredentials } from '../common/personas/types.js';
+import type { AppRoleCredentials } from '../common/personas/types.js';
 import { assertInstanceOf } from '../common/assert.js';
 
 const CREDENTIALS = {
@@ -127,17 +127,19 @@ class AppRoleExample {
                 token_max_ttl: '30m',
             })
             .unwrap();
-            
+
         this.credentials = await admin.createAppRoleCredentials('jenkins');
     }
 
     @workflow('app', 'Log in with AppRole credentials and check policy permissions')
     @runAs({ persona: 'app' })
     public async appWorkflow(app: AppPersona<'v2'>): Promise<void> {
-        await app.vault.auth.loginWithAppRole({
-            role_id: this.credentials.roleId,
-            secret_id: this.credentials.secretId,  
-        }).unwrap();
+        await app.vault.auth
+            .loginWithAppRole({
+                role_id: this.credentials.roleId,
+                secret_id: this.credentials.secretId,
+            })
+            .unwrap();
         const secretResponse = await app.vault.secret.kv.v2.read('secret', 'mysql/webapp').unwrap();
         const deleteError: unknown = await app.vault.secret.kv.v2.delete('secret', 'mysql/webapp').unwrapErr();
         assertInstanceOf(deleteError, VaultClientError);

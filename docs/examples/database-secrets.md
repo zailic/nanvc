@@ -159,12 +159,12 @@ fresh environment.
 import assert from 'node:assert';
 import { Pool, type PoolClient } from 'pg';
 
-import { AdminPersona } from '../common/personas/admin.js';
-import { AppPersona } from '../common/personas/app.js';
+import type { AdminPersona } from '../common/personas/admin.js';
+import type { AppPersona } from '../common/personas/app.js';
 import { isMountAlreadyExistsError, toExampleAuthError } from '../common/personas/helpers.js';
 import type { AppRoleCredentials } from '../common/personas/types.js';
 import { example, runAs, runExample, workflow } from '../common/workflow/decorators.js';
-import { VaultClientV2 } from '../../src/main.js';
+import type { VaultClientV2 } from '../../src/main.js';
 
 type AppRoleCredentialsSet = {
     adminAppRoleCredentials: AppRoleCredentials;

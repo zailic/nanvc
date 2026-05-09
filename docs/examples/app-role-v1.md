@@ -88,14 +88,12 @@ reset local Vault with the fresh-state commands above.
 {% highlight ts %}
 import assert from 'node:assert';
 
-import { AdminPersona } from '../common/personas/admin.js';
-import { AppPersona } from '../common/personas/app.js';
+import type { AdminPersona } from '../common/personas/admin.js';
+import type { AppPersona } from '../common/personas/app.js';
+import type { OperatorPersona } from '../common/personas/operator.js';
+import type { VaultResponseData, AppRoleCredentials } from '../common/personas/types.js';
 import { expectSuccess } from '../common/personas/helpers.js';
-import { OperatorPersona } from '../common/personas/operator.js';
-import type { VaultResponseData } from '../common/personas/types.js';
 import { example, runAs, runExample, workflow } from '../common/workflow/decorators.js';
-import { AppRoleCredentials } from '../common/personas/types.js';
-
 
 const secretData = {
     db_name: 'users',
@@ -116,10 +114,7 @@ class AppRoleExample {
     @workflow('admin', 'Configure AppRole and create credentials')
     @runAs({ persona: 'admin', version: 'v1' })
     public async adminWorkflow(admin: AdminPersona<'v1'>): Promise<void> {
-        await expectSuccess(
-            admin.vault.write('/credentials/mysql/webapp', secretData),
-            'Vault KV v1 write failed',
-        );
+        await expectSuccess(admin.vault.write('/credentials/mysql/webapp', secretData), 'Vault KV v1 write failed');
 
         await admin.enableAppRoleAuth();
 
