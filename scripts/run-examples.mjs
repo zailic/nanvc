@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { readdirSync, statSync, existsSync } from 'fs';
 import { join } from 'path';
 import process from 'node:process';
@@ -19,7 +19,7 @@ try {
         const exampleMainPath = join(examplesDir, example, 'main.ts');
         console.log(`\n🧪 Running: ${example}`);
         try {
-            execSync(`npx tsx ${exampleMainPath}`, {
+            execFileSync('npx', ['tsx', exampleMainPath], {
                 stdio: 'inherit',
                 env: { ...process.env, NANVC_LOG_LEVEL: 'debug' },
             });
