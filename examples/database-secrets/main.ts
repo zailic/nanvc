@@ -1,117 +1,257 @@
 import assert from 'node:assert';
+import { Pool, type PoolClient } from 'pg';
 
-import { AdminPersona } from '../common/personas/admin.js';
-import { isMountAlreadyExistsError, printSuccessBanner, toExampleAuthError } from '../common/personas/helpers.js';
-import { createTestVaultClient } from '../../test/helpers/vault.js';
+import type { AdminPersona } from '../common/personas/admin.js';
+import type { AppPersona } from '../common/personas/app.js';
+import { isMountAlreadyExistsError, toExampleAuthError } from '../common/personas/helpers.js';
+import type { AppRoleCredentials } from '../common/personas/types.js';
+import { example, runAs, runExample, workflow } from '../common/workflow/decorators.js';
+import type { VaultClientV2 } from '../../src/main.js';
 
-const VAULT_CLUSTER_ADDRESS = process.env.NANVC_VAULT_CLUSTER_ADDRESS ?? 'http://127.0.0.1:8200';
+type AppRoleCredentialsSet = {
+    adminAppRoleCredentials: AppRoleCredentials;
+    readOnlyAppRoleCredentials: AppRoleCredentials;
+    readWriteAppRoleCredentials: AppRoleCredentials;
+};
 
-// Database secrets engine mount and resource names.
+type DatabaseCredentials = {
+    password: string;
+    username: string;
+};
+
+type DatabaseSession = {
+    client: PoolClient;
+    close(): Promise<void>;
+};
+
+type UserRow = {
+    email: string;
+    id: number;
+    username: string;
+};
+
 const DB_MOUNT = 'database';
-const DB_CONNECTION = 'postgres-webapp';
-const DB_ROLE = 'readonly';
+const DB_CONNECTION = 'postgres-example';
+const DB_ROLE_RO = 'readonly_role';
+const DB_ROLE_RW = 'readwrite_role';
+const DB_ROLE_ADMIN = 'schema_admin_role';
+const DB_SCHEMA = 'example';
+const DB_TABLE = 'users';
 
-async function main(): Promise<void> {
+@example('Database secrets engine example')
+class DatabaseSecretsExample {
+    private credentials!: AppRoleCredentialsSet;
 
-    // ── Step 1: Prepare Vault ─────────────────────────────────────────────────
-    // createTestVaultClient initializes and unseals Vault if needed, and returns
-    // a VaultClientV2 with the root token already set. Credentials are persisted
-    // to a temp env file so subsequent runs skip re-initialization.
-    const rootVault = await createTestVaultClient({ clusterAddress: VAULT_CLUSTER_ADDRESS });
+    public constructor(private readonly rootVault: VaultClientV2) {}
 
-    const admin = AdminPersona.v2({ client: rootVault });
-    await admin.withWorkflow(async ({ vault }) => {
-
-        // ── Step 2: Admin — enable the database secrets engine ────────────────
-        // The database secrets engine is not mounted by default. Enabling it
-        // at 'database' is the same as running `vault secrets enable database`.
-        // The typed sys.mount.enable method covers this step.
-        const [, mountError] = await vault.sys.mount.enable(DB_MOUNT, { type: 'database' });
+    @workflow('admin', 'Configure Vault database roles and AppRoles')
+    @runAs({ persona: 'admin' })
+    public async configureVault(admin: AdminPersona<'v2'>): Promise<void> {
+        const [, mountError] = await this.rootVault.sys.mount.enable(DB_MOUNT, { type: 'database' });
         if (mountError && !isMountAlreadyExistsError(mountError)) {
             throw toExampleAuthError(mountError);
         }
 
-        // ── Step 3: Admin — configure the database connection ─────────────────
-        // vault.secret.db.configureConnection sets up a named PostgreSQL
-        // connection. Vault stores the management credentials (nanvc /
-        // integration) encrypted and uses them to create and revoke dynamic
-        // roles. The {{username}} and {{password}} placeholders are filled in
-        // by Vault at request time.
-        //
-        // The PostgreSQL service is reachable at db:5432 within the Docker
-        // Compose network. The host machine does not need direct DB access.
-        await vault.secret.db.configureConnection(DB_MOUNT, DB_CONNECTION, {
-            plugin_name: 'postgresql-database-plugin',
-            connection_url: 'postgresql://{{username}}:{{password}}@db:5432/nanvc?sslmode=disable',
-            allowed_roles: [DB_ROLE],
-            username: 'nanvc',
-            password: 'integration',
-        }).unwrap();
+        await this.rootVault.secret.db
+            .configureConnection(DB_MOUNT, DB_CONNECTION, {
+                plugin_name: 'postgresql-database-plugin',
+                connection_url: 'postgresql://{{username}}:{{password}}@db:5432/nanvc?sslmode=disable',
+                allowed_roles: [DB_ROLE_RO, DB_ROLE_RW, DB_ROLE_ADMIN],
+                username: 'vault',
+                password: 'integration',
+            })
+            .unwrap();
 
-        // ── Step 4: Admin — create a dynamic-credentials role ─────────────────
-        // A database role maps a Vault role name to the SQL statements Vault
-        // runs when generating credentials. Each credential set gets a unique
-        // username derived from the role name plus a timestamp, and a random
-        // password. Credentials are automatically revoked when the lease expires.
-        await vault.secret.db.writeRole(DB_MOUNT, DB_ROLE, {
-            db_name: DB_CONNECTION,
-            creation_statements: [
-                "CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}' NOINHERIT;",
-                "GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"{{name}}\";",
-            ],
-            revocation_statements: [
-                "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM \"{{name}}\";",
-                "DROP ROLE IF EXISTS \"{{name}}\";",
-            ],
-            default_ttl: '1h',
-            max_ttl: '24h',
-        }).unwrap();
+        await this.writeDatabaseRole(DB_ROLE_RO);
+        await this.writeDatabaseRole(DB_ROLE_RW);
+        await this.writeDatabaseRole(DB_ROLE_ADMIN);
 
-        // ── Step 5: Admin — write a least-privilege policy ────────────────────
-        // Any identity that needs to generate database credentials must hold a
-        // token with this policy. The policy is minimal: read-only on the single
-        // creds path for the 'readonly' role.
-        const dbPolicy = [
-            `# Allow reading dynamic credentials for the '${DB_ROLE}' database role.`,
-            `path "${DB_MOUNT}/creds/${DB_ROLE}" {`,
-            '  capabilities = ["read"]',
-            '}',
-        ].join('\n');
-        await admin.createPolicy('db-readonly', dbPolicy);
+        await this.registerDatabaseAppRole(admin, 'db-readonly-role', DB_ROLE_RO);
+        await this.registerDatabaseAppRole(admin, 'db-readwrite-role', DB_ROLE_RW);
+        await this.registerDatabaseAppRole(admin, 'db-admin-schema-role', DB_ROLE_ADMIN);
 
-        // ── Step 6: Generate dynamic database credentials ─────────────────────
-        // vault.secret.db.generateCredentials causes Vault to connect to the
-        // database, execute the creation_statements with a generated name and
-        // password, and return the result. Each call produces a unique,
-        // time-limited credential pair backed by a Vault lease.
-        const creds = await vault.secret.db.generateCredentials(DB_MOUNT, DB_ROLE).unwrap();
+        this.credentials = {
+            adminAppRoleCredentials: await admin.createAppRoleCredentials('db-admin-schema-role'),
+            readOnlyAppRoleCredentials: await admin.createAppRoleCredentials('db-readonly-role'),
+            readWriteAppRoleCredentials: await admin.createAppRoleCredentials('db-readwrite-role'),
+        };
+    }
 
-        assert.ok(
-            typeof creds.data?.username === 'string' && creds.data.username.length > 0,
-            'Generated username must be a non-empty string',
+    @workflow('admin app', 'Create users table')
+    @runAs({ persona: 'app' })
+    public async adminCreatesUsersTable(persona: AppPersona<'v2'>): Promise<void> {
+        const adminCredentials = await this.receiveDatabaseCredentials(
+            persona,
+            this.credentials.adminAppRoleCredentials,
+            DB_ROLE_ADMIN,
         );
-        assert.ok(
-            typeof creds.data?.password === 'string' && creds.data.password.length > 0,
-            'Generated password must be a non-empty string',
+        const database = await this.openDatabase(adminCredentials);
+
+        try {
+            await database.client.query('BEGIN');
+            try {
+                await database.client.query('SET LOCAL ROLE example_owner');
+                await database.client.query(`
+                    CREATE TABLE IF NOT EXISTS ${DB_SCHEMA}.${DB_TABLE} (
+                        id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+                        username TEXT NOT NULL,
+                        email TEXT NOT NULL
+                    )
+                `);
+                await database.client.query(`TRUNCATE TABLE ${DB_SCHEMA}.${DB_TABLE} RESTART IDENTITY`);
+                await database.client.query('COMMIT');
+            } catch (error) {
+                await database.client.query('ROLLBACK');
+                throw error;
+            }
+        } finally {
+            await database.close();
+        }
+
+        console.log('  Admin app created example.users as example_owner');
+    }
+
+    @workflow('readwrite app', 'Insert user records')
+    @runAs({ persona: 'app' })
+    public async readwriteInsertsUsers(persona: AppPersona<'v2'>): Promise<void> {
+        const readWriteCredentials = await this.receiveDatabaseCredentials(
+            persona,
+            this.credentials.readWriteAppRoleCredentials,
+            DB_ROLE_RW,
         );
-        assert.ok(
-            typeof creds.lease_id === 'string' && creds.lease_id.length > 0,
-            'Vault must return a lease_id for generated credentials',
+        const database = await this.openDatabase(readWriteCredentials);
+
+        try {
+            await database.client.query(
+                `
+                    INSERT INTO ${DB_SCHEMA}.${DB_TABLE} (username, email)
+                    VALUES
+                        ($1, $2),
+                        ($3, $4),
+                        ($5, $6)
+                `,
+                ['ada', 'ada@example.test', 'grace', 'grace@example.test', 'linus', 'linus@example.test'],
+            );
+        } finally {
+            await database.close();
+        }
+
+        console.log('  Readwrite app inserted 3 users');
+    }
+
+    @workflow('readonly app', 'List user records')
+    @runAs({ persona: 'app' })
+    public async readonlyListsUsers(persona: AppPersona<'v2'>): Promise<void> {
+        const readOnlyCredentials = await this.receiveDatabaseCredentials(
+            persona,
+            this.credentials.readOnlyAppRoleCredentials,
+            DB_ROLE_RO,
         );
-        assert.ok(
-            (creds.lease_duration ?? 0) > 0,
-            'Vault must return a positive lease_duration',
+        const database = await this.openDatabase(readOnlyCredentials);
+
+        let rows: UserRow[];
+        try {
+            const result = await database.client.query<UserRow>(`
+                SELECT id, username, email
+                FROM ${DB_SCHEMA}.${DB_TABLE}
+                ORDER BY id
+            `);
+            rows = result.rows;
+        } finally {
+            await database.close();
+        }
+
+        assert.deepStrictEqual(rows, [
+            { id: 1, username: 'ada', email: 'ada@example.test' },
+            { id: 2, username: 'grace', email: 'grace@example.test' },
+            { id: 3, username: 'linus', email: 'linus@example.test' },
+        ]);
+
+        console.log(`  Readonly app listed ${rows.length} users`);
+    }
+
+    private async writeDatabaseRole(roleName: string): Promise<void> {
+        await this.rootVault.secret.db
+            .writeRole(DB_MOUNT, roleName, {
+                db_name: DB_CONNECTION,
+                creation_statements: [
+                    "CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';",
+                    `GRANT "${roleName}" TO "{{name}}";`,
+                    `ALTER ROLE "{{name}}" SET search_path = '${DB_SCHEMA}';`,
+                ],
+                revocation_statements: [
+                    `REVOKE "${roleName}" FROM "{{name}}";`,
+                    'DROP OWNED BY "{{name}}";',
+                    'DROP ROLE IF EXISTS "{{name}}";',
+                ],
+                default_ttl: 3600,
+                max_ttl: 86400,
+            })
+            .unwrap();
+    }
+
+    private async registerDatabaseAppRole(
+        admin: AdminPersona<'v2'>,
+        roleName: string,
+        databaseRoleName: string,
+    ): Promise<void> {
+        await admin.createPolicy(
+            roleName,
+            [
+                `# Allow receiving dynamic credentials for the '${databaseRoleName}' database role.`,
+                `path "${DB_MOUNT}/creds/${databaseRoleName}" {`,
+                '  capabilities = ["read"]',
+                '}',
+            ].join('\n'),
         );
 
-        console.log(`  Dynamic username : ${creds.data?.username}`);
-        console.log(`  Lease ID         : ${creds.lease_id}`);
-        console.log(`  Lease duration   : ${creds.lease_duration}s`);
-    });
+        await admin.registerAppRole(roleName, {
+            token_policies: [roleName],
+            token_ttl: '20m',
+            token_max_ttl: '30m',
+        });
+    }
 
-    printSuccessBanner('Database secrets engine workflow complete');
+    private async receiveDatabaseCredentials(
+        app: AppPersona<'v2'>,
+        appRoleCredentials: AppRoleCredentials,
+        databaseRoleName: string,
+    ): Promise<DatabaseCredentials> {
+        await app.loginWithAppRole(appRoleCredentials);
+
+        const dbCreds = await app.vault.secret.db.generateCredentials(DB_MOUNT, databaseRoleName).unwrap();
+        const username = dbCreds.data?.username;
+        const password = dbCreds.data?.password;
+
+        assert.ok(typeof username === 'string' && username.length > 0, 'Generated username must be a non-empty string');
+        assert.ok(typeof password === 'string' && password.length > 0, 'Generated password must be a non-empty string');
+        assert.ok(typeof dbCreds.lease_id === 'string' && dbCreds.lease_id.length > 0, 'Vault must return a lease_id');
+        assert.ok((dbCreds.lease_duration ?? 0) > 0, 'Vault must return a positive lease_duration');
+
+        return { username, password };
+    }
+
+    private async openDatabase(credentials: DatabaseCredentials): Promise<DatabaseSession> {
+        const pool = new Pool({
+            database: 'nanvc',
+            host: 'localhost',
+            password: credentials.password,
+            port: 35432,
+            user: credentials.username,
+        });
+
+        const client = await pool.connect();
+        return {
+            client,
+            async close(): Promise<void> {
+                client.release();
+                await pool.end();
+            },
+        };
+    }
 }
 
-main().catch((error) => {
+runExample(DatabaseSecretsExample).catch((error) => {
     console.error(error);
     process.exitCode = 1;
 });

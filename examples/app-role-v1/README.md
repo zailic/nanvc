@@ -1,44 +1,25 @@
 # AppRole example with `VaultClient`
 
-This example mirrors the AppRole workflow using the original v1 client.
+This example mirrors the AppRole authentication flow with the original v1
+client. It intentionally uses KV v1 at the `secret` mount so the code can show
+the legacy client's native `write` and `read` calls.
 
-It intentionally uses KV v1 for the secret path so the example can show the v1
-client's native `write` and `read` ergonomics:
+## What the workflow demonstrates
 
-- prepare a local Vault server if needed
-- mount a KV v1 secrets engine at `credentials`
-- write a database secret
-- enable AppRole auth
-- create a read-only policy and role
-- log in as an app with `role_id` and `secret_id`
-- read the secret with the app token
+- Prepare Vault by enabling a KV v1 mount at `secret`.
+- Write an application secret at `/secret/mysql/webapp`.
+- Enable the `approle` auth method.
+- Create a read-only `jenkins` policy for that one secret path.
+- Register an AppRole with short-lived tokens.
+- Generate `role_id` and `secret_id` credentials.
+- Log in as an app with those AppRole credentials.
+- Read the secret with the app token and assert the returned data.
 
-The example reuses the local Vault setup helper from `test/helpers/vault.ts`.
-That helper initializes and unseals the local Vault instance when needed, caches
-the root credentials, and returns a ready root client. This v1 example asks the
-helper for the original `VaultClient`, so the operator and admin personas share
-the same initialized Vault instance.
+This example uses the shared decorator-based runner and personas described in
+`examples/README.md`.
 
-The workflow is still organized around three reusable personas from
-`examples/common/personas`:
-
-- `OperatorPersona.v1()` performs operator-level setup for this example, namely
-  ensuring the KV mount exists.
-- `AdminPersona.v1()` configures AppRole, writes the policy, registers the role,
-  and returns `role_id` / `secret_id`.
-- `AppPersona.v1()` starts with an unauthenticated client, logs in with AppRole,
-  and reads the application secret.
-
-Each persona exposes `withWorkflow(async ({ vault }) => { ... })`, so the
-example-specific logic stays in this file while repeated setup lives in common
-helpers.
-
-`OperatorPersona` is intentionally thin here because Vault initialization now
-lives in the shared test helper. It remains useful as an example extension point
-for workflows that need extra operator-only setup before admin/app actions run.
-
-Inside the v1 personas, some AppRole calls use `apiRequest()` with a custom
-`POST 200` command spec because the original client does not expose dedicated
+Some AppRole operations use `apiRequest()` with a custom `POST 200` command spec
+inside the v1 personas because the original client does not expose dedicated
 AppRole helpers.
 
 ## Local Vault
@@ -49,10 +30,10 @@ From the repository root, start only the plain Vault service:
 docker compose up -d vault
 ```
 
-One Vault instance is enough for this example. You do not need to start the
-`vault_tls` or `vault_mtls` services unless you are specifically testing TLS.
+One Vault instance is enough. You do not need `vault_tls` or `vault_mtls` unless
+you are specifically testing TLS.
 
-If you want a fresh Vault state:
+For a fresh Vault state:
 
 ```bash
 docker compose down --volumes --remove-orphans
@@ -70,11 +51,11 @@ npm install
 Then run the example:
 
 ```bash
-npx tsx examples/app-role-v1/main.ts
+NANVC_VAULT_CLUSTER_ADDRESS=http://127.0.0.1:8200 npx tsx examples/app-role-v1/main.ts
 ```
 
-The default client configuration points at `http://127.0.0.1:8200`, which
-matches the `vault` service port mapping.
+The helper defaults to `http://vault.local:8200`. Use the environment variable
+above when `vault.local` is not mapped on your machine.
 
 ## Environment
 
@@ -92,8 +73,7 @@ the helper writes a shared cache file under your OS temp directory with:
 - `TEST_NANVC_VAULT_AUTH_TOKEN`
 - `TEST_NANVC_VAULT_UNSEAL_KEY`
 
-Those cached values let tests and examples reuse the same initialized local
-Vault instance. Shell-exported `TEST_NANVC_*` variables take precedence over the
-cached values. If Vault reports `invalid token`, the cached credentials probably
-belong to another Vault instance or an older Docker volume. Export valid
-`TEST_NANVC_*` values, or reset local Vault with the fresh-state commands above.
+Shell-exported `TEST_NANVC_*` variables take precedence over cached values. If
+Vault reports `invalid token`, the cached credentials probably belong to another
+Vault instance or an older Docker volume. Export valid `TEST_NANVC_*` values, or
+reset local Vault with the fresh-state commands above.

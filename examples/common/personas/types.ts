@@ -34,7 +34,3 @@ export type AppRoleConfig = {
     token_policies: string[];
     token_ttl?: string;
 };
-
-export type WorkflowContext<V extends VaultClientVersion> = {
-    vault: VaultClientFor<V>;
-};

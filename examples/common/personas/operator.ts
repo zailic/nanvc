@@ -1,6 +1,6 @@
 import VaultClient, { VaultClientV2 } from '../../../src/main.js';
 import { expectSuccessOrAlreadyExists, isMountAlreadyExistsError, toExampleAuthError } from './helpers.js';
-import type { PersonaOptions, VaultClientFor, VaultClientVersion, WorkflowContext } from './types.js';
+import type { PersonaOptions, VaultClientFor, VaultClientVersion } from './types.js';
 
 export class OperatorPersona<V extends VaultClientVersion> {
     public readonly vault: VaultClientFor<V>;
@@ -18,10 +18,6 @@ export class OperatorPersona<V extends VaultClientVersion> {
 
     public static v2(options: PersonaOptions<'v2'> = {}): OperatorPersona<'v2'> {
         return new OperatorPersona('v2', options);
-    }
-
-    public async withWorkflow<R>(workflow: (context: WorkflowContext<V>) => Promise<R> | R): Promise<R> {
-        return workflow({ vault: this.vault });
     }
 
     public async ensureKvMountAvailable(

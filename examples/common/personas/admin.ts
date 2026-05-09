@@ -7,7 +7,6 @@ import type {
     VaultClientFor,
     VaultClientVersion,
     VaultResponseData,
-    WorkflowContext,
 } from './types.js';
 
 export class AdminPersona<TVersion extends VaultClientVersion> {
@@ -26,12 +25,6 @@ export class AdminPersona<TVersion extends VaultClientVersion> {
 
     public static v2(options: PersonaOptions<'v2'> = {}): AdminPersona<'v2'> {
         return new AdminPersona('v2', options);
-    }
-
-    public async withWorkflow<TResult>(
-        workflow: (context: WorkflowContext<TVersion>) => Promise<TResult> | TResult,
-    ): Promise<TResult> {
-        return workflow({ vault: this.vault });
     }
 
     public async enableAppRoleAuth(): Promise<void> {

@@ -7,7 +7,13 @@ The format is inspired by Keep a Changelog, with the current work tracked under 
 
 ### Added
 
+- Added a database secrets engine example that configures Vault dynamic PostgreSQL credentials against the local Docker Compose database service.
+- Added generated SQL setup documentation for the database secrets example from `test/util/db/init.sh`.
+
 ### Changed
+
+- Refactored runnable examples around shared workflow decorators and persona helpers for consistent operator, admin, and app flows.
+- Updated generated example documentation to support an optional third tab for additional example resources.
 
 ### Fixed
 

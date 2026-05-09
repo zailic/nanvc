@@ -45,5 +45,10 @@ services:
     image: postgres
     restart: always
     environment:
+      POSTGRES_DB: nanvc
       POSTGRES_PASSWORD: integration
       POSTGRES_USER: nanvc
+    volumes:
+      - ./test/util/db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    ports:
+      - "35432:5432"

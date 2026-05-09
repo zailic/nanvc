@@ -3,10 +3,16 @@
 <div class="doc-tabs doc-tabs--{{ include.id }}">
   <input {% if default_tab == 1 %}checked{% endif %} id="{{ include.id }}-tab-1" name="{{ include.id }}-tabs" type="radio">
   <input {% if default_tab == 2 %}checked{% endif %} id="{{ include.id }}-tab-2" name="{{ include.id }}-tabs" type="radio">
+  {% if include.panel_three %}
+  <input {% if default_tab == 3 %}checked{% endif %} id="{{ include.id }}-tab-3" name="{{ include.id }}-tabs" type="radio">
+  {% endif %}
 
   <div class="doc-tabs__nav" role="tablist" aria-label="{{ include.aria_label | default: 'Documentation tabs' }}">
     <label for="{{ include.id }}-tab-1" role="tab" aria-controls="{{ include.id }}-panel-1">{{ include.label_one }}</label>
     <label for="{{ include.id }}-tab-2" role="tab" aria-controls="{{ include.id }}-panel-2">{{ include.label_two }}</label>
+    {% if include.panel_three %}
+    <label for="{{ include.id }}-tab-3" role="tab" aria-controls="{{ include.id }}-panel-3">{{ include.label_three }}</label>
+    {% endif %}
   </div>
 
   <div class="doc-tabs__panel" id="{{ include.id }}-panel-1">
@@ -24,17 +30,28 @@
       {{ include.panel_two }}
     {% endif %}
   </div>
+  {% if include.panel_three %}
+  <div class="doc-tabs__panel" id="{{ include.id }}-panel-3">
+    {% if include.markdown_three %}
+      {{ include.panel_three | markdownify }}
+    {% else %}
+      {{ include.panel_three }}
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
 
 <style>
   #{{ include.id }}-tab-1:checked ~ .doc-tabs__nav label[for="{{ include.id }}-tab-1"],
-  #{{ include.id }}-tab-2:checked ~ .doc-tabs__nav label[for="{{ include.id }}-tab-2"] {
+  #{{ include.id }}-tab-2:checked ~ .doc-tabs__nav label[for="{{ include.id }}-tab-2"]{% if include.panel_three %},
+  #{{ include.id }}-tab-3:checked ~ .doc-tabs__nav label[for="{{ include.id }}-tab-3"]{% endif %} {
     background: var(--accent);
     color: white;
   }
 
   #{{ include.id }}-tab-1:checked ~ #{{ include.id }}-panel-1,
-  #{{ include.id }}-tab-2:checked ~ #{{ include.id }}-panel-2 {
+  #{{ include.id }}-tab-2:checked ~ #{{ include.id }}-panel-2{% if include.panel_three %},
+  #{{ include.id }}-tab-3:checked ~ #{{ include.id }}-panel-3{% endif %} {
     display: block;
   }
 </style>
