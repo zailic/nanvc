@@ -2,6 +2,7 @@ import { normalize } from 'path';
 
 import type { components } from '../generated/vault-openapi.js';
 import type { RawVaultClient } from '../core/raw-client.js';
+import type { VaultSysHealthStatusError } from '../core/errors.js';
 import { err, ok, toResult, type Result, type ResultTuple } from '../core/result.js';
 import { VaultSystemPoliciesClient } from './sys-policies.js';
 import { VaultSystemWrappingClient } from './sys-wrapping.js';
@@ -185,8 +186,11 @@ export class VaultSystemClient {
      *   const status = await vault.sys.status().unwrap();
      * @end-nanvc-doc
      */
-    public status(): Result<components['schemas']['HealthStatusResponse']> {
-        return this.raw.get('/sys/health');
+    public status(): Result<components['schemas']['HealthStatusResponse'], VaultSysHealthStatusError> {
+        return this.raw.get('/sys/health') as Result<
+            components['schemas']['HealthStatusResponse'],
+            VaultSysHealthStatusError
+        >;
     }
 
     /**

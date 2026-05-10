@@ -1,3 +1,5 @@
+import type { components } from '../generated/vault-openapi.js';
+
 export type VaultClientErrorCode =
     | 'HTTP_ERROR'
     | 'NETWORK_ERROR'
@@ -44,3 +46,7 @@ export class VaultClientError extends Error {
         );
     }
 }
+
+export type VaultSysHealthStatusError = Omit<VaultClientError, 'responseBody'> & {
+    responseBody?: components['schemas']['HealthStatusResponse'];
+};
