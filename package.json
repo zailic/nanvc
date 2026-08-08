@@ -128,7 +128,7 @@
         "eslint-plugin-prettier": "^5.5.5",
         "mocha": "^11.0.0",
         "nyc": "^18.0.0",
-        "pg": "8.22.0",
+        "pg": "8.23.0",
         "prettier": "3.8.5",
         "rimraf": "^6.0.0",
         "serialize-javascript": "^7.0.5",
